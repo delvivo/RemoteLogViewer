@@ -6,3 +6,5 @@ obj/
 .vscode/
 .idea/
 Thumbs.db
+__pycache__/
+*.pyc
