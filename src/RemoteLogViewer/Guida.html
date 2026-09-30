@@ -132,6 +132,9 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>Il calendario verifica quali giorni del mese visualizzato hanno il file di log: i giorni <strong>barrati</strong> non hanno il file e non si possono scegliere. Oggi resta sempre selezionabile: se il file non c'è ancora, la sessione resta in attesa. Se la share non è raggiungibile, sotto il calendario compare il motivo e tutti i giorni restano selezionabili.</li>
   <li>Se hai scelto <strong>oggi</strong>, a mezzanotte la sessione passa da sola al file del nuovo giorno e mostra la riga <span class="mark">— nuovo giorno: … —</span>. Se hai scelto una data passata, la sessione resta su quella data.</li>
   <li>Il formato può contenere solo giorno, mese e anno (niente ore o minuti). La data non è ammessa nella share.</li>
+  <li>Se la data c'è solo nei log vecchi e il file corrente no (es. oggi <code>app.log</code>, ieri <code>app.2026-09-29.log</code>), metti il separatore dentro il formato tra apici e spunta <em>Il file di oggi non ha la data</em>:
+    <pre><code>logs\app{date:'.'yyyy-MM-dd}.log</code></pre>
+    Per oggi si apre <code>logs\app.log</code>, per le altre date il file con la data. A mezzanotte la sessione resta su <code>app.log</code>: quando il server lo rinomina, l'app lo rileva e riparte dall'inizio del nuovo file.</li>
 </ul>
 
 <h2 id="schede">Schede e Affianca</h2>

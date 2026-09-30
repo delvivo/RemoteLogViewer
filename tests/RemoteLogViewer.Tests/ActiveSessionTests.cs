@@ -84,6 +84,30 @@ public class ActiveSessionTests : IDisposable
     }
 
     [Fact]
+    public async Task Undated_current_file_keeps_tailing_across_midnight()
+    {
+        if (Share == null) return;
+
+        File.WriteAllText(_local, "INFO day1\n");
+        var dated = _local[3..].Replace(".log", "{date:'.'yyyy_MM_dd}.log");
+        var config = new SessionConfig { Name = "local", SharePath = Share!, FilePath = dated, TailLines = 3, CurrentUndated = true };
+        var now = new DateTime(2026, 1, 1);
+        var s = new ActiveSession(config, now, () => now);
+        Assert.Equal(Share + @"\" + _local[3..], s.Path);
+        s.Start();
+        try
+        {
+            Assert.Equal("INFO day1", Assert.Single(await Collect(s, 1)).Text);
+            now = new DateTime(2026, 1, 2);
+            File.AppendAllText(_local, "INFO day2\n");
+            var after = await Collect(s, 2, 3000);
+            Assert.Equal(["— nuovo giorno: 2026-01-02 —", "INFO day2"], after.Select(l => l.Text)); // same file, no re-read
+            Assert.Equal(Share + @"\" + _local[3..], s.Path);
+        }
+        finally { s.Stop(); await Task.Delay(700); }
+    }
+
+    [Fact]
     public async Task Past_date_session_does_not_switch_day()
     {
         if (Share == null) return;

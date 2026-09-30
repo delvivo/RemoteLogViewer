@@ -14,13 +14,15 @@ public class SessionConfig
     public string Encoding { get; set; } = "auto";
     public Guid? CollectionId { get; set; } // null = root
     public Guid? CredentialId { get; set; } // null = UserName/ProtectedPassword above
+    public bool CurrentUndated { get; set; } // today's file has no date: placeholders resolve to "" for today
 
     /// Display path: date placeholders left unresolved.
     [System.Text.Json.Serialization.JsonIgnore]
     public string FullPath => Combine(FilePath);
 
     /// Path to actually open, with `{date:…}` placeholders resolved.
-    public string ResolvePath(DateTime date) => Combine(DatePath.Resolve(FilePath, date));
+    public string ResolvePath(DateTime date, DateTime? today = null) =>
+        Combine(CurrentUndated && date.Date == (today ?? DateTime.Today).Date ? DatePath.Strip(FilePath) : DatePath.Resolve(FilePath, date));
 
     private string Combine(string file) => file.StartsWith(@"\\") ? file : Path.Combine(SharePath.TrimEnd('\\') + "\\", file.TrimStart('\\'));
 

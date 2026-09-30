@@ -30,4 +30,15 @@ public class SessionConfigTests
         var c = new SessionConfig { Name = "x", SharePath = @"\\server\E$", FilePath = @"\\server\E$\logs\{date:yyyy_MM_dd}\a.log" };
         Assert.Empty(c.Validate());
     }
+
+    [Fact]
+    public void CurrentUndated_strips_placeholder_only_for_today()
+    {
+        var c = new SessionConfig { SharePath = @"\server\E$", FilePath = @"logs\app{date:'.'yyyy-MM-dd}.log", CurrentUndated = true };
+        var today = new DateTime(2026, 9, 30);
+        Assert.Equal(@"\server\E$\logs\app.log", c.ResolvePath(today, today));
+        Assert.Equal(@"\server\E$\logs\app.2026-09-29.log", c.ResolvePath(today.AddDays(-1), today));
+        c.CurrentUndated = false;
+        Assert.Equal(@"\server\E$\logs\app.2026-09-30.log", c.ResolvePath(today, today));
+    }
 }

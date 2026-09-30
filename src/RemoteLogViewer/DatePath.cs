@@ -16,6 +16,9 @@ public static partial class DatePath
     public static string Resolve(string path, DateTime date) =>
         Placeholder().Replace(path, m => date.ToString(m.Groups[1].Value, CultureInfo.InvariantCulture));
 
+    /// Path with every placeholder removed (today's undated file, e.g. `app{date:'.'yyyy-MM-dd}.log` → `app.log`).
+    public static string Strip(string path) => Placeholder().Replace(path, "");
+
     public static List<string> Validate(string path)
     {
         var errors = new List<string>();

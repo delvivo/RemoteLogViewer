@@ -21,6 +21,7 @@ public partial class SessionEditWindow : Window
         NameBox.Text = Config.Name;
         ShareBox.Text = Config.SharePath;
         UserBox.Text = Config.UserName;
+        CurrentUndatedBox.IsChecked = Config.CurrentUndated;
         FileBox.Text = Config.FilePath;
         TailBox.Text = Config.TailLines.ToString();
         EncodingBox.ItemsSource = new[] { "auto", "utf-8", "utf-16", "windows-1252" };
@@ -36,14 +37,20 @@ public partial class SessionEditWindow : Window
         UserBox.IsEnabled = PasswordBox.IsEnabled = inline;
     }
 
-    private void FileBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    private void FileBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => UpdateFilePreview();
+
+    private void CurrentUndatedBox_Changed(object sender, RoutedEventArgs e) => UpdateFilePreview();
+
+    private void UpdateFilePreview()
     {
         var file = FileBox.Text.Trim();
-        if (!DatePath.Has(file)) { FilePreview.Visibility = Visibility.Collapsed; return; }
-        FilePreview.Visibility = Visibility.Visible;
+        if (!DatePath.Has(file)) { FilePreview.Visibility = CurrentUndatedBox.Visibility = Visibility.Collapsed; return; }
+        FilePreview.Visibility = CurrentUndatedBox.Visibility = Visibility.Visible;
         var errors = DatePath.Validate(file);
-        var preview = new SessionConfig { SharePath = ShareBox.Text.Trim().TrimEnd('\\'), FilePath = file };
-        FilePreview.Text = errors.Count > 0 ? string.Join(" ", errors) : $"Anteprima (oggi): {preview.ResolvePath(DateTime.Today)}";
+        var preview = new SessionConfig { SharePath = ShareBox.Text.Trim().TrimEnd('\\'), FilePath = file, CurrentUndated = CurrentUndatedBox.IsChecked == true };
+        FilePreview.Text = errors.Count > 0 ? string.Join(" ", errors)
+            : $"Anteprima (oggi): {preview.ResolvePath(DateTime.Today)}"
+              + (preview.CurrentUndated ? $"\nAnteprima (ieri): {preview.ResolvePath(DateTime.Today.AddDays(-1))}" : "");
         FilePreview.Foreground = errors.Count > 0 ? Brushes.Red : Brushes.Gray;
     }
 
@@ -54,6 +61,7 @@ public partial class SessionEditWindow : Window
         Config.SharePath = ShareBox.Text.Trim().TrimEnd('\\');
         Config.UserName = UserBox.Text.Trim();
         Config.FilePath = FileBox.Text.Trim();
+        Config.CurrentUndated = CurrentUndatedBox.IsChecked == true && DatePath.Has(Config.FilePath);
         Config.Encoding = (string)EncodingBox.SelectedItem;
         Config.CredentialId = (CredentialBox.SelectedItem as Credential)?.Id;
         if (Config.CredentialId != null) (Config.UserName, Config.ProtectedPassword) = ("", null); // the credential wins

@@ -16,7 +16,7 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
     public DateTime? Date { get; private set; } = date?.Date;
     public bool FollowToday { get; } = date != null && date.Value.Date == (today ?? (() => DateTime.Today))().Date;
     public string DisplayName => Date is { } d ? $"{Config.Name} · {d:yyyy-MM-dd}" : Config.Name;
-    public string Path => Date is { } d ? Config.ResolvePath(d) : Config.FullPath;
+    public string Path => Date is { } d ? Config.ResolvePath(d, _today()) : Config.FullPath;
     public ConcurrentQueue<LogLine> Pending { get; } = new();
     public ConcurrentQueue<List<LogLine>> Older { get; } = new(); // blocks of earlier lines, to put at the top
     public bool CanLoadOlder => _canLoadOlder;
@@ -69,10 +69,10 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
                 if (FollowToday && _today().Date != Date)
                 {
                     // New day: switch to its file and read it from the start (capped like the view buffer).
+                    // An undated current file keeps its path: the tailer sees the server's rotation by itself.
                     Date = _today().Date;
                     Marker($"— nuovo giorno: {Date:yyyy-MM-dd} —");
-                    tailer = null;
-                    fromStart = true;
+                    if (!Config.CurrentUndated) { tailer = null; fromStart = true; }
                     StateChanged?.Invoke(); // tab title shows the date
                 }
                 if (tailer == null)

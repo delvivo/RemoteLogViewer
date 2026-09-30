@@ -42,6 +42,9 @@
         <StackPanel Grid.Row="5" Grid.Column="1">
             <TextBox x:Name="FileBox" TextChanged="FileBox_TextChanged"
                      ToolTip="Relativo alla share (logs\app.log) o UNC completo. Usa {date:yyyy_MM_dd} per una data variabile, scelta all'avvio." />
+            <CheckBox x:Name="CurrentUndatedBox" Content="Il file di _oggi non ha la data" Margin="0,2" Visibility="Collapsed"
+                      Checked="CurrentUndatedBox_Changed" Unchecked="CurrentUndatedBox_Changed"
+                      ToolTip="Solo il file corrente è senza data (es. oggi app.log, ieri app.2026-09-29.log). Metti il separatore nel formato tra apici: app{date:'.'yyyy-MM-dd}.log" />
             <TextBlock x:Name="FilePreview" Foreground="Gray" FontSize="11" TextWrapping="Wrap" Visibility="Collapsed" Margin="0,0,0,4" />
         </StackPanel>
         <Label Grid.Row="6" Content="_Righe iniziali" Target="{Binding ElementName=TailBox}" />
