@@ -7,9 +7,16 @@ public enum SessionState { Connecting, Running, Waiting, Reconnecting, Error, St
 
 /// Runtime of one session: connect share → tail → poll every 500 ms, reconnect every 5 s on I/O errors.
 /// Lines go to Pending (background thread); the UI drains it in batches.
-public class ActiveSession(SessionConfig config)
+/// `date` resolves `{date:…}` placeholders; a session started on today follows the new day's file after midnight.
+public class ActiveSession(SessionConfig config, DateTime? date = null, Func<DateTime>? today = null)
 {
+    private readonly Func<DateTime> _today = today ?? (() => DateTime.Today);
+
     public SessionConfig Config { get; } = config;
+    public DateTime? Date { get; private set; } = date?.Date;
+    public bool FollowToday { get; } = date != null && date.Value.Date == (today ?? (() => DateTime.Today))().Date;
+    public string DisplayName => Date is { } d ? $"{Config.Name} · {d:yyyy-MM-dd}" : Config.Name;
+    public string Path => Date is { } d ? Config.ResolvePath(d) : Config.FullPath;
     public ConcurrentQueue<LogLine> Pending { get; } = new();
     public SessionState State { get; private set; } = SessionState.Stopped;
     public string StatusText { get; private set; } = "Ferma";
@@ -38,6 +45,7 @@ public class ActiveSession(SessionConfig config)
         var share = Config.SharePath;
         var connected = false;
         var everRead = false;
+        var fromStart = false;
         LogTailer? tailer = null;
 
         while (!ct.IsCancellationRequested)
@@ -51,12 +59,22 @@ public class ActiveSession(SessionConfig config)
                     SmbConnection.Connect(share, Config.UserName, SessionStore.Unprotect(Config.ProtectedPassword));
                     connected = true;
                 }
+                if (FollowToday && _today().Date != Date)
+                {
+                    // New day: switch to its file and read it from the start (capped like the view buffer).
+                    Date = _today().Date;
+                    Marker($"— nuovo giorno: {Date:yyyy-MM-dd} —");
+                    tailer = null;
+                    fromStart = true;
+                    StateChanged?.Invoke(); // tab title shows the date
+                }
                 if (tailer == null)
                 {
-                    var t = new LogTailer(Config.FullPath, Config.Encoding);
-                    Emit(t.ReadTail(Config.TailLines));
+                    var t = new LogTailer(Path, Config.Encoding);
+                    Emit(t.ReadTail(fromStart ? 100_000 : Config.TailLines));
                     tailer = t;
                     everRead = true;
+                    fromStart = false;
                 }
                 else
                 {

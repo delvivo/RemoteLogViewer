@@ -1,6 +1,6 @@
 # Data Model: Collezioni, riordino schede e percorsi con data
 
-## Collection (nuova)
+## SessionCollection (nuova; nome scelto per non confondersi con `Collection<T>`)
 
 | Campo | Tipo | Note |
 |---|---|---|

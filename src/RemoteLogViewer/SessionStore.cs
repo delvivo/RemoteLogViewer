@@ -13,34 +13,54 @@ public class SessionStore(string path)
     private static readonly byte[] Entropy = "RemoteLogViewer"u8.ToArray();
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
-    private record SessionsFile(List<SessionConfig> Sessions);
+    // v1 had only Sessions; Collections missing → all sessions at root.
+    private record SessionsFile(List<SessionCollection>? Collections, List<SessionConfig>? Sessions);
 
     public string Path => path;
 
     /// Set by Load when the file was corrupt and has been moved aside.
     public string? Warning { get; private set; }
 
-    public List<SessionConfig> Load()
+    public SessionTree Load()
     {
-        if (!File.Exists(path)) return [];
+        if (!File.Exists(path)) return new SessionTree();
         try
         {
-            return JsonSerializer.Deserialize<SessionsFile>(File.ReadAllText(path), Json)?.Sessions ?? [];
+            var f = JsonSerializer.Deserialize<SessionsFile>(File.ReadAllText(path), Json);
+            var tree = new SessionTree(f?.Collections ?? [], f?.Sessions ?? []);
+            tree.Normalize();
+            return tree;
         }
         catch (JsonException)
         {
             File.Move(path, path + ".bak", true);
             Warning = $"File sessioni corrotto, salvato come {path}.bak.";
-            return [];
+            return new SessionTree();
         }
     }
 
-    public void Save(IEnumerable<SessionConfig> sessions)
+    public void Save(SessionTree tree) => WriteAtomic(path, new SessionsFile(tree.Collections, tree.Sessions));
+
+    public static void WriteExport(string file, ExportFile export) => WriteAtomic(file, export);
+
+    public static ExportFile ReadExport(string file)
     {
-        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
-        var tmp = path + ".tmp";
-        File.WriteAllText(tmp, JsonSerializer.Serialize(new SessionsFile(sessions.ToList()), Json));
-        File.Move(tmp, path, true);
+        ExportFile? f;
+        try { f = JsonSerializer.Deserialize<ExportFile>(File.ReadAllText(file), Json); }
+        catch (JsonException) { throw new InvalidDataException("File non valido."); }
+        if (f?.Format != ExportFile.FormatId) throw new InvalidDataException("File non riconosciuto.");
+        if (f.Version > 1) throw new InvalidDataException("Versione del file non supportata.");
+        f.Collections ??= [];
+        f.Sessions ??= [];
+        return f;
+    }
+
+    private static void WriteAtomic<T>(string file, T content)
+    {
+        Directory.CreateDirectory(System.IO.Path.GetDirectoryName(System.IO.Path.GetFullPath(file))!);
+        var tmp = file + ".tmp";
+        File.WriteAllText(tmp, JsonSerializer.Serialize(content, Json));
+        File.Move(tmp, file, true);
     }
 
     public static string Protect(string password) =>

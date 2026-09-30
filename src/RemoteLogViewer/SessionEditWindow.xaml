@@ -35,7 +35,11 @@
         <Label Grid.Row="3" Content="_Password" Target="{Binding ElementName=PasswordBox}" />
         <PasswordBox Grid.Row="3" Grid.Column="1" x:Name="PasswordBox" ToolTip="Vuota in modifica = invariata" />
         <Label Grid.Row="4" Content="_File" Target="{Binding ElementName=FileBox}" />
-        <TextBox Grid.Row="4" Grid.Column="1" x:Name="FileBox" ToolTip="Relativo alla share (logs\app.log) o UNC completo" />
+        <StackPanel Grid.Row="4" Grid.Column="1">
+            <TextBox x:Name="FileBox" TextChanged="FileBox_TextChanged"
+                     ToolTip="Relativo alla share (logs\app.log) o UNC completo. Usa {date:yyyy_MM_dd} per una data variabile, scelta all'avvio." />
+            <TextBlock x:Name="FilePreview" Foreground="Gray" FontSize="11" TextWrapping="Wrap" Visibility="Collapsed" Margin="0,0,0,4" />
+        </StackPanel>
         <Label Grid.Row="5" Content="_Righe iniziali" Target="{Binding ElementName=TailBox}" />
         <TextBox Grid.Row="5" Grid.Column="1" x:Name="TailBox" Width="100" HorizontalAlignment="Left" />
         <Label Grid.Row="6" Content="_Encoding" Target="{Binding ElementName=EncodingBox}" />

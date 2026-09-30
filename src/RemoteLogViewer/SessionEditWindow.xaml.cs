@@ -24,6 +24,17 @@ public partial class SessionEditWindow : Window
         Loaded += (_, _) => NameBox.Focus();
     }
 
+    private void FileBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    {
+        var file = FileBox.Text.Trim();
+        if (!DatePath.Has(file)) { FilePreview.Visibility = Visibility.Collapsed; return; }
+        FilePreview.Visibility = Visibility.Visible;
+        var errors = DatePath.Validate(file);
+        var preview = new SessionConfig { SharePath = ShareBox.Text.Trim().TrimEnd('\\'), FilePath = file };
+        FilePreview.Text = errors.Count > 0 ? string.Join(" ", errors) : $"Anteprima (oggi): {preview.ResolvePath(DateTime.Today)}";
+        FilePreview.Foreground = errors.Count > 0 ? Brushes.Red : Brushes.Gray;
+    }
+
     // Reads the form into Config. Returns validation errors.
     private List<string> ReadForm()
     {
@@ -56,8 +67,9 @@ public partial class SessionEditWindow : Window
                 SmbConnection.Connect(c.SharePath, c.UserName, SessionStore.Unprotect(c.ProtectedPassword));
                 try
                 {
-                    return File.Exists(c.FullPath)
-                        ? (true, $"OK: file trovato ({new FileInfo(c.FullPath).Length / 1024:N0} KB).")
+                    var path = c.ResolvePath(DateTime.Today);
+                    return File.Exists(path)
+                        ? (true, $"OK: file trovato ({new FileInfo(path).Length / 1024:N0} KB).")
                         : (false, "Share OK, ma il file non esiste (la sessione resterà in attesa).");
                 }
                 finally { SmbConnection.Release(c.SharePath); }

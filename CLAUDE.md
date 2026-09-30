@@ -32,6 +32,8 @@ The data flow crosses threads, so it only makes sense when you read several file
      - Once a read has succeeded, an I/O error goes to `Reconnecting`, which retries every 5 s and resumes from the tailer's offset.
      - A missing file goes to `Waiting`.
    - It runs on a **clone** of the saved `SessionConfig`, so edits to saved sessions don't affect running ones.
+   - **Date paths:** `FilePath` may contain `{date:<.NET format>}` (`DatePath` resolves/validates it). `SessionConfig.FullPath` is the *display* path with placeholders unresolved; the path actually opened is `ActiveSession.Path` (= `ResolvePath(Date)`). `MainWindow.Open` asks the date via `DateDialog`.
+   - If the chosen date was today (`FollowToday`), the loop switches to the new day's file when the injectable clock (`today` ctor arg, for tests) changes: marker line, new tailer read from the start (`ReadTail(100_000)`), `StateChanged` so the tab title (`DisplayName`) updates.
 2. **`LogView`** (one per session) drains `Pending` on a 200 ms `DispatcherTimer`:
    - It keeps the full buffer in `_all` (a `List`) and the filtered view in `_visible` (an `ObservableCollection` bound to a virtualized `ListBox`).
    - Changing the filter, or trimming past 100k lines, **rebuilds** `_visible` rather than mutating it.
@@ -49,13 +51,19 @@ The data flow crosses threads, so it only makes sense when you read several file
    - Writes are atomic (a temp file, then a move).
    - Passwords are stored as DPAPI CurrentUser base64. `Unprotect` returns null when a password can't be decrypted.
    - A corrupt file is moved to `.bak`.
-6. **`MainWindow`**: the `TabItem`s are the source of truth, and each one's `Tag` holds its `LogView`. `Relayout()` detaches every `LogView` and re-parents it into either the tabs or the `UniformGrid` for "Affianca" (side-by-side). Call it after any add, close or toggle.
+   - `Load()` returns a **`SessionTree`**: flat lists of `SessionCollection { Id, Name, ParentId }` and sessions with `CollectionId` (null = root). The file stays v1-compatible (missing `collections` → everything at root); `Normalize()` repairs orphans/cycles.
+   - `SessionTree` holds all tree logic (move with cycle check, recursive delete/count, `UniqueName` "X (2)", export/import). Export uses the same JSON shape plus `format`/`version`, **never** passwords; import validates everything first (all-or-nothing) and remaps every id to a new Guid.
+6. **`MainWindow`**:
+   - Sidebar is a `TreeView` of `CollectionNode`/`SessionNode` **rebuilt from `SessionTree` after every change** (`RebuildTree(select)`); expansion state lives in `_expanded`, selection is restored by object. The context menu is built on `ContextMenuOpening` from the node under the mouse (empty space = root actions).
+   - The `TabItem`s are the source of truth, and each one's `Tag` holds its `LogView`. `Relayout()` detaches every `LogView` and re-parents it into either the tabs or the `UniformGrid` for "Affianca" (side-by-side), in tab order. Call it after any add, close, toggle or tab drag. Tab drag moves the `TabItem` only; the `LogView`/session is untouched.
 
 ## Gotchas
 
 - **`LogLine` must stay a class, not a record.** Value equality would make identical log lines collide in `ListBox` selection. `IsMatch` raises `INotifyPropertyChanged` for search highlighting.
 - **Use `Checked`/`Unchecked` for toggles and checkboxes, not `Click`.** `Click` doesn't fire for UI Automation or programmatic toggles. `Checked` fires during `InitializeComponent` when `IsChecked="True"` is set in XAML, so handlers must guard with `IsLoaded`.
-- **`ActiveSessionTests` does real SMB I/O through `\\localhost\C$`** as the current user. It returns early and passes silently if the admin share isn't reachable.
+- **`ActiveSessionTests` does real SMB I/O through `\\localhost\C$`, falling back to `\\127.0.0.1\C$`** (on some machines only the IP works) as the current user. It returns early and passes silently if neither is reachable. Claude Code's sandbox blocks SMB: run these tests outside the sandbox, or they silently skip.
+- **Menu items with dynamic names use a `TextBlock` header** so `_` in names (e.g. `DOB_SDL`) isn't eaten as an access key; they set `AutomationProperties.Name` explicitly, otherwise UI Automation/screen readers see no name.
+- **Drag start for tabs is detected on the `TabControl`'s `PreviewMouseMove`**, not on the `TabItem`: a fast drag leaves the small header before the first move event.
 - **`Environment.GetFolderPath(ApplicationData)` ignores the `APPDATA` env var.** Manual UI testing therefore reads and writes the real `sessions.json`. Clean it up afterwards.
 
 ## Workflow for code changes (mandatory)

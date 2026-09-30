@@ -104,6 +104,7 @@ L'utente vuole condividere con un collega la propria configurazione (es. tutte l
 - La sessione resta aperta oltre la mezzanotte: se avviata su oggi passa al file del nuovo giorno (US1 scenario 7), altrimenti resta sulla data scelta.
 - Il PC resta sospeso per più giorni con una sessione "oggi" aperta: al risveglio la sessione passa direttamente al file della data corrente, senza ripercorrere i giorni intermedi.
 - Nome collezione vuoto o duplicato nello stesso livello: nome vuoto rifiutato; duplicato consentito solo tramite import con suffisso automatico, nella creazione manuale viene rifiutato.
+- Spostamento di una collezione dove esiste già una sorella con lo stesso nome: la collezione spostata riceve il suffisso (es. "API (2)"), lo spostamento non viene bloccato.
 - Eliminazione di una collezione che contiene sessioni attualmente aperte: le schede aperte continuano a funzionare (girano su una copia della configurazione).
 - Import di un file prodotto da una versione futura con campi sconosciuti: i campi sconosciuti vengono ignorati.
 - Trascinamento di una scheda nella vista affiancata: non richiesto; il riordino si fa dalle schede.
