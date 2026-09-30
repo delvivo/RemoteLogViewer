@@ -21,6 +21,7 @@ public partial class LogView : UserControl
     private ObservableCollection<LogLine> _visible = [];
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
     private Func<string, bool>? _filter;
+    private readonly HashSet<LogLevel> _hiddenLevels = [];
     private string _search = "";
     private ScrollViewer? _scroll;
 
@@ -47,7 +48,8 @@ public partial class LogView : UserControl
 
     private bool Follow => FollowButton.IsChecked == true;
 
-    private bool Matches(LogLine l) => l.IsMarker || _filter == null || _filter(l.Text);
+    // Lines with no detected level (None) are never hidden by the level filter.
+    private bool Matches(LogLine l) => l.IsMarker || (!_hiddenLevels.Contains(l.Level) && (_filter == null || _filter(l.Text)));
 
     private bool SearchHit(LogLine l) => _search.Length > 0 && l.Text.Contains(_search, StringComparison.OrdinalIgnoreCase);
 
@@ -147,6 +149,14 @@ public partial class LogView : UserControl
         }
         else if (text.Length > 0) _filter = s => s.Contains(text, StringComparison.OrdinalIgnoreCase);
         Rebuild();
+    }
+
+    private void Level_Changed(object sender, RoutedEventArgs e)
+    {
+        var cb = (CheckBox)sender;
+        var level = Enum.Parse<LogLevel>((string)cb.Tag);
+        if (cb.IsChecked == true) _hiddenLevels.Remove(level); else _hiddenLevels.Add(level);
+        if (IsLoaded) Rebuild(); // Checked fires during InitializeComponent
     }
 
     private void Search_Changed(object sender, TextChangedEventArgs e)

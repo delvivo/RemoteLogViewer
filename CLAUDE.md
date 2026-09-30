@@ -36,7 +36,7 @@ The data flow crosses threads, so it only makes sense when you read several file
    - If the chosen date was today (`FollowToday`), the loop switches to the new day's file when the injectable clock (`today` ctor arg, for tests) changes: marker line, new tailer read from the start (`ReadTail(100_000)`), `StateChanged` so the tab title (`DisplayName`) updates.
 2. **`LogView`** (one per session) drains `Pending` on a 200 ms `DispatcherTimer`:
    - It keeps the full buffer in `_all` (a `List`) and the filtered view in `_visible` (an `ObservableCollection` bound to a virtualized `ListBox`).
-   - Changing the filter, or trimming past 100k lines, **rebuilds** `_visible` rather than mutating it.
+   - Filter = level checkboxes (`_hiddenLevels`; `None` and marker lines are never hidden) AND text/regex. Changing it, or trimming past 100k lines, **rebuilds** `_visible` rather than mutating it.
    - Follow mode is driven by `ScrollChanged`: a user scroll-up turns Follow off, and reaching the bottom turns it back on.
 3. **`LogTailer`** opens a short-lived `FileStream` per call, with `FileShare.ReadWrite|Delete`, so it never blocks server-side log rotation:
    - A shrinking length or a changed creation time counts as rotation, and reading restarts from 0.
