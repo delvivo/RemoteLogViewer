@@ -13,6 +13,7 @@
             <TextBlock x:Name="StatusLabel" VerticalAlignment="Center" MinWidth="120" MaxWidth="400" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" />
             <Button x:Name="StartStopButton" Content="Stop" Width="60" Margin="2" Click="StartStop_Click" />
             <ToggleButton x:Name="FollowButton" Content="Follow" IsChecked="True" Width="60" Margin="2" Checked="Follow_Click" ToolTip="Scorrimento automatico" />
+            <ToggleButton x:Name="WrapButton" Content="A capo" Width="60" Margin="2" ToolTip="Manda a capo le righe lunghe" />
             <Button Content="Pulisci" Width="60" Margin="2" Click="Clear_Click" />
             <TextBlock Text="Filtro:" VerticalAlignment="Center" Margin="10,0,4,0" />
             <TextBox x:Name="FilterBox" Width="160" Margin="2" VerticalContentAlignment="Center" TextChanged="Filter_Changed" ToolTip="Mostra solo le righe che contengono il testo" />
@@ -25,7 +26,17 @@
         </WrapPanel>
         <ListBox x:Name="Lines" SelectionMode="Extended" FontFamily="Cascadia Mono, Consolas" FontSize="12"
                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
-                 ScrollViewer.HorizontalScrollBarVisibility="Auto" ScrollViewer.ScrollChanged="Lines_ScrollChanged">
+                 ScrollViewer.ScrollChanged="Lines_ScrollChanged">
+            <ListBox.Style>
+                <Style TargetType="ListBox">
+                    <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsChecked, ElementName=WrapButton}" Value="True">
+                            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </ListBox.Style>
             <ListBox.CommandBindings>
                 <CommandBinding Command="ApplicationCommands.Copy" Executed="Copy_Executed" />
             </ListBox.CommandBindings>
@@ -54,7 +65,17 @@
             </ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate>
                 <DataTemplate>
-                    <TextBlock Text="{Binding Text}" />
+                    <TextBlock Text="{Binding Text}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsChecked, ElementName=WrapButton}" Value="True">
+                                        <Setter Property="TextWrapping" Value="Wrap" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

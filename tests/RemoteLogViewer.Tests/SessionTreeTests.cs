@@ -167,6 +167,21 @@ public class SessionTreeTests
     }
 
     [Fact]
+    public void Duplicate_copies_subtree_next_to_original_with_passwords()
+    {
+        var copy = _t.Duplicate(_api.Id);
+        Assert.Equal("API (copia)", copy.Name);
+        Assert.Equal(_prod.Id, copy.ParentId);
+        Assert.Equal(3, _t.CountSessions(copy.Id));
+        Assert.Equal(1, _t.CountCollections(copy.Id));
+        Assert.Equal("API (copia) (2)", _t.Duplicate(_api.Id).Name);
+
+        var p = _t.Duplicate(_prod.Id);
+        var p1 = _t.Sessions.Single(s => s.Name == "p1" && s.CollectionId == p.Id);
+        Assert.Equal("secret", SessionStore.Unprotect(p1.ProtectedPassword!));
+    }
+
+    [Fact]
     public void Import_root_export_attaches_roots_under_target()
     {
         var f = _t.Export(null);

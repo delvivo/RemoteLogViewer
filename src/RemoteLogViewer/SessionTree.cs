@@ -122,8 +122,8 @@ public class SessionTree(List<SessionCollection> collections, List<SessionConfig
 
     // ---- export / import ----
 
-    /// `collectionId` null = everything. Passwords are never exported.
-    public ExportFile Export(Guid? collectionId)
+    /// `collectionId` null = everything. Passwords are never exported (only kept for in-app Duplicate).
+    public ExportFile Export(Guid? collectionId, bool keepPasswords = false)
     {
         List<SessionCollection> cols = collectionId is { } id ? [Find(id)!, .. Descendants(id)] : Collections;
         var colIds = cols.Select(c => c.Id).ToHashSet();
@@ -133,13 +133,13 @@ public class SessionTree(List<SessionCollection> collections, List<SessionConfig
             Format = ExportFile.FormatId,
             Version = 1,
             Collections = cols.Select(c => new SessionCollection { Id = c.Id, Name = c.Name, ParentId = c.Id == collectionId ? null : c.ParentId }).ToList(),
-            Sessions = sessions.Select(s => { var x = s.Clone(); x.ProtectedPassword = null; return x; }).ToList(),
+            Sessions = sessions.Select(s => { var x = s.Clone(); if (!keepPasswords) x.ProtectedPassword = null; return x; }).ToList(),
         };
     }
 
     /// Adds the file's content under `targetParentId` with new ids; never touches existing items.
     /// Returns the first imported root item (collection or session), or null if the file is empty.
-    public object? Import(ExportFile file, Guid? targetParentId)
+    public object? Import(ExportFile file, Guid? targetParentId, bool keepPasswords = false)
     {
         Validate(file);
         var map = file.Collections.ToDictionary(c => c.Id, _ => Guid.NewGuid());
@@ -156,13 +156,21 @@ public class SessionTree(List<SessionCollection> collections, List<SessionConfig
         {
             var copy = s.Clone();
             copy.Id = Guid.NewGuid();
-            copy.ProtectedPassword = null;
+            if (!keepPasswords) copy.ProtectedPassword = null;
             copy.CollectionId = s.CollectionId is { } c ? map[c] : targetParentId;
             if (s.CollectionId == null) copy.Name = UniqueSessionName(targetParentId, copy.Name);
             Sessions.Add(copy);
             if (s.CollectionId == null) first ??= copy;
         }
         return first;
+    }
+
+    /// Deep copy of a collection next to the original, named "X (copia)", passwords kept.
+    public SessionCollection Duplicate(Guid id)
+    {
+        var file = Export(id, keepPasswords: true);
+        file.Collections[0].Name += " (copia)"; // [0] is the exported root
+        return (SessionCollection)Import(file, Find(id)!.ParentId, keepPasswords: true)!;
     }
 
     private static void Validate(ExportFile file)

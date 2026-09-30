@@ -237,6 +237,7 @@ public partial class MainWindow : Window
                 Add("Nuova sessione qui", () => AddSession(new SessionConfig { CollectionId = c.Id }));
                 Add("Nuova sottocollezione", () => NewCollection(c.Id));
                 Add("Rinomina", () => Rename(c));
+                Add("Duplica", () => { var copy = _tree.Duplicate(c.Id); Save(); RebuildTree(copy); });
                 menu.Items.Add(MoveMenu(c, c.ParentId));
                 Sep();
                 Add("Esporta…", () => Export(c.Id, c.Name));
