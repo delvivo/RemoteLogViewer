@@ -128,7 +128,8 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"</code></pre>
 <pre><code>DOB\DOB_SDL\log\standard_logs\{date:yyyy_MM_dd}\log.log
 logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <ul>
-  <li>Quando avvii la sessione, l'app chiede la data (propone oggi) e mostra un'anteprima del percorso.</li>
+  <li>Quando avvii la sessione, l'app chiede la data su un calendario (propone oggi) e mostra un'anteprima del percorso.</li>
+  <li>Il calendario verifica quali giorni del mese visualizzato hanno il file di log: i giorni <strong>barrati</strong> non hanno il file e non si possono scegliere. Oggi resta sempre selezionabile: se il file non c'è ancora, la sessione resta in attesa. Se la share non è raggiungibile, sotto il calendario compare il motivo e tutti i giorni restano selezionabili.</li>
   <li>Se hai scelto <strong>oggi</strong>, a mezzanotte la sessione passa da sola al file del nuovo giorno e mostra la riga <span class="mark">— nuovo giorno: … —</span>. Se hai scelto una data passata, la sessione resta su quella data.</li>
   <li>Il formato può contenere solo giorno, mese e anno (niente ore o minuti). La data non è ammessa nella share.</li>
 </ul>

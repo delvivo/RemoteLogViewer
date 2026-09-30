@@ -384,7 +384,7 @@ public partial class MainWindow : Window
         DateTime? date = null;
         if (DatePath.Has(config.FilePath))
         {
-            var dlg = new DateDialog(config) { Owner = this };
+            var dlg = new DateDialog(config.WithCredential(_tree.Credentials)) { Owner = this };
             if (dlg.ShowDialog() != true) return;
             date = dlg.SelectedDate;
         }

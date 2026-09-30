@@ -4,8 +4,11 @@
         Width="480" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
     <StackPanel Margin="12">
-        <Label Content="_Data del log" Target="{Binding ElementName=Picker}" Padding="0,0,0,4" />
-        <DatePicker x:Name="Picker" Width="160" HorizontalAlignment="Left" SelectedDateChanged="Picker_SelectedDateChanged" />
+        <Label Content="_Data del log" Target="{Binding ElementName=Cal}" Padding="0,0,0,4" />
+        <Calendar x:Name="Cal" HorizontalAlignment="Left" SelectionMode="SingleDate"
+                  SelectedDatesChanged="Cal_SelectedDatesChanged" DisplayDateChanged="Cal_DisplayDateChanged"
+                  DisplayModeChanged="Cal_DisplayModeChanged" PreviewMouseUp="Cal_PreviewMouseUp" />
+        <TextBlock x:Name="Status" Foreground="Gray" TextWrapping="Wrap" Margin="0,4,0,0" />
         <TextBlock x:Name="Preview" Foreground="Gray" TextWrapping="Wrap" Margin="0,8" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
             <Button x:Name="OkButton" Content="Avvia" Padding="16,3" Margin="4,0" IsDefault="True" Click="Ok_Click" />

@@ -33,7 +33,7 @@ The data flow crosses threads, so it only makes sense when you read several file
      - Once a read has succeeded, an I/O error goes to `Reconnecting`, which retries every 5 s and resumes from the tailer's offset.
      - A missing file goes to `Waiting`.
    - It runs on a **clone** of the saved `SessionConfig`, so edits to saved sessions don't affect running ones.
-   - **Date paths:** `FilePath` may contain `{date:<.NET format>}` (`DatePath` resolves/validates it). `SessionConfig.FullPath` is the *display* path with placeholders unresolved; the path actually opened is `ActiveSession.Path` (= `ResolvePath(Date)`). `MainWindow.Open` asks the date via `DateDialog`.
+   - **Date paths:** `FilePath` may contain `{date:<.NET format>}` (`DatePath` resolves/validates it). `SessionConfig.FullPath` is the *display* path with placeholders unresolved; the path actually opened is `ActiveSession.Path` (= `ResolvePath(Date)`). `MainWindow.Open` asks the date via `DateDialog` (gets the config with credential applied): an inline `Calendar` that connects the share once (released on close) and `File.Exists`-probes every day of each displayed month, adding missing days to `BlackoutDates` (never today or the selected date: blacking out the selected date throws).
    - If the chosen date was today (`FollowToday`), the loop switches to the new day's file when the injectable clock (`today` ctor arg, for tests) changes: marker line, new tailer read from the start (`ReadTail(100_000)`), `StateChanged` so the tab title (`DisplayName`) updates.
 2. **`LogView`** (one per session) drains `Pending` on a 200 ms `DispatcherTimer`:
    - It keeps the full buffer in `_all` (a `List`) and the filtered view in `_visible` (an `ObservableCollection` bound to a virtualized `ListBox`).
