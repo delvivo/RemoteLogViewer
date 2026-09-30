@@ -25,7 +25,8 @@ The data flow crosses threads, so it only makes sense when you read several file
 
 1. **`ActiveSession`** runs one background `Task` loop per open session:
    - It connects the share (`SmbConnection`), calls `LogTailer.ReadTail(N)` once, then `Poll()` every 500 ms.
-   - It pushes `LogLine`s (level detected via `LogLevels.Detect`, which inherits the previous level for stack-trace lines) into a `ConcurrentQueue` called `Pending`.
+   - It pushes `LogLine`s (built by `LogLevels.Make`: level via `LogLevels.Detect`, which inherits the previous level for stack-trace lines) into a `ConcurrentQueue` called `Pending`. Flags: `IsEntry` = level detected on that line (a stack trace is one entry: counters/badges count entries), `IsHistory` = from the initial `ReadTail` (no alerts; the new-day read-from-start is *not* history).
+   - **Load previous lines:** the UI calls `RequestOlder(n)` (atomic int); the loop, which owns the tailer, runs `ReadBefore(n)` on its next iteration and enqueues the block in `Older` (`ConcurrentQueue<List<LogLine>>`). `CanLoadOlder` (Running && `tailer.HasOlder`) raises `StateChanged` when it changes.
    - It raises `StateChanged` on the background thread.
    - **State machine:**
      - A failure on the first connect or read goes to `Error`, with no retry. This means wrong credentials or a wrong path.
@@ -36,10 +37,15 @@ The data flow crosses threads, so it only makes sense when you read several file
    - If the chosen date was today (`FollowToday`), the loop switches to the new day's file when the injectable clock (`today` ctor arg, for tests) changes: marker line, new tailer read from the start (`ReadTail(100_000)`), `StateChanged` so the tab title (`DisplayName`) updates.
 2. **`LogView`** (one per session) drains `Pending` on a 200 ms `DispatcherTimer`:
    - It keeps the full buffer in `_all` (a `List`) and the filtered view in `_visible` (an `ObservableCollection` bound to a virtualized `ListBox`).
-   - Filter = level checkboxes (`_hiddenLevels`; `None` and marker lines are never hidden) AND text/regex. Changing it, or trimming past 100k lines, **rebuilds** `_visible` rather than mutating it.
+   - Filter = level checkboxes (`_hiddenLevels`; `None` and marker lines are never hidden) AND text/regex, with optional `grep -C N` context. All of it lives in **`ContextFilter`** (pure, tested), fed one buffer index at a time: `Drain` feeds new lines, `Rebuild` = new `ContextFilter` + replay of `_all`. It is index-based, so anything that shifts `_all` (trim past 100k, prepend of `Older`) must `Rebuild`. Context separators (`--`, marker `LogLine`s) exist only in `_visible`; `IsContext` dims context lines.
+   - Prepend keeps the view still: `ListBox` scrolls by item, so `Rebuild(keepTopLine)` re-scrolls to the old top item's new index.
+   - `_counts` (entries per level, shown in the level checkboxes) is updated incrementally, fully recounted after a trim and zeroed by *Pulisci*.
+   - Alerts: `UnreadErrors` grows only while `!IsVisible` (a non-selected tab's content is out of the visual tree; in Affianca everything is visible) and resets on `IsVisibleChanged`. `ErrorsArrived` → `MainWindow` flashes the taskbar (`FlashWindowEx`) when the window is not active.
+   - `Ctrl+S` = `ApplicationCommands.Save` bound on the `LogView` (saves `_visible` texts, UTF-8 without BOM).
    - Follow mode is driven by `ScrollChanged`: a user scroll-up turns Follow off, and reaching the bottom turns it back on.
 3. **`LogTailer`** opens a short-lived `FileStream` per call, with `FileShare.ReadWrite|Delete`, so it never blocks server-side log rotation:
    - A shrinking length or a changed creation time counts as rotation, and reading restarts from 0.
+   - `ReadTail`/`ReadBefore` scan **bytes** backward (256 KB blocks) for newlines (`0A`; UTF-16 LE `0A 00` / BE `00 0A` on 2-byte boundaries from the BOM), so `_head` (offset of the oldest line handed out) is exact; they decode only whole lines. `HasOlder = _head > _start`; rotation sets `_head = _start`.
    - A stateful `Decoder` plus a `_partial` buffer keep multibyte chars and incomplete lines intact across polls.
    - A BOM overrides the configured encoding.
 4. **`SmbConnection`** is a P/Invoke wrapper around `WNetAddConnection2`/`WNetCancelConnection2`, with no local drive name:
@@ -56,6 +62,8 @@ The data flow crosses threads, so it only makes sense when you read several file
    - `SessionTree` holds all tree logic (move with cycle check, recursive delete/count, `UniqueName` "X (2)", export/import, `Duplicate` = export+import with `keepPasswords`). Export uses the same JSON shape plus `format`/`version`, **never** passwords; import validates everything first (all-or-nothing) and remaps every id to a new Guid.
 6. **`MainWindow`**:
    - Sidebar is a `TreeView` of `CollectionNode`/`SessionNode` **rebuilt from `SessionTree` after every change** (`RebuildTree(select)`); expansion state lives in `_expanded`, selection is restored by object. The context menu is built on `ContextMenuOpening` from the node under the mouse (empty space = root actions).
+   - **Workspace:** `Window_Closing` stores open tabs (`OpenTab { SessionId, Date, FollowToday }`), selected index and Affianca into `SessionTree.Workspace` (`workspace` in `sessions.json`, never exported) and saves; `Window_Loaded` reopens them via `Open(config, date)` (skips `DateDialog`; `FollowToday` → today; missing sessions skipped).
+   - **Help:** `F1`/*Guida* = `ApplicationCommands.Help`: the embedded resource `Guida.html` (`LogicalName` `RemoteLogViewer.Guida.html`) is written to `%TEMP%\RemoteLogViewer\guida.html` with `%VERSION%` replaced by the assembly informational version, then opened with the shell.
    - The `TabItem`s are the source of truth, and each one's `Tag` holds its `LogView`. `Relayout()` detaches every `LogView` and re-parents it into either the tabs or the `UniformGrid` for "Affianca" (side-by-side), in tab order. Call it after any add, close, toggle or tab drag. Tab drag moves the `TabItem` only; the `LogView`/session is untouched.
 
 ## Gotchas
@@ -75,6 +83,7 @@ The data flow crosses threads, so it only makes sense when you read several file
    - **Not on a `feature/*` branch** (e.g. `develop`): before implementing, create `feature/<name>`, where `<name>` is the feature name chosen by spec-kit (e.g. `feature/001-remote-log-viewer`).
    - **Already on a `feature/*` branch**: stay on it and don't create a new branch. The spec-kit feature name must be rooted in the current feature: `<current-feature>-<short-name>`. For example, on `feature/001-remote-log-viewer` it becomes `specs/001-remote-log-viewer-<short-name>/`, passed as `SPECIFY_FEATURE_DIRECTORY`.
 3. **After every change**, update `README.md` and this `CLAUDE.md` if the change affects what they describe: features, commands, architecture, gotchas.
+4. **After every user-visible change** (features, buttons, commands, keyboard shortcuts, messages, behaviour), update the user guide `src/RemoteLogViewer/Guida.html` too (Italian, self-contained HTML: no external resources; keep the shortcuts table complete).
 
 ## Spec-kit workflow
 

@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <Resource Include="app.ico" />
+    <EmbeddedResource Include="Guida.html" LogicalName="RemoteLogViewer.Guida.html" />
   </ItemGroup>
 
 </Project>

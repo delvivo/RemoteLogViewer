@@ -58,6 +58,53 @@ public class SessionStoreTests : IDisposable
     }
 
     [Fact]
+    public void Round_trip_keeps_workspace()
+    {
+        var a = new SessionConfig { Name = "a" };
+        var date = new DateTime(2026, 6, 11);
+        var tree = new SessionTree([], [a])
+        {
+            Workspace = new Workspace
+            {
+                Tabs = [new OpenTab { SessionId = a.Id }, new OpenTab { SessionId = a.Id, Date = date, FollowToday = true }],
+                Selected = 1,
+                SideBySide = true,
+            },
+        };
+        new SessionStore(FilePath).Save(tree);
+
+        var ws = new SessionStore(FilePath).Load().Workspace;
+        Assert.Equal(2, ws.Tabs.Count);
+        Assert.Equal(a.Id, ws.Tabs[0].SessionId);
+        Assert.Null(ws.Tabs[0].Date);
+        Assert.Equal(date, ws.Tabs[1].Date);
+        Assert.True(ws.Tabs[1].FollowToday);
+        Assert.Equal(1, ws.Selected);
+        Assert.True(ws.SideBySide);
+    }
+
+    [Fact]
+    public void File_without_workspace_loads_empty_workspace()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(FilePath, """{ "sessions": [] }""");
+        var ws = new SessionStore(FilePath).Load().Workspace;
+        Assert.Empty(ws.Tabs);
+        Assert.Equal(-1, ws.Selected);
+        Assert.False(ws.SideBySide);
+    }
+
+    [Fact]
+    public void Export_never_contains_workspace()
+    {
+        var path = Path.Combine(_dir, "x.rlv.json");
+        var s = new SessionConfig { Name = "s" };
+        var tree = new SessionTree([], [s]) { Workspace = new Workspace { Tabs = [new OpenTab { SessionId = s.Id }] } };
+        SessionStore.WriteExport(path, tree.Export(null));
+        Assert.DoesNotContain("workspace", File.ReadAllText(path));
+    }
+
+    [Fact]
     public void Export_round_trip()
     {
         var path = Path.Combine(_dir, "x.rlv.json");

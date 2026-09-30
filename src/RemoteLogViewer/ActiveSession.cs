@@ -18,12 +18,19 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
     public string DisplayName => Date is { } d ? $"{Config.Name} · {d:yyyy-MM-dd}" : Config.Name;
     public string Path => Date is { } d ? Config.ResolvePath(d) : Config.FullPath;
     public ConcurrentQueue<LogLine> Pending { get; } = new();
+    public ConcurrentQueue<List<LogLine>> Older { get; } = new(); // blocks of earlier lines, to put at the top
+    public bool CanLoadOlder => _canLoadOlder;
     public SessionState State { get; private set; } = SessionState.Stopped;
     public string StatusText { get; private set; } = "Ferma";
     public event Action? StateChanged; // raised on background thread
 
     private CancellationTokenSource? _cts;
     private LogLevel _last;
+    private volatile bool _canLoadOlder;
+    private int _olderRequest;
+
+    /// Ask the loop (which owns the tailer) to read n lines before the oldest one read so far.
+    public void RequestOlder(int n) => Interlocked.Exchange(ref _olderRequest, n);
 
     public void Start()
     {
@@ -71,19 +78,25 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
                 if (tailer == null)
                 {
                     var t = new LogTailer(Path, Config.Encoding);
-                    Emit(t.ReadTail(fromStart ? 100_000 : Config.TailLines));
+                    Emit(t.ReadTail(fromStart ? 100_000 : Config.TailLines), history: !fromStart); // a new day's lines are new
                     tailer = t;
                     everRead = true;
                     fromStart = false;
                 }
                 else
                 {
+                    if (Interlocked.Exchange(ref _olderRequest, 0) is var n and > 0)
+                    {
+                        var last = LogLevel.None;
+                        Older.Enqueue(tailer.ReadBefore(n).Select(l => LogLevels.Make(l, ref last, history: true)).ToList());
+                    }
                     var lines = tailer.Poll(out var rotated);
                     if (State != SessionState.Running) Marker("— riconnesso —");
                     if (rotated) Marker("— file troncato o ruotato: lettura dall'inizio —");
-                    Emit(lines);
+                    Emit(lines, history: false);
                 }
                 Set(SessionState.Running, "Attiva");
+                SetCanLoadOlder(tailer.HasOlder);
             }
             catch (Exception e) when (e is FileNotFoundException or DirectoryNotFoundException && connected)
             {
@@ -111,20 +124,25 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
                 break;
             }
 
+            if (State != SessionState.Running) SetCanLoadOlder(false);
             try { await Task.Delay(delay, ct); } catch (OperationCanceledException) { break; }
         }
 
         if (connected) SmbConnection.Release(share);
+        _canLoadOlder = false;
         if (State != SessionState.Error) Set(SessionState.Stopped, "Ferma");
     }
 
-    private void Emit(List<string> lines)
+    private void SetCanLoadOlder(bool value)
     {
-        foreach (var l in lines)
-        {
-            _last = LogLevels.Detect(l, _last);
-            Pending.Enqueue(new LogLine(l, _last));
-        }
+        if (_canLoadOlder == value) return;
+        _canLoadOlder = value;
+        StateChanged?.Invoke();
+    }
+
+    private void Emit(List<string> lines, bool history)
+    {
+        foreach (var l in lines) Pending.Enqueue(LogLevels.Make(l, ref _last, history));
     }
 
     private void Marker(string text) => Pending.Enqueue(new LogLine(text, LogLevel.None, true));

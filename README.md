@@ -18,6 +18,13 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"
 - **Data nel percorso**: `{date:<formato>}` nel campo *File*, in una cartella o nel nome, es. `DOB\DOB_SDL\log\standard_logs\{date:yyyy_MM_dd}\log.log` o `logs\app_{date:yyyy-MM-dd}.log`. All'avvio si sceglie la data (default oggi, con anteprima del percorso). Se la data scelta è oggi, a mezzanotte la sessione passa da sola al file del nuovo giorno (riga `— nuovo giorno —`); una data passata resta fissa. Solo componenti di data (niente ore/minuti), non ammesso nella share.
 - Più sessioni in schede (riordinabili trascinandole) o **Affianca** (tutte visibili insieme, nello stesso ordine delle schede).
 - Colori per livello (ERROR/WARN/INFO/DEBUG), filtro per livello (checkbox ERROR/WARN/INFO/DEBUG; le righe senza livello restano sempre visibili), filtro testo/regex, ricerca con evidenziazione (Ctrl+F, F3/Shift+F3), Follow automatico (si ferma scrollando in su), pulsante *A capo* per mandare a capo le righe lunghe invece dello scroll orizzontale, Ctrl+C copia righe, buffer max 100.000 righe.
+- **Contatori per livello** nelle checkbox (`ERROR 12`): voci nel buffer (uno stack trace conta 1), indipendenti dai filtri, azzerati da *Pulisci*.
+- **Contesto** (0–50) accanto al filtro: mostra N righe prima/dopo ogni riga filtrata, come `grep -C N`; righe di contesto attenuate, gruppi separati da `--`.
+- **▲ Precedenti**: carica sopra le righe già lette un altro blocco (= *Righe iniziali*, 1000 se 0) senza interrompere il tail; disabilitato a inizio file, dopo una rotazione o con sessione non attiva.
+- **Salva…** / Ctrl+S: salva le righe visibili (filtri e contesto applicati) in un `.log` UTF-8.
+- **Avvisi**: badge rosso con il numero di ERROR sulle schede non visibili (azzerato selezionandole; niente badge in Affianca) e lampeggio della taskbar se l'app non è in primo piano. Le righe lette all'apertura non avvisano.
+- **Riapertura all'avvio**: alla chiusura si memorizzano schede aperte, ordine, selezione e Affianca; all'avvio vengono riaperte senza domande (sessioni con data su "oggi" → data corrente, data fissa → stessa data).
+- **Guida utente** (F1 o pulsante *Guida*): pagina HTML in italiano, aperta nel browser predefinito, funziona offline.
 
 ## Build / avvio
 
@@ -33,4 +40,5 @@ dotnet run --project src/RemoteLogViewer
 
 - Connessione share senza lettera di unità (`WNetAddConnection2`); rilasciata alla chiusura della sessione/app. Mappature già esistenti create fuori dall'app non vengono toccate.
 - Errore "credenziali diverse" (1219): Windows ammette una sola identità per server; chiudi la connessione esistente (`net use \\server\share /delete`) o usa le stesse credenziali.
-- Specifiche: `specs/001-remote-log-viewer/`, `specs/001-remote-log-viewer-collections-tabs-datepath/`.
+- Specifiche: `specs/001-remote-log-viewer/`, `specs/001-remote-log-viewer-collections-tabs-datepath/`, `specs/002-usability-improvements/`.
+- Guida utente: `src/RemoteLogViewer/Guida.html` (risorsa incorporata nell'exe).

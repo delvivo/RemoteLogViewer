@@ -1,7 +1,11 @@
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Microsoft.Win32;
@@ -384,14 +388,26 @@ public partial class MainWindow : Window
             if (dlg.ShowDialog() != true) return;
             date = dlg.SelectedDate;
         }
+        Open(config, date);
+    }
+
+    private void Open(SessionConfig config, DateTime? date)
+    {
         var session = new ActiveSession(config.WithCredential(_tree.Credentials), date); // clone: later edits don't touch a running session
         var view = new LogView(session);
         var dot = new Ellipse { Width = 8, Height = 8, Margin = new Thickness(0, 0, 5, 0), Fill = view.StatusBrush };
         var close = new Button { Content = "✕", Padding = new Thickness(3, 0, 3, 0), Margin = new Thickness(6, 0, 0, 0), BorderThickness = new Thickness(0), Background = Brushes.Transparent };
         var title = new TextBlock { Text = session.DisplayName };
+        var badge = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0xD3, 0x2F, 0x2F)), CornerRadius = new CornerRadius(7), Padding = new Thickness(5, 0, 5, 0),
+            Margin = new Thickness(6, 0, 0, 0), Visibility = Visibility.Collapsed, ToolTip = "Errori arrivati mentre la scheda non era visibile",
+            Child = new TextBlock { Foreground = Brushes.White, FontSize = 11, FontWeight = FontWeights.SemiBold },
+        };
         var header = new StackPanel { Orientation = Orientation.Horizontal };
         header.Children.Add(dot);
         header.Children.Add(title);
+        header.Children.Add(badge);
         header.Children.Add(close);
         var tab = new TabItem { Header = header, Tag = view, ToolTip = session.Path, AllowDrop = true };
         view.StatusChanged += () =>
@@ -399,7 +415,12 @@ public partial class MainWindow : Window
             dot.Fill = view.StatusBrush;
             title.Text = session.DisplayName; // changes when a "today" session rolls over to the next day
             tab.ToolTip = session.Path;
+            ((TextBlock)badge.Child).Text = view.UnreadErrors.ToString();
+            badge.Visibility = view.UnreadErrors > 0 ? Visibility.Visible : Visibility.Collapsed;
+            System.Windows.Automation.AutomationProperties.SetName(tab, view.UnreadErrors > 0 ? $"{session.DisplayName} ({view.UnreadErrors} errori)" : session.DisplayName);
         };
+        System.Windows.Automation.AutomationProperties.SetName(tab, session.DisplayName);
+        view.ErrorsArrived += _ => { if (!IsActive) Flash(); };
         close.Click += (_, _) => CloseTab(tab);
         tab.MouseUp += (_, e) => { if (e.ChangedButton == MouseButton.Middle) CloseTab(tab); };
 
@@ -481,9 +502,70 @@ public partial class MainWindow : Window
         EmptyHint.Visibility = tabs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    // ---- workspace: tabs reopened at the next start ----
+
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        var ws = _tree.Workspace;
+        foreach (var t in ws.Tabs)
+        {
+            if (_tree.Sessions.FirstOrDefault(s => s.Id == t.SessionId) is not { } config) continue; // deleted meanwhile
+            DateTime? date = !DatePath.Has(config.FilePath) ? null : t.FollowToday ? DateTime.Today : t.Date ?? DateTime.Today;
+            Open(config, date);
+        }
+        SideBySideButton.IsChecked = ws.SideBySide;
+        if (ws.Selected >= 0 && ws.Selected < Tabs.Items.Count) Tabs.SelectedIndex = ws.Selected;
+    }
+
     private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        foreach (TabItem t in Tabs.Items) ((LogView)t.Tag).Close();
+        var views = Tabs.Items.Cast<TabItem>().Select(t => (LogView)t.Tag).ToList();
+        _tree.Workspace = new Workspace
+        {
+            Tabs = views.Select(v => new OpenTab { SessionId = v.Session.Config.Id, Date = v.Session.Date, FollowToday = v.Session.FollowToday }).ToList(),
+            Selected = Tabs.SelectedIndex,
+            SideBySide = SideBySideButton.IsChecked == true,
+        };
+        try { Save(); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { } // closing must never fail
+        foreach (var v in views) v.Close();
+    }
+
+    // ---- alerts ----
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FLASHWINFO { public uint cbSize; public IntPtr hwnd; public uint dwFlags; public uint uCount; public uint dwTimeout; }
+
+    [DllImport("user32.dll")]
+    private static extern bool FlashWindowEx(ref FLASHWINFO info);
+
+    /// Taskbar button flashes until the window comes back to the foreground.
+    private void Flash()
+    {
+        const uint FLASHW_ALL = 3, FLASHW_TIMERNOFG = 12;
+        var info = new FLASHWINFO { hwnd = new WindowInteropHelper(this).Handle, dwFlags = FLASHW_ALL | FLASHW_TIMERNOFG };
+        info.cbSize = (uint)Marshal.SizeOf(info);
+        FlashWindowEx(ref info);
+    }
+
+    // ---- user guide ----
+
+    private void Help_Executed(object sender, ExecutedRoutedEventArgs e)
+    {
+        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "RemoteLogViewer", "guida.html");
+        try
+        {
+            var asm = Assembly.GetExecutingAssembly();
+            using var res = asm.GetManifestResourceStream("RemoteLogViewer.Guida.html")!;
+            var version = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "";
+            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, new StreamReader(res).ReadToEnd().Replace("%VERSION%", version));
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, $"Impossibile aprire la guida ({ex.Message}).\nFile: {path}", Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 }
 

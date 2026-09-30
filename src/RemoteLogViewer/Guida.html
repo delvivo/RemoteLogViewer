@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guida Remote Log Viewer</title>
+<!-- Guida utente: aggiornarla a ogni modifica visibile all'utente (funzioni, comandi, scorciatoie, messaggi). %VERSION% viene sostituito all'apertura. -->
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --border: #d1d9e0; --accent: #0969da;
+    --code-bg: #f3f4f6; --error: #d32f2f; --warn: #e07b00; --debug: #808080; --marker: #4682b4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --border: #3d444d; --accent: #4493f8;
+      --code-bg: #1f2428; --error: #f47067; --warn: #f0a04b; --debug: #9198a1; --marker: #79b8ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.6 "Segoe UI", system-ui, sans-serif; }
+  .layout { display: flex; max-width: 1150px; margin: 0 auto; }
+  nav { position: sticky; top: 0; align-self: flex-start; width: 250px; flex: none; height: 100vh; overflow-y: auto; padding: 24px 16px; border-right: 1px solid var(--border); font-size: 14px; }
+  nav ol { padding-left: 18px; margin: 8px 0; }
+  nav a { color: var(--fg); text-decoration: none; }
+  nav a:hover { color: var(--accent); }
+  main { flex: 1; min-width: 0; padding: 24px 40px 80px; }
+  h1 { margin: 0 0 4px; font-size: 28px; }
+  .version { color: var(--muted); margin: 0 0 24px; }
+  h2 { margin-top: 40px; padding-bottom: 6px; border-bottom: 1px solid var(--border); font-size: 21px; }
+  h3 { margin-top: 24px; font-size: 17px; }
+  a { color: var(--accent); }
+  code, kbd { font-family: "Cascadia Mono", Consolas, monospace; font-size: 13px; background: var(--code-bg); border-radius: 4px; padding: 1px 5px; }
+  kbd { border: 1px solid var(--border); border-bottom-width: 2px; }
+  pre { background: var(--code-bg); border-radius: 6px; padding: 12px; overflow-x: auto; }
+  pre code { padding: 0; background: none; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code-bg); }
+  .note { border-left: 4px solid var(--accent); background: var(--code-bg); padding: 8px 14px; border-radius: 0 6px 6px 0; }
+  .err { color: var(--error); font-weight: 600; } .warn { color: var(--warn); font-weight: 600; }
+  .dbg { color: var(--debug); } .mark { color: var(--marker); font-style: italic; }
+  .badge { background: #d32f2f; color: #fff; border-radius: 8px; padding: 0 6px; font-size: 12px; font-weight: 600; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; }
+  @media (max-width: 800px) {
+    .layout { display: block; }
+    nav { position: static; width: auto; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <strong>Indice</strong>
+  <ol>
+    <li><a href="#intro">Introduzione</a></li>
+    <li><a href="#sessioni">Sessioni</a></li>
+    <li><a href="#credenziali">Credenziali</a></li>
+    <li><a href="#collezioni">Collezioni</a></li>
+    <li><a href="#export">Esporta e importa</a></li>
+    <li><a href="#data">Data nel percorso</a></li>
+    <li><a href="#schede">Schede e Affianca</a></li>
+    <li><a href="#workspace">Riapertura all'avvio</a></li>
+    <li><a href="#avvisi">Avvisi di errore</a></li>
+    <li><a href="#vista">Barra della sessione</a></li>
+    <li><a href="#filtri">Filtri, contesto e ricerca</a></li>
+    <li><a href="#precedenti">Righe precedenti</a></li>
+    <li><a href="#salva">Salvare e copiare</a></li>
+    <li><a href="#stati">Stati della sessione</a></li>
+    <li><a href="#tasti">Scorciatoie da tastiera</a></li>
+    <li><a href="#problemi">Problemi comuni</a></li>
+  </ol>
+</nav>
+<main>
+<h1>Remote Log Viewer</h1>
+<p class="version">Guida utente · versione %VERSION%</p>
+
+<h2 id="intro">Introduzione</h2>
+<p>Remote Log Viewer segue in tempo reale i file di log presenti su share di rete Windows (SMB), come <code>\\server\E$</code>. Sostituisce la sequenza manuale:</p>
+<pre><code>New-SmbMapping -RemotePath "\\server\E$" -UserName "user" -Password "pwd"
+Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"</code></pre>
+<p>L'app si connette alla share senza assegnare una lettera di unità, legge le ultime righe del file e mostra le nuove man mano che vengono scritte (controllo ogni mezzo secondo). Gestisce da sola la rotazione dei file, le disconnessioni e i file che non esistono ancora.</p>
+
+<h2 id="sessioni">Sessioni</h2>
+<p>Una <strong>sessione</strong> è una configurazione salvata: dove si trova il file e come accedervi. Le sessioni compaiono nel pannello <em>Sessioni salvate</em> a sinistra.</p>
+<table>
+  <tr><th>Campo</th><th>Significato</th></tr>
+  <tr><td>Nome</td><td>Nome mostrato nell'elenco e nel titolo della scheda.</td></tr>
+  <tr><td>Share</td><td>Nel formato <code>\\server\share</code>, per esempio <code>\\nts11050\E$</code>.</td></tr>
+  <tr><td>Credenziale</td><td>Una <a href="#credenziali">credenziale condivisa</a>, oppure nessuna: in quel caso si usano Utente e Password qui sotto.</td></tr>
+  <tr><td>Utente / Password</td><td><code>DOMINIO\utente</code>. Se lasci l'utente vuoto si usa l'utente Windows corrente. Quando modifichi una sessione, una password lasciata vuota resta quella di prima.</td></tr>
+  <tr><td>File</td><td>Il percorso relativo alla share (<code>logs\app.log</code>) oppure il percorso UNC completo, che deve trovarsi dentro la share. Può contenere una <a href="#data">data variabile</a>.</td></tr>
+  <tr><td>Righe iniziali</td><td>Quante righe leggere dalla fine del file all'apertura (da 0 a 100.000). È anche il numero di righe caricate ogni volta con <a href="#precedenti">▲ Precedenti</a>.</td></tr>
+  <tr><td>Encoding</td><td><em>auto</em> (UTF-8), UTF-16 o Windows-1252. Se il file inizia con un BOM, vale sempre la codifica indicata dal BOM.</td></tr>
+</table>
+<p><strong>Test connessione</strong> prova ad accedere alla share e al file senza salvare nulla.</p>
+<p>I pulsanti sotto l'elenco sono: <em>Avvia</em>, <em>Nuova</em>, <em>Modifica</em> (<kbd>F2</kbd>), <em>Duplica</em>, <em>Elimina</em> (<kbd>Canc</kbd>) e <em>Collezione</em>. Per avviare una sessione puoi anche fare doppio click o premere <kbd>Invio</kbd>.</p>
+<p class="note">Le password sono cifrate con DPAPI: solo il tuo utente Windows, su questo PC, può decifrarle. Il file delle sessioni è <code>%APPDATA%\RemoteLogViewer\sessions.json</code>.</p>
+
+<h2 id="credenziali">Credenziali</h2>
+<p>Il pulsante <strong>Credenziali…</strong> nella barra in alto gestisce utente e password condivisi tra più sessioni (nome, utente, password). Nella sessione scegli la credenziale nel campo <em>Credenziale</em>. Quando la password cambia, la aggiorni una sola volta nella credenziale.</p>
+<ul>
+  <li>Le sessioni già aperte continuano a usare la password precedente fino a quando non vengono riaperte.</li>
+  <li>Se elimini una credenziale, le sessioni che la usavano tornano al proprio utente e alla propria password.</li>
+  <li>Le credenziali non vengono mai esportate.</li>
+</ul>
+
+<h2 id="collezioni">Collezioni</h2>
+<p>Le <strong>collezioni</strong> sono cartelle, anche annidate (per esempio <code>PROD › API</code>), in cui organizzare le sessioni.</p>
+<ul>
+  <li><em>Collezione</em> crea una collezione dentro quella selezionata.</li>
+  <li>Il tasto destro su una collezione offre: nuova sessione, nuova sottocollezione, rinomina, duplica, sposta, esporta, importa ed elimina. Il tasto destro su uno spazio vuoto offre le azioni sulla radice.</li>
+  <li>Puoi trascinare sessioni e collezioni su un'altra collezione, oppure su uno spazio vuoto per portarle alla radice.</li>
+  <li><em>Duplica</em> su una collezione copia tutto il contenuto, password comprese, come <code>Nome (copia)</code>.</li>
+  <li>Prima di eliminare una collezione con contenuto, l'app chiede conferma e indica quante sessioni verranno eliminate.</li>
+</ul>
+
+<h2 id="export">Esporta e importa</h2>
+<p>Con il tasto destro su una collezione scegli <em>Esporta…</em>; con il tasto destro su uno spazio vuoto scegli <em>Esporta tutto…</em>. Viene creato un file <code>.rlv.json</code> da condividere con i colleghi.</p>
+<ul>
+  <li>Le password <strong>non</strong> vengono esportate. Dopo l'import vanno reinserite con <em>Modifica</em>.</li>
+  <li>L'import aggiunge sempre copie nuove e non sovrascrive nulla. Se un nome è già in uso diventa <code>Nome (2)</code>.</li>
+  <li>Una sessione importata resta collegata alla sua credenziale solo se quella credenziale esiste già su questo PC.</li>
+</ul>
+
+<h2 id="data">Data nel percorso</h2>
+<p>Molti log hanno una cartella o un file diverso per ogni giorno. Nel campo <em>File</em> scrivi <code>{date:formato}</code> al posto della data, usando il formato data di .NET:</p>
+<pre><code>DOB\DOB_SDL\log\standard_logs\{date:yyyy_MM_dd}\log.log
+logs\app_{date:yyyy-MM-dd}.log</code></pre>
+<ul>
+  <li>Quando avvii la sessione, l'app chiede la data (propone oggi) e mostra un'anteprima del percorso.</li>
+  <li>Se hai scelto <strong>oggi</strong>, a mezzanotte la sessione passa da sola al file del nuovo giorno e mostra la riga <span class="mark">— nuovo giorno: … —</span>. Se hai scelto una data passata, la sessione resta su quella data.</li>
+  <li>Il formato può contenere solo giorno, mese e anno (niente ore o minuti). La data non è ammessa nella share.</li>
+</ul>
+
+<h2 id="schede">Schede e Affianca</h2>
+<p>Ogni sessione avviata si apre in una scheda. Il titolo della scheda mostra un pallino di stato, il nome della sessione (più la data, se il percorso ne contiene una), l'eventuale <a href="#avvisi">badge degli errori</a> e il pulsante ✕. Per chiudere una scheda puoi anche fare click con il tasto centrale sul titolo.</p>
+<ul>
+  <li>Per riordinare le schede, trascina il titolo su un'altra scheda.</li>
+  <li><strong>Affianca</strong> (barra in alto) mostra tutte le sessioni aperte insieme, in una griglia, nello stesso ordine delle schede.</li>
+</ul>
+
+<h2 id="workspace">Riapertura all'avvio</h2>
+<p>Quando chiudi l'app, vengono memorizzate le schede aperte, il loro ordine, la scheda selezionata e la modalità Affianca. Alla riapertura tutto viene ripristinato senza domande.</p>
+<ul>
+  <li>Una sessione con data che seguiva <em>oggi</em> si riapre sulla data del giorno corrente. Una sessione aperta su una data fissa si riapre sulla stessa data.</li>
+  <li>Le sessioni eliminate nel frattempo vengono ignorate.</li>
+  <li>Se una sessione non riesce a connettersi, la sua scheda mostra l'errore e le altre si aprono normalmente.</li>
+</ul>
+
+<h2 id="avvisi">Avvisi di errore</h2>
+<ul>
+  <li>Quando arriva una riga <span class="err">ERROR</span> in una scheda che non stai guardando, sul suo titolo compare un badge rosso con il numero di errori, per esempio <span class="badge">3</span>. Il badge sparisce quando selezioni la scheda.</li>
+  <li>Se l'app non è in primo piano, il suo pulsante nella barra delle applicazioni di Windows lampeggia finché non torni sull'app.</li>
+  <li>Un errore seguito dal suo stack trace conta come <strong>un solo</strong> errore.</li>
+  <li>Le righe lette all'apertura della sessione e quelle caricate con ▲ Precedenti non generano avvisi. In modalità Affianca non compare nessun badge, perché tutte le sessioni sono già visibili.</li>
+</ul>
+
+<h2 id="vista">Barra della sessione</h2>
+<table>
+  <tr><th>Elemento</th><th>Funzione</th></tr>
+  <tr><td><span class="dot" style="background:#32cd32"></span> Stato</td><td>Pallino e testo dello <a href="#stati">stato della sessione</a>.</td></tr>
+  <tr><td>Stop / Avvia</td><td>Ferma o riavvia la lettura del file.</td></tr>
+  <tr><td>Follow</td><td>Scorrimento automatico sulle nuove righe. Si disattiva quando scorri verso l'alto e si riattiva quando torni in fondo.</td></tr>
+  <tr><td>A capo</td><td>Manda a capo le righe lunghe invece di mostrare la barra di scorrimento orizzontale.</td></tr>
+  <tr><td>Pulisci</td><td>Svuota la vista e azzera i contatori. La lettura del file continua.</td></tr>
+  <tr><td>▲ Precedenti</td><td>Carica le <a href="#precedenti">righe precedenti</a> a quelle già lette.</td></tr>
+  <tr><td>Salva…</td><td><a href="#salva">Salva le righe visibili</a> in un file (<kbd>Ctrl</kbd>+<kbd>S</kbd>).</td></tr>
+  <tr><td>Filtro, Regex, Contesto</td><td>Vedi <a href="#filtri">Filtri, contesto e ricerca</a>.</td></tr>
+  <tr><td><span class="err">ERROR n</span> <span class="warn">WARN n</span> INFO n <span class="dbg">DEBUG n</span></td><td>Le caselle mostrano o nascondono le righe di quel livello. Il numero indica quante voci di quel livello ci sono nel buffer: uno stack trace conta 1 e il numero non dipende dai filtri.</td></tr>
+  <tr><td>Cerca, ▲ ▼</td><td>Evidenzia le righe che contengono il testo e scorre da un risultato all'altro.</td></tr>
+  <tr><td>Contatore righe</td><td>Righe visibili sul totale, più il numero di risultati della ricerca.</td></tr>
+</table>
+<p>Colori: <span class="err">ERROR</span> (anche FATAL e CRITICAL) in rosso, <span class="warn">WARN</span> in arancione, <span class="dbg">DEBUG/TRACE</span> in grigio. Le righe di servizio dell'app sono <span class="mark">blu in corsivo</span>. Le righe senza livello (per esempio uno stack trace) prendono il livello della riga precedente.</p>
+<p>La vista tiene al massimo 100.000 righe. Oltre quel limite vengono scartate le più vecchie.</p>
+
+<h2 id="filtri">Filtri, contesto e ricerca</h2>
+<h3>Filtro</h3>
+<p>Mostra solo le righe che contengono il testo, senza distinguere maiuscole e minuscole. Se attivi <strong>Regex</strong>, il testo viene letto come espressione regolare .NET; una regex non valida colora il bordo di rosso. Le caselle dei livelli si applicano insieme al filtro. Le righe di servizio restano sempre visibili.</p>
+<h3>Contesto</h3>
+<p>Nella casella <strong>Contesto</strong> indichi quante righe mostrare prima e dopo ogni riga che corrisponde al filtro (da 0 a 50), come <code>grep -C</code>. Le righe di contesto appaiono attenuate. Tra un gruppo e l'altro, se non sono contigui, compare un separatore <span class="mark">--</span>. Con Follow attivo, le righe successive a un risultato compaiono man mano che arrivano. Senza filtro, il contesto non ha effetto.</p>
+<h3>Ricerca</h3>
+<p><kbd>Ctrl</kbd>+<kbd>F</kbd> porta il cursore nella casella di ricerca. Le righe trovate vengono evidenziate in giallo; con <kbd>F3</kbd> e <kbd>Shift</kbd>+<kbd>F3</kbd> passi al risultato successivo o precedente. A differenza del filtro, la ricerca non nasconde nessuna riga.</p>
+
+<h2 id="precedenti">Righe precedenti</h2>
+<p>All'apertura vengono lette solo le ultime <em>Righe iniziali</em> del file. <strong>▲ Precedenti</strong> carica un altro blocco della stessa dimensione (1000 righe se <em>Righe iniziali</em> è 0) e lo mette sopra le righe già presenti. La lettura delle nuove righe continua e la vista non salta.</p>
+<ul>
+  <li>Il pulsante è disabilitato quando l'inizio del file è già caricato, quando la sessione non è attiva, e dopo una rotazione del file (il nuovo file viene letto già dall'inizio).</li>
+  <li>Se il blocco supererebbe il limite di 100.000 righe, ne vengono caricate solo quante ci stanno e l'app te lo segnala.</li>
+</ul>
+
+<h2 id="salva">Salvare e copiare</h2>
+<ul>
+  <li><kbd>Ctrl</kbd>+<kbd>S</kbd> o <strong>Salva…</strong> salvano in un file UTF-8 esattamente le righe visibili, con i filtri e il contesto applicati (i separatori diventano righe <code>--</code>). Il nome proposto è <code>&lt;sessione&gt;_&lt;aaaaMMgg_HHmmss&gt;.log</code>.</li>
+  <li><kbd>Ctrl</kbd>+<kbd>C</kbd> copia le righe selezionate. <kbd>Shift</kbd> e <kbd>Ctrl</kbd>+click servono per la selezione multipla.</li>
+</ul>
+
+<h2 id="stati">Stati della sessione</h2>
+<table>
+  <tr><th>Stato</th><th>Significato</th></tr>
+  <tr><td><span class="dot" style="background:#ffa500"></span> Connessione…</td><td>Connessione alla share in corso.</td></tr>
+  <tr><td><span class="dot" style="background:#32cd32"></span> Attiva</td><td>Il file viene seguito.</td></tr>
+  <tr><td><span class="dot" style="background:#ffa500"></span> In attesa del file…</td><td>Il file non esiste (ancora): viene ricontrollato ogni 2 secondi.</td></tr>
+  <tr><td><span class="dot" style="background:#ffa500"></span> Riconnessione…</td><td>La connessione si è interrotta dopo aver funzionato: nuovo tentativo ogni 5 secondi, poi la lettura riprende dal punto in cui si era fermata.</td></tr>
+  <tr><td><span class="dot" style="background:#ff0000"></span> Errore</td><td>La prima connessione è fallita (credenziali o percorso errati). Non ci sono nuovi tentativi automatici: correggi la sessione e premi <em>Avvia</em>.</td></tr>
+  <tr><td><span class="dot" style="background:#808080"></span> Ferma</td><td>Fermata con <em>Stop</em>.</td></tr>
+</table>
+<p>Nella vista compaiono righe di servizio come <span class="mark">— file troncato o ruotato: lettura dall'inizio —</span>, <span class="mark">— disconnesso —</span> e <span class="mark">— riconnesso —</span>.</p>
+
+<h2 id="tasti">Scorciatoie da tastiera</h2>
+<table>
+  <tr><th>Tasto</th><th>Dove</th><th>Azione</th></tr>
+  <tr><td><kbd>F1</kbd></td><td>Ovunque</td><td>Apre questa guida</td></tr>
+  <tr><td><kbd>Invio</kbd></td><td>Elenco sessioni</td><td>Avvia la sessione / espande o comprime la collezione</td></tr>
+  <tr><td><kbd>F2</kbd></td><td>Elenco sessioni</td><td>Modifica la sessione / rinomina la collezione</td></tr>
+  <tr><td><kbd>Canc</kbd></td><td>Elenco sessioni</td><td>Elimina</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Sessione</td><td>Vai alla casella di ricerca</td></tr>
+  <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Sessione</td><td>Risultato successivo / precedente</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Righe del log</td><td>Copia le righe selezionate</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Sessione</td><td>Salva le righe visibili</td></tr>
+  <tr><td>Tasto centrale del mouse</td><td>Titolo della scheda</td><td>Chiude la scheda</td></tr>
+</table>
+
+<h2 id="problemi">Problemi comuni</h2>
+<h3>Errore "credenziali diverse" (1219)</h3>
+<p>Windows ammette una sola identità per server. Se esiste già una connessione allo stesso server con un altro utente (per esempio un'unità mappata), chiudila con <code>net use \\server\share /delete</code>, oppure usa le stesse credenziali.</p>
+<h3>Password richiesta dopo un import o su un altro PC</h3>
+<p>Le password non vengono esportate e quelle cifrate funzionano solo per il tuo utente Windows su questo PC. Reinseriscile con <em>Modifica</em> o in <em>Credenziali…</em>.</p>
+<h3>Una mappatura esistente non viene rimossa</h3>
+<p>È voluto: l'app chiude solo le connessioni che ha aperto lei.</p>
+<h3>La guida non si apre</h3>
+<p>La guida viene scritta in <code>%TEMP%\RemoteLogViewer\guida.html</code> e aperta con il browser predefinito. Se l'apertura non riesce, l'app mostra il percorso del file: puoi aprirlo a mano.</p>
+</main>
+</div>
+</body>
+</html>

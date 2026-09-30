@@ -14,7 +14,7 @@ public class SessionStore(string path)
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     // v1 had only Sessions; Collections missing → all sessions at root.
-    private record SessionsFile(List<SessionCollection>? Collections, List<SessionConfig>? Sessions, List<Credential>? Credentials);
+    private record SessionsFile(List<SessionCollection>? Collections, List<SessionConfig>? Sessions, List<Credential>? Credentials, Workspace? Workspace);
 
     public string Path => path;
 
@@ -27,7 +27,7 @@ public class SessionStore(string path)
         try
         {
             var f = JsonSerializer.Deserialize<SessionsFile>(File.ReadAllText(path), Json);
-            var tree = new SessionTree(f?.Collections ?? [], f?.Sessions ?? [], f?.Credentials ?? []);
+            var tree = new SessionTree(f?.Collections ?? [], f?.Sessions ?? [], f?.Credentials ?? []) { Workspace = f?.Workspace ?? new() };
             tree.Normalize();
             return tree;
         }
@@ -39,7 +39,7 @@ public class SessionStore(string path)
         }
     }
 
-    public void Save(SessionTree tree) => WriteAtomic(path, new SessionsFile(tree.Collections, tree.Sessions, tree.Credentials));
+    public void Save(SessionTree tree) => WriteAtomic(path, new SessionsFile(tree.Collections, tree.Sessions, tree.Credentials, tree.Workspace));
 
     public static void WriteExport(string file, ExportFile export) => WriteAtomic(file, export);
 

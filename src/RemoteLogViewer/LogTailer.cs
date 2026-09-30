@@ -9,7 +9,11 @@ public class LogTailer(string path, string encoding = "auto")
 {
     static LogTailer() => Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
+    private const int Block = 256 * 1024;
+
     private long _offset;
+    private long _start; // preamble (BOM) length
+    private long _head;  // byte offset of the oldest line handed out
     private DateTime _created;
     private Encoding _enc = Encoding.UTF8;
     private Decoder _decoder = Encoding.UTF8.GetDecoder();
@@ -17,32 +21,34 @@ public class LogTailer(string path, string encoding = "auto")
 
     public string Path => path;
 
+    /// Lines before the oldest one read so far are still in the file (ReadBefore can return more).
+    public bool HasOlder => _head > _start;
+
     public List<string> ReadTail(int n)
     {
         using var fs = Open();
-        var start0 = DetectEncoding(fs);
+        _start = DetectEncoding(fs);
         var len = fs.Length;
         _created = File.GetCreationTimeUtc(path);
         _offset = len;
         _decoder = _enc.GetDecoder();
         _partial.Clear();
 
-        // Read ever larger chunks from the end until they contain n complete lines (or the whole file).
-        for (long size = 64 * 1024; ; size *= 4)
-        {
-            var start = Math.Max(start0, len - size);
-            if (_enc is UnicodeEncoding && (start - start0) % 2 != 0) start++;
-            var buf = new byte[len - start];
-            fs.Position = start;
-            fs.ReadExactly(buf);
-            var lines = Split(_enc.GetString(buf), out var tail);
-            if (start > start0 && lines.Count > 0) lines.RemoveAt(0); // first line may be cut
-            if (lines.Count >= n || start == start0)
-            {
-                _partial.Append(tail);
-                return lines.Count > n ? lines.GetRange(lines.Count - n, n) : lines;
-            }
-        }
+        var tailEnd = FindBack(fs, len, 1); // start of the incomplete last line (== len if the file ends with a newline)
+        _head = n == 0 || tailEnd == _start ? tailEnd : FindBack(fs, tailEnd - Unit, n);
+        _partial.Append(Decode(fs, tailEnd, len));
+        return Split(Decode(fs, _head, tailEnd), out _);
+    }
+
+    /// The n lines right before the oldest one read so far (for "load previous lines").
+    public List<string> ReadBefore(int n)
+    {
+        if (!HasOlder || n <= 0) return [];
+        using var fs = Open();
+        var head = FindBack(fs, _head - Unit, n);
+        var lines = Split(Decode(fs, head, _head), out _);
+        _head = head;
+        return lines;
     }
 
     public List<string> Poll(out bool rotated)
@@ -53,7 +59,7 @@ public class LogTailer(string path, string encoding = "auto")
         rotated = len < _offset || created != _created;
         if (rotated)
         {
-            _offset = DetectEncoding(fs);
+            _offset = _start = _head = DetectEncoding(fs); // new file read from its start: nothing older
             _created = created;
             _decoder = _enc.GetDecoder();
             _partial.Clear();
@@ -70,6 +76,40 @@ public class LogTailer(string path, string encoding = "auto")
         var lines = Split(_partial.ToString(), out var tail);
         _partial.Clear().Append(tail);
         return lines;
+    }
+
+    private int Unit => _enc is UnicodeEncoding ? 2 : 1;
+
+    /// Position right after the count-th newline found scanning backward from `from` (exclusive), or _start.
+    /// Works on bytes, so offsets are exact whatever the text contains; UTF-16 newlines are matched on 2-byte boundaries.
+    private long FindBack(FileStream fs, long from, int count)
+    {
+        var u = Unit;
+        var bigEndian = _enc.CodePage == 1201;
+        var buf = new byte[Block];
+        for (var end = from; end > _start;)
+        {
+            var start = Math.Max(_start, end - Block);
+            start += (start - _start) % u;
+            var len = (int)(end - start);
+            fs.Position = start;
+            fs.ReadExactly(buf, 0, len);
+            for (var i = len - u; i >= 0; i -= u)
+            {
+                var nl = u == 1 ? buf[i] == 0x0A : bigEndian ? buf[i] == 0 && buf[i + 1] == 0x0A : buf[i] == 0x0A && buf[i + 1] == 0;
+                if (nl && --count == 0) return start + i + u;
+            }
+            end = start;
+        }
+        return _start;
+    }
+
+    private string Decode(FileStream fs, long from, long to)
+    {
+        var buf = new byte[to - from];
+        fs.Position = from;
+        fs.ReadExactly(buf);
+        return _enc.GetString(buf);
     }
 
     private FileStream Open() => new(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
