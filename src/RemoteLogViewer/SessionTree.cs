@@ -10,7 +10,17 @@ public class SessionCollection
     public Guid? ParentId { get; set; }
 }
 
-/// Portable file for export/import: same shape as sessions.json, never with passwords.
+/// Named user/password shared by many sessions: a password change is done once.
+public class Credential
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; } = "";
+    public string UserName { get; set; } = "";
+    public string? ProtectedPassword { get; set; }
+    public override string ToString() => Name; // ComboBox/ListBox display
+}
+
+/// Portable file for export/import: same shape as sessions.json, never with passwords or credentials.
 public class ExportFile
 {
     public const string FormatId = "remote-log-viewer-collection";
@@ -21,12 +31,22 @@ public class ExportFile
 }
 
 /// Saved sessions and collections as flat lists; the tree is derived (ParentId / CollectionId).
-public class SessionTree(List<SessionCollection> collections, List<SessionConfig> sessions)
+public class SessionTree(List<SessionCollection> collections, List<SessionConfig> sessions, List<Credential>? credentials = null)
 {
     public SessionTree() : this([], []) { }
 
     public List<SessionCollection> Collections { get; } = collections;
     public List<SessionConfig> Sessions { get; } = sessions;
+    public List<Credential> Credentials { get; } = credentials ?? [];
+
+    public int CountUsing(Guid credentialId) => Sessions.Count(s => s.CredentialId == credentialId);
+
+    /// Sessions using it fall back to their inline user/password (usually empty = current Windows user).
+    public void DeleteCredential(Guid id)
+    {
+        Credentials.RemoveAll(c => c.Id == id);
+        foreach (var s in Sessions.Where(s => s.CredentialId == id)) s.CredentialId = null;
+    }
 
     private static readonly StringComparer NameOrder = StringComparer.CurrentCultureIgnoreCase;
 
@@ -112,6 +132,7 @@ public class SessionTree(List<SessionCollection> collections, List<SessionConfig
         var ids = Collections.Select(c => c.Id).ToHashSet();
         foreach (var c in Collections.Where(c => c.ParentId is { } p && !ids.Contains(p))) c.ParentId = null;
         foreach (var s in Sessions.Where(s => s.CollectionId is { } p && !ids.Contains(p))) s.CollectionId = null;
+        foreach (var s in Sessions.Where(s => s.CredentialId is { } c && Credentials.All(x => x.Id != c))) s.CredentialId = null;
         foreach (var c in Collections)
         {
             var seen = new HashSet<Guid> { c.Id };
@@ -157,6 +178,7 @@ public class SessionTree(List<SessionCollection> collections, List<SessionConfig
             var copy = s.Clone();
             copy.Id = Guid.NewGuid();
             if (!keepPasswords) copy.ProtectedPassword = null;
+            if (Credentials.All(x => x.Id != copy.CredentialId)) copy.CredentialId = null; // file from another PC
             copy.CollectionId = s.CollectionId is { } c ? map[c] : targetParentId;
             if (s.CollectionId == null) copy.Name = UniqueSessionName(targetParentId, copy.Name);
             Sessions.Add(copy);

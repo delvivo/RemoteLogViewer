@@ -13,6 +13,7 @@ public class SessionConfig
     public int TailLines { get; set; } = 1000;
     public string Encoding { get; set; } = "auto";
     public Guid? CollectionId { get; set; } // null = root
+    public Guid? CredentialId { get; set; } // null = UserName/ProtectedPassword above
 
     /// Display path: date placeholders left unresolved.
     [System.Text.Json.Serialization.JsonIgnore]
@@ -39,4 +40,13 @@ public class SessionConfig
     }
 
     public SessionConfig Clone() => (SessionConfig)MemberwiseClone();
+
+    /// Clone with the saved credential's user/password applied (if the session uses one).
+    public SessionConfig WithCredential(IEnumerable<Credential> credentials)
+    {
+        var c = Clone();
+        if (credentials.FirstOrDefault(x => x.Id == CredentialId) is { } cred)
+            (c.UserName, c.ProtectedPassword) = (cred.UserName, cred.ProtectedPassword);
+        return c;
+    }
 }

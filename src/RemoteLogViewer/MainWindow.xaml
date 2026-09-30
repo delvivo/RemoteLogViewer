@@ -54,6 +54,8 @@
 
         <DockPanel Grid.Column="2">
             <ToolBar DockPanel.Dock="Top">
+                <Button Content="Credenziali…" Click="Credentials_Click" ToolTip="Utente/password condivisi tra più sessioni: cambi la password in un solo punto" />
+                <Separator />
                 <ToggleButton x:Name="SideBySideButton" Content="Affianca" Checked="SideBySide_Click" Unchecked="SideBySide_Click" ToolTip="Mostra tutte le sessioni aperte contemporaneamente" />
             </ToolBar>
             <Grid>

@@ -6,12 +6,18 @@ namespace RemoteLogViewer;
 
 public partial class SessionEditWindow : Window
 {
+    private const string InlineCredential = "(utente/password qui sotto)";
+    private readonly IReadOnlyList<Credential> _credentials;
+
     public SessionConfig Config { get; }
 
-    public SessionEditWindow(SessionConfig config)
+    public SessionEditWindow(SessionConfig config, IReadOnlyList<Credential> credentials)
     {
         InitializeComponent();
+        _credentials = credentials;
         Config = config.Clone();
+        CredentialBox.ItemsSource = new object[] { InlineCredential }.Concat(credentials.OrderBy(c => c.Name, StringComparer.CurrentCultureIgnoreCase)).ToList();
+        CredentialBox.SelectedItem = credentials.FirstOrDefault(c => c.Id == Config.CredentialId) ?? (object)InlineCredential;
         NameBox.Text = Config.Name;
         ShareBox.Text = Config.SharePath;
         UserBox.Text = Config.UserName;
@@ -22,6 +28,12 @@ public partial class SessionEditWindow : Window
         if (Config.ProtectedPassword != null && SessionStore.Unprotect(Config.ProtectedPassword) == null)
             ShowResult("Password salvata non leggibile su questo PC/utente: reinseriscila.", false);
         Loaded += (_, _) => NameBox.Focus();
+    }
+
+    private void CredentialBox_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        var inline = CredentialBox.SelectedItem is not Credential;
+        UserBox.IsEnabled = PasswordBox.IsEnabled = inline;
     }
 
     private void FileBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
@@ -43,7 +55,9 @@ public partial class SessionEditWindow : Window
         Config.UserName = UserBox.Text.Trim();
         Config.FilePath = FileBox.Text.Trim();
         Config.Encoding = (string)EncodingBox.SelectedItem;
-        if (PasswordBox.Password.Length > 0) Config.ProtectedPassword = SessionStore.Protect(PasswordBox.Password);
+        Config.CredentialId = (CredentialBox.SelectedItem as Credential)?.Id;
+        if (Config.CredentialId != null) (Config.UserName, Config.ProtectedPassword) = ("", null); // the credential wins
+        else if (PasswordBox.Password.Length > 0) Config.ProtectedPassword = SessionStore.Protect(PasswordBox.Password);
         else if (Config.UserName.Length == 0) Config.ProtectedPassword = null;
         var errors = new List<string>();
         if (int.TryParse(TailBox.Text, out var n)) Config.TailLines = n; else errors.Add("Righe iniziali non valide.");
@@ -59,7 +73,7 @@ public partial class SessionEditWindow : Window
 
         TestButton.IsEnabled = false;
         ShowResult("Connessione…", null);
-        var c = Config.Clone();
+        var c = Config.WithCredential(_credentials);
         var (ok, msg) = await Task.Run(() =>
         {
             try

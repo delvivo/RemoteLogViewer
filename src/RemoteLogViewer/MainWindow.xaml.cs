@@ -93,7 +93,7 @@ public partial class MainWindow : Window
 
     private void AddSession(SessionConfig config)
     {
-        var dlg = new SessionEditWindow(config) { Owner = this };
+        var dlg = new SessionEditWindow(config, _tree.Credentials) { Owner = this };
         if (dlg.ShowDialog() != true) return;
         _tree.Sessions.Add(dlg.Config);
         Save();
@@ -111,7 +111,7 @@ public partial class MainWindow : Window
 
     private void EditSession(SessionConfig s)
     {
-        var dlg = new SessionEditWindow(s) { Owner = this };
+        var dlg = new SessionEditWindow(s, _tree.Credentials) { Owner = this };
         if (dlg.ShowDialog() != true) return;
         _tree.Sessions[_tree.Sessions.IndexOf(s)] = dlg.Config; // CollectionId carried over by the clone
         Save();
@@ -384,7 +384,7 @@ public partial class MainWindow : Window
             if (dlg.ShowDialog() != true) return;
             date = dlg.SelectedDate;
         }
-        var session = new ActiveSession(config.Clone(), date); // clone: later edits don't touch a running session
+        var session = new ActiveSession(config.WithCredential(_tree.Credentials), date); // clone: later edits don't touch a running session
         var view = new LogView(session);
         var dot = new Ellipse { Width = 8, Height = 8, Margin = new Thickness(0, 0, 5, 0), Fill = view.StatusBrush };
         var close = new Button { Content = "✕", Padding = new Thickness(3, 0, 3, 0), Margin = new Thickness(6, 0, 0, 0), BorderThickness = new Thickness(0), Background = Brushes.Transparent };
@@ -446,6 +446,8 @@ public partial class MainWindow : Window
         Tabs.Items.Remove(tab);
         Relayout();
     }
+
+    private void Credentials_Click(object sender, RoutedEventArgs e) => new CredentialsWindow(_tree, Save) { Owner = this }.ShowDialog();
 
     private void SideBySide_Click(object sender, RoutedEventArgs e) => Relayout();
 

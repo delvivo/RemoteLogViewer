@@ -50,6 +50,7 @@ The data flow crosses threads, so it only makes sense when you read several file
 5. **`SessionStore`** reads and writes `%APPDATA%\RemoteLogViewer\sessions.json` using camelCase JSON:
    - Writes are atomic (a temp file, then a move).
    - Passwords are stored as DPAPI CurrentUser base64. `Unprotect` returns null when a password can't be decrypted.
+   - **Credentials:** `SessionTree.Credentials` (`Credential { Id, Name, UserName, ProtectedPassword }`, managed in `CredentialsWindow`). A session with `CredentialId` ignores its inline `UserName`/`ProtectedPassword`; `SessionConfig.WithCredential(creds)` returns the clone with the credential applied and is what `MainWindow.Open` and the edit window's connection test use. `DeleteCredential` and `Normalize` null dangling `CredentialId`s. Credentials are never exported; import keeps a `CredentialId` only if it exists locally.
    - A corrupt file is moved to `.bak`.
    - `Load()` returns a **`SessionTree`**: flat lists of `SessionCollection { Id, Name, ParentId }` and sessions with `CollectionId` (null = root). The file stays v1-compatible (missing `collections` → everything at root); `Normalize()` repairs orphans/cycles.
    - `SessionTree` holds all tree logic (move with cycle check, recursive delete/count, `UniqueName` "X (2)", export/import, `Duplicate` = export+import with `keepPasswords`). Export uses the same JSON shape plus `format`/`version`, **never** passwords; import validates everything first (all-or-nothing) and remaps every id to a new Guid.
