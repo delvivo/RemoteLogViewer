@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+.vscode/
+.idea/
+Thumbs.db
+__pycache__/
+*.pyc

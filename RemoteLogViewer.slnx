@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/RemoteLogViewer/RemoteLogViewer.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RemoteLogViewer.Tests/RemoteLogViewer.Tests.csproj" />
+  </Folder>
+</Solution>
