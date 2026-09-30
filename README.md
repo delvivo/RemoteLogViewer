@@ -9,6 +9,7 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"
 
 ## Funzioni
 
+- Icona dell'applicazione (`src/RemoteLogViewer/app.ico`): exe e finestra principale.
 - Sessioni salvate (share, utente, password, file, righe iniziali, encoding) in `%APPDATA%\RemoteLogViewer\sessions.json`; password cifrate con DPAPI (utente Windows corrente).
 - **Credenziali** condivise (pulsante *Credenziali…* nella barra): nome + utente + password, selezionabili nel campo *Credenziale* di ogni sessione in alternativa a utente/password propri. Al cambio password si aggiorna solo la credenziale; le sessioni già aperte la usano dalla prossima apertura. Eliminare una credenziale riporta le sessioni che la usavano a utente/password propri. Le credenziali non vengono esportate: l'import ricollega la credenziale solo se esiste già (stesso PC).
 - Tail in tempo reale (polling 500 ms), rilevamento troncamento/rotazione, attesa file mancante, riconnessione automatica.

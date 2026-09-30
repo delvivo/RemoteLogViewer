@@ -60,6 +60,7 @@ The data flow crosses threads, so it only makes sense when you read several file
 
 ## Gotchas
 
+- **Icon:** `src/RemoteLogViewer/app.ico` (multi-size PNG-in-ICO) is the exe icon (`ApplicationIcon` in the csproj) and `MainWindow`'s `Icon` (embedded as `Resource`). It was generated with a one-off `System.Drawing` script (log rows with level dots + green tail cursor); to change it, replace the file. Dialog windows have no `Icon` set.
 - **`LogLine` must stay a class, not a record.** Value equality would make identical log lines collide in `ListBox` selection. `IsMatch` raises `INotifyPropertyChanged` for search highlighting.
 - **Use `Checked`/`Unchecked` for toggles and checkboxes, not `Click`.** `Click` doesn't fire for UI Automation or programmatic toggles. `Checked` fires during `InitializeComponent` when `IsChecked="True"` is set in XAML, so handlers must guard with `IsLoaded`.
 - **`ActiveSessionTests` does real SMB I/O through `\\localhost\C$`, falling back to `\\127.0.0.1\C$`** (on some machines only the IP works) as the current user. It returns early and passes silently if neither is reachable. Claude Code's sandbox blocks SMB: run these tests outside the sandbox, or they silently skip.
