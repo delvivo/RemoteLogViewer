@@ -435,7 +435,9 @@ public partial class MainWindow : Window
         // Reorder by dragging the header onto another tab. The LogView stays in Tag, so the session is untouched.
         tab.PreviewMouseLeftButtonDown += (_, e) =>
         {
-            _dragTab = Ancestor<Button>(e.OriginalSource as DependencyObject) == null ? tab : null;
+            // The content (LogView) also routes here through the logical tree: only the header (visual child) starts a drag,
+            // otherwise dragging the log's scrollbar thumb would turn into a tab drag and lose the mouse capture.
+            _dragTab = e.OriginalSource is Visual v && tab.IsAncestorOf(v) && Ancestor<Button>(v) == null ? tab : null;
             _dragStart = e.GetPosition(this);
         };
         tab.DragOver += (_, e) =>
