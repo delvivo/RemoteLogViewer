@@ -11,6 +11,27 @@ public class SessionConfigTests
     }
 
     [Fact]
+    public void Local_config_points_straight_at_the_file()
+    {
+        var c = SessionConfig.Local(@"C:\log\app.log");
+        Assert.True(c.IsLocal);
+        Assert.Equal("app.log", c.Name);
+        Assert.Equal(@"C:\log\app.log", c.FilePath);
+        Assert.Equal(1000, c.TailLines);
+        Assert.Equal("auto", c.Encoding);
+        Assert.Equal(@"C:\log\app.log", c.FullPath); // no share to combine with
+        Assert.Equal(@"C:\log\app.log", c.ResolvePath(DateTime.Today));
+    }
+
+    [Fact]
+    public void Local_config_normalizes_relative_paths()
+    {
+        var c = SessionConfig.Local(Path.Combine("sub", "..", "x.log"));
+        Assert.Equal(Path.GetFullPath("x.log"), c.FilePath);
+        Assert.False(new SessionConfig().IsLocal);
+    }
+
+    [Fact]
     public void Date_placeholder_not_allowed_in_share()
     {
         var c = new SessionConfig { Name = "x", SharePath = @"\\server\{date:yyyy}", FilePath = "a.log" };

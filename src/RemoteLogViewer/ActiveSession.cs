@@ -65,7 +65,7 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
                 if (!connected)
                 {
                     Set(everRead ? SessionState.Reconnecting : SessionState.Connecting, everRead ? "Riconnessione…" : "Connessione…");
-                    SmbConnection.Connect(share, Config.UserName, SessionStore.Unprotect(Config.ProtectedPassword));
+                    if (!Config.IsLocal) SmbConnection.Connect(share, Config.UserName, SessionStore.Unprotect(Config.ProtectedPassword));
                     connected = true;
                 }
                 if (FollowToday && _today().Date != Date)
@@ -116,7 +116,7 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
             catch (Exception e) when (e is IOException or UnauthorizedAccessException)
             {
                 if (State == SessionState.Running) Marker(L.F("— disconnesso: {0} —", e.Message));
-                if (connected) { SmbConnection.Release(share); connected = false; }
+                if (connected) { if (!Config.IsLocal) SmbConnection.Release(share); connected = false; }
                 Set(SessionState.Reconnecting, "Disconnesso, nuovo tentativo tra 5 s ({0})", e.Message);
                 delay = 5000;
             }
@@ -130,7 +130,7 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
             try { await Task.Delay(delay, ct); } catch (OperationCanceledException) { break; }
         }
 
-        if (connected) SmbConnection.Release(share);
+        if (connected && !Config.IsLocal) SmbConnection.Release(share);
         _canLoadOlder = false;
         if (State != SessionState.Error) Set(SessionState.Stopped, "Ferma");
     }

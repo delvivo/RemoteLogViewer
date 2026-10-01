@@ -2,10 +2,12 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:RemoteLogViewer"
-        Title="Remote Log Viewer" Icon="app.ico" Height="720" Width="1280" Closing="Window_Closing" Loaded="Window_Loaded">
+        Title="Remote Log Viewer" Icon="app.ico" Height="720" Width="1280" Closing="Window_Closing" Loaded="Window_Loaded"
+        AllowDrop="True" PreviewDragOver="Window_PreviewDragOver" PreviewDrop="Window_PreviewDrop">
     <Window.CommandBindings>
         <CommandBinding Command="ApplicationCommands.Help" Executed="Help_Executed" />
         <CommandBinding Command="{x:Static local:MainWindow.Search}" Executed="Search_Executed" />
+        <CommandBinding Command="ApplicationCommands.Open" Executed="Open_Executed" />
     </Window.CommandBindings>
     <Window.InputBindings>
         <KeyBinding Key="F" Modifiers="Control+Shift" Command="{x:Static local:MainWindow.Search}" />
@@ -61,6 +63,8 @@
 
         <DockPanel Grid.Column="2">
             <ToolBar DockPanel.Dock="Top">
+                <Button Content="{local:T 'Apri file…'}" Command="ApplicationCommands.Open" ToolTip="{local:T 'Apri un file di log (Ctrl+O)'}" />
+                <Separator />
                 <Button Content="{local:T 'Credenziali…'}" Click="Credentials_Click" ToolTip="{local:T 'Utente/password condivisi tra più sessioni: cambi la password in un solo punto'}" />
                 <Separator />
                 <ToggleButton x:Name="SideBySideButton" Content="{local:T 'Affianca'}" Checked="SideBySide_Click" Unchecked="SideBySide_Click" ToolTip="{local:T 'Mostra tutte le sessioni aperte contemporaneamente'}" />

@@ -59,6 +59,7 @@
     <li><a href="#collezioni">Collezioni</a></li>
     <li><a href="#export">Esporta e importa</a></li>
     <li><a href="#data">Data nel percorso</a></li>
+    <li><a href="#file-locali">File locali</a></li>
     <li><a href="#schede">Schede e Affianca</a></li>
     <li><a href="#workspace">Riapertura all'avvio</a></li>
     <li><a href="#avvisi">Avvisi di errore</a></li>
@@ -137,6 +138,17 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>Se la data c'è solo nei log vecchi e il file corrente no (es. oggi <code>app.log</code>, ieri <code>app.2026-09-29.log</code>), metti il separatore dentro il formato tra apici e spunta <em>Il file di oggi non ha la data</em>:
     <pre><code>logs\app{date:'.'yyyy-MM-dd}.log</code></pre>
     Per oggi si apre <code>logs\app.log</code>, per le altre date il file con la data. A mezzanotte la sessione resta su <code>app.log</code>: quando il server lo rinomina, l'app lo rileva e riparte dall'inizio del nuovo file.</li>
+</ul>
+
+<h2 id="file-locali">File locali</h2>
+<p>Per leggere un file che hai sul PC (o su un'unit&agrave; gi&agrave; accessibile a Windows) senza creare una sessione: <strong>Apri file…</strong> o <kbd>Ctrl</kbd>+<kbd>O</kbd> apre il dialogo di selezione (anche pi&ugrave; file insieme; filtri <em>Log e testo</em> e <em>Tutti i file</em>), oppure trascina uno o pi&ugrave; file da Esplora risorse sulla finestra.</p>
+<ul>
+  <li>Ogni file si apre in una scheda con il nome del file (il percorso completo &egrave; nel suggerimento; se due file hanno lo stesso nome il titolo diventa <code>cartella\nome</code>). Un file gi&agrave; aperto non viene duplicato: si seleziona la sua scheda.</li>
+  <li>Nessuna credenziale, nessuna data e nessuna connessione di rete gestita dall'app: il file &egrave; letto con i permessi dell'utente Windows. Per le condivisioni che richiedono utente e password usa una <a href="#sessioni">sessione</a>.</li>
+  <li>Si leggono le ultime 1000 righe, poi il file viene seguito. Con <strong>&#9650; Precedenti</strong> carichi altre righe. Filtri, ricerca, <a href="#ricerca-avanzata">ricerca avanzata</a>, Salva, avvisi di errore e Affianca funzionano come per le sessioni remote.</li>
+  <li>Se il file viene cancellato la scheda va in <em>In attesa del file…</em> e riprende quando riappare; se viene troncato o ruotato la lettura riparte dall'inizio.</li>
+  <li>Non finisce nell'elenco delle sessioni salvate n&eacute; negli export. Alla chiusura viene ricordato e riaperto all'avvio se esiste ancora (altrimenti viene saltato in silenzio).</li>
+  <li>Cartelle ed elementi che non sono file, se trascinati, vengono ignorati; un file che non si pu&ograve; aprire (inesistente, senza permessi) produce un messaggio e nessuna scheda.</li>
 </ul>
 
 <h2 id="schede">Schede e Affianca</h2>
@@ -228,6 +240,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <h2 id="tasti">Scorciatoie da tastiera</h2>
 <table>
   <tr><th>Tasto</th><th>Dove</th><th>Azione</th></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>Finestra principale</td><td>Apre uno o pi&ugrave; <a href="#file-locali">file locali</a></td></tr>
   <tr><td><kbd>F1</kbd></td><td>Ovunque</td><td>Apre questa guida</td></tr>
   <tr><td><kbd>Invio</kbd></td><td>Elenco sessioni</td><td>Avvia la sessione / espande o comprime la collezione</td></tr>
   <tr><td><kbd>F2</kbd></td><td>Elenco sessioni</td><td>Modifica la sessione / rinomina la collezione</td></tr>

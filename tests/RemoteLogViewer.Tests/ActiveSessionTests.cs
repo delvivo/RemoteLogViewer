@@ -27,6 +27,57 @@ public class ActiveSessionTests : IDisposable
         return got;
     }
 
+    private SessionConfig LocalConfig()
+    {
+        var c = SessionConfig.Local(_local);
+        c.TailLines = 3;
+        return c;
+    }
+
+    // No SMB involved: runs on every machine.
+    [Fact]
+    public async Task Local_file_tails_appends_truncation_and_waits_when_deleted()
+    {
+        File.WriteAllText(_local, "INFO 1\nINFO 2\nERROR 3\n   at stack\nWARN 5\n");
+        var s = new ActiveSession(LocalConfig());
+        Assert.Equal(_local, s.Path);
+        Assert.Equal(Path.GetFileName(_local), s.DisplayName);
+        s.Start();
+        try
+        {
+            var tail = await Collect(s, 3);
+            Assert.Equal(["ERROR 3", "   at stack", "WARN 5"], tail.Select(l => l.Text));
+            Assert.Equal(SessionState.Running, s.State);
+
+            File.AppendAllText(_local, "INFO 6\n");
+            Assert.Equal("INFO 6", Assert.Single(await Collect(s, 1, 2000)).Text);
+
+            File.WriteAllText(_local, "INFO nuovo\n");
+            var after = await Collect(s, 2, 2000);
+            Assert.True(after[0].IsMarker);
+            Assert.Equal("INFO nuovo", after[1].Text);
+
+            File.Delete(_local);
+            await WaitFor(s, SessionState.Waiting);
+
+            File.WriteAllText(_local, "INFO tornato\n");
+            var back = await Collect(s, 2, 4000);
+            Assert.Contains(back, l => l.Text == "INFO tornato");
+            Assert.Equal(SessionState.Running, s.State);
+        }
+        finally { s.Stop(); }
+
+        await Task.Delay(700);
+        Assert.Equal(SessionState.Stopped, s.State);
+    }
+
+    private static async Task WaitFor(ActiveSession s, SessionState state, int timeoutMs = 5000)
+    {
+        var until = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (s.State != state && DateTime.UtcNow < until) await Task.Delay(50);
+        Assert.Equal(state, s.State);
+    }
+
     [Fact]
     public async Task Tails_appends_and_detects_truncation_over_smb()
     {

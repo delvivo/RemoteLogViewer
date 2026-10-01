@@ -476,6 +476,70 @@ public partial class MainWindow : Window
         Relayout();
     }
 
+    // ---- local files ----
+
+    private void Open_Executed(object sender, ExecutedRoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog
+        {
+            Multiselect = true,
+            Title = L.T("Apri file di log"),
+            Filter = L.T("Log e testo (*.log;*.txt)|*.log;*.txt|Tutti i file (*.*)|*.*"),
+        };
+        if (dlg.ShowDialog(this) == true) OpenFiles(dlg.FileNames);
+    }
+
+    /// Opens each file in its own tab (dialog or drag & drop). Folders are ignored; a file already open is just selected.
+    private void OpenFiles(IEnumerable<string> paths)
+    {
+        var files = paths.Where(File.Exists).ToList();
+        if (files.Count == 0)
+        {
+            MessageBox.Show(this, L.T("Nessun file valido"), "Remote Log Viewer", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        foreach (var file in files)
+        {
+            var full = System.IO.Path.GetFullPath(file);
+            var existing = Tabs.Items.Cast<TabItem>().FirstOrDefault(t =>
+                ((LogView)t.Tag).Session.Config is { IsLocal: true } c && string.Equals(c.FilePath, full, StringComparison.OrdinalIgnoreCase));
+            if (existing != null) { Tabs.SelectedItem = existing; continue; }
+            try { using var _ = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                MessageBox.Show(this, L.F("Impossibile aprire «{0}»: {1}", full, ex.Message), "Remote Log Viewer", MessageBoxButton.OK, MessageBoxImage.Error);
+                continue;
+            }
+            Open(LocalConfig(full), null);
+        }
+    }
+
+    // Files dragged from Explorer. Tunneling (Preview) so the tab and tree handlers, which reject foreign data, never see them;
+    // internal drags use their own formats (rlv-tab, rlv-tree-item) and are left alone.
+    private void Window_PreviewDragOver(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        e.Effects = DragDropEffects.Copy;
+        e.Handled = true;
+    }
+
+    private void Window_PreviewDrop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
+        e.Handled = true;
+        OpenFiles(paths);
+    }
+
+    /// Config for a local file; the title is `folder\name` when another local tab already has that file name.
+    private SessionConfig LocalConfig(string path)
+    {
+        var config = SessionConfig.Local(path);
+        var taken = Tabs.Items.Cast<TabItem>().Any(t => ((LogView)t.Tag).Session.Config is { IsLocal: true } c && c.Name == config.Name);
+        if (taken && System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(config.FilePath)) is { Length: > 0 } dir)
+            config.Name = System.IO.Path.Combine(dir, config.Name);
+        return config;
+    }
+
     public static readonly RoutedCommand Search = new();
     private SearchWindow? _search;
 
@@ -542,6 +606,11 @@ public partial class MainWindow : Window
         var ws = _tree.Workspace;
         foreach (var t in ws.Tabs)
         {
+            if (t.LocalPath != null)
+            {
+                if (File.Exists(t.LocalPath)) Open(LocalConfig(t.LocalPath), null); // gone since last time: skipped silently
+                continue;
+            }
             if (_tree.Sessions.FirstOrDefault(s => s.Id == t.SessionId) is not { } config) continue; // deleted meanwhile
             DateTime? date = !DatePath.Has(config.FilePath) ? null : t.FollowToday ? DateTime.Today : t.Date ?? DateTime.Today;
             Open(config, date);
@@ -555,7 +624,9 @@ public partial class MainWindow : Window
         var views = Tabs.Items.Cast<TabItem>().Select(t => (LogView)t.Tag).ToList();
         _tree.Workspace = new Workspace
         {
-            Tabs = views.Select(v => new OpenTab { SessionId = v.Session.Config.Id, Date = v.Session.Date, FollowToday = v.Session.FollowToday }).ToList(),
+            Tabs = views.Select(v => v.Session.Config.IsLocal
+                ? new OpenTab { LocalPath = v.Session.Config.FilePath }
+                : new OpenTab { SessionId = v.Session.Config.Id, Date = v.Session.Date, FollowToday = v.Session.FollowToday }).ToList(),
             Selected = Tabs.SelectedIndex,
             SideBySide = SideBySideButton.IsChecked == true,
         };

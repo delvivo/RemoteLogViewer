@@ -59,6 +59,7 @@
     <li><a href="#collezioni">Collections</a></li>
     <li><a href="#export">Export and import</a></li>
     <li><a href="#data">Date in the path</a></li>
+    <li><a href="#file-locali">Local files</a></li>
     <li><a href="#schede">Tabs and Side by side</a></li>
     <li><a href="#workspace">Reopening at startup</a></li>
     <li><a href="#avvisi">Error alerts</a></li>
@@ -137,6 +138,17 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>If only the old logs have the date and the current file does not (e.g. today <code>app.log</code>, yesterday <code>app.2026-09-29.log</code>), put the separator inside the format, quoted, and tick <em>Today's file has no date</em>:
     <pre><code>logs\app{date:'.'yyyy-MM-dd}.log</code></pre>
     For today <code>logs\app.log</code> is opened, for other dates the file with the date. At midnight the session stays on <code>app.log</code>: when the server renames it, the app detects it and restarts from the beginning of the new file.</li>
+</ul>
+
+<h2 id="file-locali">Local files</h2>
+<p>To read a file on your PC (or on a drive Windows can already reach) without creating a session: <strong>Open file…</strong> or <kbd>Ctrl</kbd>+<kbd>O</kbd> opens the file dialog (several files at once are fine; <em>Log and text</em> and <em>All files</em> filters), or drag one or more files from Explorer onto the window.</p>
+<ul>
+  <li>Each file opens in a tab named after the file (the full path is in the tooltip; if two files have the same name the title becomes <code>folder\name</code>). A file that is already open is not duplicated: its tab is selected.</li>
+  <li>No credentials, no date and no network connection managed by the app: the file is read with your Windows user's permissions. For shares that need a user and password use a <a href="#sessioni">session</a>.</li>
+  <li>The last 1000 lines are read, then the file is followed. <strong>&#9650; Older</strong> loads more lines. Filters, search, <a href="#ricerca-avanzata">advanced search</a>, Save, error alerts and Side by side work as for remote sessions.</li>
+  <li>If the file is deleted the tab goes to <em>Waiting for the file…</em> and resumes when it comes back; if it is truncated or rotated, reading restarts from the beginning.</li>
+  <li>It is not added to the saved sessions list nor to exports. On close it is remembered and reopened at startup if it still exists (otherwise it is silently skipped).</li>
+  <li>Folders and non-file items that are dragged in are ignored; a file that cannot be opened (missing, no permission) gives a message and no tab.</li>
 </ul>
 
 <h2 id="schede">Tabs and Side by side</h2>
@@ -228,6 +240,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <h2 id="tasti">Keyboard shortcuts</h2>
 <table>
   <tr><th>Key</th><th>Where</th><th>Action</th></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>O</kbd></td><td>Main window</td><td>Opens one or more <a href="#file-locali">local files</a></td></tr>
   <tr><td><kbd>F1</kbd></td><td>Everywhere</td><td>Opens this guide</td></tr>
   <tr><td><kbd>Enter</kbd></td><td>Session list</td><td>Starts the session / expands or collapses the collection</td></tr>
   <tr><td><kbd>F2</kbd></td><td>Session list</td><td>Edits the session / renames the collection</td></tr>

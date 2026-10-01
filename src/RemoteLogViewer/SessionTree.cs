@@ -30,7 +30,8 @@ public class Workspace
 
 public class OpenTab
 {
-    public Guid SessionId { get; set; }
+    public Guid SessionId { get; set; }     // empty for a local file tab
+    public string? LocalPath { get; set; }  // local file tab: reopened if the file still exists
     public DateTime? Date { get; set; }
     public bool FollowToday { get; set; } // reopen on the current day, not on Date
 }

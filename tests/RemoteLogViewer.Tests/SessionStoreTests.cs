@@ -84,6 +84,30 @@ public class SessionStoreTests : IDisposable
     }
 
     [Fact]
+    public void Round_trip_keeps_local_file_tabs()
+    {
+        var a = new SessionConfig { Name = "a" };
+        var tree = new SessionTree([], [a])
+        {
+            Workspace = new Workspace { Tabs = [new OpenTab { LocalPath = @"C:\x\app.log" }, new OpenTab { SessionId = a.Id }] },
+        };
+        new SessionStore(FilePath).Save(tree);
+
+        var ws = new SessionStore(FilePath).Load().Workspace;
+        Assert.Equal(@"C:\x\app.log", ws.Tabs[0].LocalPath);
+        Assert.Equal(Guid.Empty, ws.Tabs[0].SessionId);
+        Assert.Null(ws.Tabs[1].LocalPath);
+    }
+
+    [Fact]
+    public void Workspace_tab_without_local_path_loads_with_null()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(FilePath, """{ "sessions": [], "workspace": { "tabs": [ { "sessionId": "11111111-1111-1111-1111-111111111111" } ] } }""");
+        Assert.Null(new SessionStore(FilePath).Load().Workspace.Tabs[0].LocalPath);
+    }
+
+    [Fact]
     public void File_without_workspace_loads_empty_workspace()
     {
         Directory.CreateDirectory(_dir);

@@ -15,14 +15,22 @@ public class SessionConfig
     public Guid? CollectionId { get; set; } // null = root
     public Guid? CredentialId { get; set; } // null = UserName/ProtectedPassword above
     public bool CurrentUndated { get; set; } // today's file has no date: placeholders resolve to "" for today
+    public bool IsLocal { get; set; }        // file on the local file system: FilePath is absolute, no SMB; never stored in the session list
+
+    /// Config for a local file (opened from the file system, not saved).
+    public static SessionConfig Local(string path)
+    {
+        var full = Path.GetFullPath(path);
+        return new SessionConfig { Name = Path.GetFileName(full), FilePath = full, IsLocal = true };
+    }
 
     /// Display path: date placeholders left unresolved.
     [System.Text.Json.Serialization.JsonIgnore]
-    public string FullPath => Combine(FilePath);
+    public string FullPath => IsLocal ? FilePath : Combine(FilePath);
 
     /// Path to actually open, with `{date:…}` placeholders resolved.
     public string ResolvePath(DateTime date, DateTime? today = null) =>
-        Combine(CurrentUndated && date.Date == (today ?? DateTime.Today).Date ? DatePath.Strip(FilePath) : DatePath.Resolve(FilePath, date));
+        IsLocal ? FilePath : Combine(CurrentUndated && date.Date == (today ?? DateTime.Today).Date ? DatePath.Strip(FilePath) : DatePath.Resolve(FilePath, date));
 
     private string Combine(string file) => file.StartsWith(@"\\") ? file : Path.Combine(SharePath.TrimEnd('\\') + "\\", file.TrimStart('\\'));
 

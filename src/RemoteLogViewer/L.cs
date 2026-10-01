@@ -259,6 +259,14 @@ public static class L
         ["Risultati limitati a {0:N0}: restringi la ricerca"] = "Results limited to {0:N0}: narrow the search",
         ["La riga non è più disponibile nel buffer"] = "The line is no longer in the buffer",
         ["Filtri rimossi"] = "Filters cleared",
+
+        // ---- open local file ----
+        ["Apri file…"] = "Open file…",
+        ["Apri un file di log (Ctrl+O)"] = "Open a log file (Ctrl+O)",
+        ["Apri file di log"] = "Open log file",
+        ["Log e testo (*.log;*.txt)|*.log;*.txt|Tutti i file (*.*)|*.*"] = "Log and text (*.log;*.txt)|*.log;*.txt|All files (*.*)|*.*",
+        ["Impossibile aprire «{0}»: {1}"] = "Cannot open \"{0}\": {1}",
+        ["Nessun file valido"] = "No valid file",
     };
 }
 
