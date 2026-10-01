@@ -8,7 +8,7 @@ Percorso: `%APPDATA%\RemoteLogViewer\sessions.json`. UTF-8, scritto atomicamente
     {
       "id": "3f1c…",
       "name": "PROD – API",
-      "sharePath": "\\\\nts11050\\E$",
+      "sharePath": "\\\\serverName\\E$",
       "userName": "DOMAIN\\myusername",
       "protectedPassword": "AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAA…",
       "filePath": "logs\\api\\app.log",

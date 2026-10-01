@@ -6,13 +6,13 @@
 
 **Status**: Draft
 
-**Input**: User description: "Applicazione desktop Windows per visualizzare log remoti (es. su server Windows). Replica il flusso PowerShell attuale: New-SmbMapping -RemotePath \"\\\\nts11050\\E$\" -UserName \"myusername\" -Password \"mypassword\" seguito da Get-Content -Tail 1000 -Wait \"path su server\". Requisiti: configurare più sessioni (server/share, credenziali, percorso file log) e salvarle; visualizzazione intelligente dei log in tail (follow in tempo reale, ultime N righe); più sessioni in parallelo visualizzabili contemporaneamente."
+**Input**: User description: "Applicazione desktop Windows per visualizzare log remoti (es. su server Windows). Replica il flusso PowerShell attuale: New-SmbMapping -RemotePath \"\\\\serverName\\E$\" -UserName \"myusername\" -Password \"mypassword\" seguito da Get-Content -Tail 1000 -Wait \"path su server\". Requisiti: configurare più sessioni (server/share, credenziali, percorso file log) e salvarle; visualizzazione intelligente dei log in tail (follow in tempo reale, ultime N righe); più sessioni in parallelo visualizzabili contemporaneamente."
 
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Seguire un log remoto in tempo reale (Priority: P1)
 
-L'utente (sviluppatore / sistemista) inserisce share di rete remota (es. `\\nts11050\E$`), credenziali e percorso del file di log. L'app si autentica sulla share, mostra le ultime N righe (default 1000) e poi aggiunge in tempo reale le nuove righe scritte nel file, come `Get-Content -Tail 1000 -Wait`.
+L'utente (sviluppatore / sistemista) inserisce share di rete remota (es. `\\serverName\E$`), credenziali e percorso del file di log. L'app si autentica sulla share, mostra le ultime N righe (default 1000) e poi aggiunge in tempo reale le nuove righe scritte nel file, come `Get-Content -Tail 1000 -Wait`.
 
 **Why this priority**: È il flusso che oggi l'utente esegue a mano in PowerShell. Da sola sostituisce già lo script.
 

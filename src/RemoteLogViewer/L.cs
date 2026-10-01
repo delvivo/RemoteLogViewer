@@ -146,7 +146,7 @@ public static class L
         ["Sessione"] = "Session",
         ["Credenziali"] = "Credentials",
         ["_Share"] = "_Share",
-        ["\\\\server\\share, es. \\\\nts11050\\E$"] = "\\\\server\\share, e.g. \\\\nts11050\\E$",
+        ["\\\\server\\share, es. \\\\serverName\\E$"] = "\\\\server\\share, e.g. \\\\serverName\\E$",
         ["_Credenziale"] = "_Credential",
         ["Credenziale salvata (gestiscile con 'Credenziali…'), oppure utente/password solo per questa sessione"] = "Saved credential (manage them with 'Credentials…'), or user/password for this session only",
         ["(utente/password qui sotto)"] = "(user/password below)",

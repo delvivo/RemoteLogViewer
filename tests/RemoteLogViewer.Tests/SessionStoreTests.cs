@@ -13,7 +13,7 @@ public class SessionStoreTests : IDisposable
         var store = new SessionStore(FilePath);
         var s = new SessionConfig
         {
-            Name = "PROD", SharePath = @"\\nts11050\E$", UserName = @"DOM\me",
+            Name = "PROD", SharePath = @"\\serverName\E$", UserName = @"DOM\me",
             ProtectedPassword = SessionStore.Protect("S3gret0!pw"), FilePath = @"logs\app.log", TailLines = 500, Encoding = "utf-16",
         };
         store.Save(new SessionTree([], [s]));
@@ -23,8 +23,8 @@ public class SessionStoreTests : IDisposable
 
         var loaded = Assert.Single(new SessionStore(FilePath).Load().Sessions);
         Assert.Equal(s.Id, loaded.Id);
-        Assert.Equal(@"\\nts11050\E$", loaded.SharePath);
-        Assert.Equal(@"\\nts11050\E$\logs\app.log", loaded.FullPath);
+        Assert.Equal(@"\\serverName\E$", loaded.SharePath);
+        Assert.Equal(@"\\serverName\E$\logs\app.log", loaded.FullPath);
         Assert.Equal(500, loaded.TailLines);
         Assert.Equal("S3gret0!pw", SessionStore.Unprotect(loaded.ProtectedPassword));
     }

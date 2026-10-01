@@ -5,9 +5,9 @@ public class SessionConfigTests
     [Fact]
     public void ResolvePath_combines_share_and_resolved_file()
     {
-        var c = new SessionConfig { SharePath = @"\\server\E$", FilePath = @"DOB\standard_logs\{date:yyyy_MM_dd}\log.log" };
-        Assert.Equal(@"\\server\E$\DOB\standard_logs\2026_06_11\log.log", c.ResolvePath(new DateTime(2026, 6, 11)));
-        Assert.Equal(@"\\server\E$\DOB\standard_logs\{date:yyyy_MM_dd}\log.log", c.FullPath); // display keeps the placeholder
+        var c = new SessionConfig { SharePath = @"\\server\E$", FilePath = @"FOLDER\standard_logs\{date:yyyy_MM_dd}\log.log" };
+        Assert.Equal(@"\\server\E$\FOLDER\standard_logs\2026_06_11\log.log", c.ResolvePath(new DateTime(2026, 6, 11)));
+        Assert.Equal(@"\\server\E$\FOLDER\standard_logs\{date:yyyy_MM_dd}\log.log", c.FullPath); // display keeps the placeholder
     }
 
     [Fact]

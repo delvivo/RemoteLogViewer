@@ -79,7 +79,7 @@
 <p class="version">User guide · version %VERSION%</p>
 
 <h2 id="intro">Introduction</h2>
-<p>Remote Log Viewer follows log files on Windows network shares (SMB), such as <code>\\server\E$</code>, in real time. It replaces the manual sequence:</p>
+<p>Remote Log Viewer follows log files on Windows network shares (SMB), such as <code>\\server\E$</code>, in real time. It is designed for Windows servers. It replaces the manual sequence:</p>
 <pre><code>New-SmbMapping -RemotePath "\\server\E$" -UserName "user" -Password "pwd"
 Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"</code></pre>
 <p>The app connects to the share without assigning a drive letter, reads the last lines of the file and shows new ones as they are written (it checks every half second). It handles file rotation, disconnections and files that do not exist yet on its own.</p>
@@ -89,7 +89,7 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"</code></pre>
 <table>
   <tr><th>Field</th><th>Meaning</th></tr>
   <tr><td>Name</td><td>Name shown in the list and in the tab title.</td></tr>
-  <tr><td>Share</td><td>In the form <code>\\server\share</code>, for example <code>\\nts11050\E$</code>.</td></tr>
+  <tr><td>Share</td><td>In the form <code>\\server\share</code>, for example <code>\\serverName\E$</code>.</td></tr>
   <tr><td>Credential</td><td>A <a href="#credenziali">shared credential</a>, or none: in that case the User and Password below are used.</td></tr>
   <tr><td>User / Password</td><td><code>DOMAIN\user</code>. If you leave the user empty, the current Windows user is used. When you edit a session, an empty password stays the same as before.</td></tr>
   <tr><td>File</td><td>The path relative to the share (<code>logs\app.log</code>) or the full UNC path, which must be inside the share. It can contain a <a href="#data">variable date</a>.</td></tr>
@@ -128,7 +128,7 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"</code></pre>
 
 <h2 id="data">Date in the path</h2>
 <p>Many logs have a different folder or file for each day. In the <em>File</em> field write <code>{date:format}</code> in place of the date, using the .NET date format:</p>
-<pre><code>DOB\DOB_SDL\log\standard_logs\{date:yyyy_MM_dd}\log.log
+<pre><code>FOLDER\APP_NAME\log\standard_logs\{date:yyyy_MM_dd}\log.log
 logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <ul>
   <li>When you start the session, the app asks for the date on a calendar (it proposes today) and shows a preview of the path.</li>

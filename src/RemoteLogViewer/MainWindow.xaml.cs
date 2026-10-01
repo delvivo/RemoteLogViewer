@@ -278,7 +278,7 @@ public partial class MainWindow : Window
         return menu;
     }
 
-    // TextBlock header: names like "DOB_SDL" must not turn "_" into an access key.
+    // TextBlock header: names like "APP_NAME" must not turn "_" into an access key.
     private static MenuItem Item(string header, Action action, bool enabled = true)
     {
         var mi = new MenuItem { Header = new TextBlock { Text = header }, IsEnabled = enabled };

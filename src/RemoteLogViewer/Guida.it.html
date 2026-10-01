@@ -79,7 +79,7 @@
 <p class="version">Guida utente · versione %VERSION%</p>
 
 <h2 id="intro">Introduzione</h2>
-<p>Remote Log Viewer segue in tempo reale i file di log presenti su share di rete Windows (SMB), come <code>\\server\E$</code>. Sostituisce la sequenza manuale:</p>
+<p>Remote Log Viewer segue in tempo reale i file di log presenti su share di rete Windows (SMB), come <code>\\server\E$</code>. È pensata per i server Windows. Sostituisce la sequenza manuale:</p>
 <pre><code>New-SmbMapping -RemotePath "\\server\E$" -UserName "user" -Password "pwd"
 Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"</code></pre>
 <p>L'app si connette alla share senza assegnare una lettera di unità, legge le ultime righe del file e mostra le nuove man mano che vengono scritte (controllo ogni mezzo secondo). Gestisce da sola la rotazione dei file, le disconnessioni e i file che non esistono ancora.</p>
@@ -89,7 +89,7 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"</code></pre>
 <table>
   <tr><th>Campo</th><th>Significato</th></tr>
   <tr><td>Nome</td><td>Nome mostrato nell'elenco e nel titolo della scheda.</td></tr>
-  <tr><td>Share</td><td>Nel formato <code>\\server\share</code>, per esempio <code>\\nts11050\E$</code>.</td></tr>
+  <tr><td>Share</td><td>Nel formato <code>\\server\share</code>, per esempio <code>\\serverName\E$</code>.</td></tr>
   <tr><td>Credenziale</td><td>Una <a href="#credenziali">credenziale condivisa</a>, oppure nessuna: in quel caso si usano Utente e Password qui sotto.</td></tr>
   <tr><td>Utente / Password</td><td><code>DOMINIO\utente</code>. Se lasci l'utente vuoto si usa l'utente Windows corrente. Quando modifichi una sessione, una password lasciata vuota resta quella di prima.</td></tr>
   <tr><td>File</td><td>Il percorso relativo alla share (<code>logs\app.log</code>) oppure il percorso UNC completo, che deve trovarsi dentro la share. Può contenere una <a href="#data">data variabile</a>.</td></tr>
@@ -128,7 +128,7 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"</code></pre>
 
 <h2 id="data">Data nel percorso</h2>
 <p>Molti log hanno una cartella o un file diverso per ogni giorno. Nel campo <em>File</em> scrivi <code>{date:formato}</code> al posto della data, usando il formato data di .NET:</p>
-<pre><code>DOB\DOB_SDL\log\standard_logs\{date:yyyy_MM_dd}\log.log
+<pre><code>FOLDER\APP_NAME\log\standard_logs\{date:yyyy_MM_dd}\log.log
 logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <ul>
   <li>Quando avvii la sessione, l'app chiede la data su un calendario (propone oggi) e mostra un'anteprima del percorso.</li>

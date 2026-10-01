@@ -12,7 +12,7 @@ Estensione suggerita: `.rlv.json` (filtro dei dialog: `Collezioni Remote Log Vie
   ],
   "sessions": [
     {
-      "id": "3f1c…", "name": "DOB standard", "collectionId": "b2…",
+      "id": "3f1c…", "name": "FOLDER standard", "collectionId": "b2…",
       "sharePath": "\\\\server\\E$", "userName": "DOMAIN\\me", "protectedPassword": null,
       "filePath": "…\\{date:yyyy_MM_dd}\\log.log", "tailLines": 1000, "encoding": "auto"
     }
