@@ -64,6 +64,7 @@
     <li><a href="#avvisi">Avvisi di errore</a></li>
     <li><a href="#vista">Barra della sessione</a></li>
     <li><a href="#filtri">Filtri, contesto e ricerca</a></li>
+    <li><a href="#ricerca-avanzata">Ricerca avanzata tra le sessioni</a></li>
     <li><a href="#precedenti">Righe precedenti</a></li>
     <li><a href="#salva">Salvare e copiare</a></li>
     <li><a href="#stati">Stati della sessione</a></li>
@@ -187,6 +188,18 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <h3>Ricerca</h3>
 <p><kbd>Ctrl</kbd>+<kbd>F</kbd> porta il cursore nella casella di ricerca. Le righe trovate vengono evidenziate in giallo; con <kbd>F3</kbd> e <kbd>Shift</kbd>+<kbd>F3</kbd> passi al risultato successivo o precedente. A differenza del filtro, la ricerca non nasconde nessuna riga.</p>
 
+<h2 id="ricerca-avanzata">Ricerca avanzata tra le sessioni</h2>
+<p>Il pulsante <strong>Cerca…</strong> o <kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>F</kbd> apre una finestra che cerca nelle righe già lette di <em>tutte</em> le sessioni aperte, anche se la scheda non è visibile e a prescindere dai filtri della singola scheda. La finestra resta aperta mentre usi le schede (anche in Affianca).</p>
+<ul>
+  <li><strong>Testo</strong> (<kbd>Invio</kbd> per cercare), con <strong>Regex</strong> opzionale; <strong>Maiuscole/minuscole</strong> e <strong>Parola intera</strong> sono disattivate di default.</li>
+  <li><strong>Livelli</strong>: solo ERROR/WARN/INFO/DEBUG selezionati; le righe di uno stack trace hanno il livello della riga che lo apre. Con un filtro parziale le righe senza livello sono escluse.</li>
+  <li><strong>Da / A</strong>: intervallo di data e ora (estremi inclusi, entrambi facoltativi; la sola data vale dall'inizio o fino alla fine del giorno; l'ora da sola non è ammessa). Il timestamp è letto a inizio riga (<code>2026-10-01 12:34:56,789</code>, <code>01/10/2026 12:34:56</code> o solo <code>12:34:56</code>: in quel caso la data è quella della sessione). Le righe senza timestamp, come lo stack trace, ereditano quello della riga precedente della stessa sessione.</li>
+  <li>Con il testo vuoto e almeno un filtro attivo vengono elencate tutte le righe che lo soddisfano.</li>
+  <li>I risultati sono raggruppati per scheda (<code>Nome · N</code>), una riga per ogni corrispondenza, evidenziata. Sono al massimo 10.000: oltre, la ricerca si ferma e te lo segnala. Sono un&rsquo;istantanea: premi di nuovo <strong>Cerca</strong> per aggiornarli, <strong>Annulla</strong> ferma una ricerca lunga.</li>
+  <li><strong>Doppio click</strong> (o <kbd>Invio</kbd>) su un risultato seleziona la scheda e porta la riga in vista. Se i filtri della scheda la nascondono vengono azzerati e compare l&rsquo;avviso <em>Filtri rimossi</em>; se la riga non è più nel buffer, viene detto.</li>
+  <li><strong>Esporta…</strong> salva i risultati mostrati in un file UTF-8, un blocco <code># Nome (N)</code> per sessione.</li>
+</ul>
+
 <h2 id="precedenti">Righe precedenti</h2>
 <p>All'apertura vengono lette solo le ultime <em>Righe iniziali</em> del file. <strong>▲ Precedenti</strong> carica un altro blocco della stessa dimensione (1000 righe se <em>Righe iniziali</em> è 0) e lo mette sopra le righe già presenti. La lettura delle nuove righe continua e la vista non salta.</p>
 <ul>
@@ -220,6 +233,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td><kbd>F2</kbd></td><td>Elenco sessioni</td><td>Modifica la sessione / rinomina la collezione</td></tr>
   <tr><td><kbd>Canc</kbd></td><td>Elenco sessioni</td><td>Elimina</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Sessione</td><td>Vai alla casella di ricerca</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>F</kbd></td><td>Finestra principale</td><td>Apre la <a href="#ricerca-avanzata">ricerca avanzata</a> tra tutte le sessioni</td></tr>
   <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Sessione</td><td>Risultato successivo / precedente</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Righe del log</td><td>Copia le righe selezionate</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Sessione</td><td>Salva le righe visibili</td></tr>

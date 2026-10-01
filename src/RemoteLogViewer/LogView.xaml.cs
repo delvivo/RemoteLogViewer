@@ -11,6 +11,8 @@ using Microsoft.Win32;
 
 namespace RemoteLogViewer;
 
+public enum RevealResult { NotFound, Shown, ShownFiltersCleared }
+
 public partial class LogView : UserControl
 {
     public static readonly RoutedCommand FindNext = new(), FindPrev = new(), FocusSearch = new();
@@ -66,6 +68,29 @@ public partial class LogView : UserControl
         L.Changed -= OnLanguageChanged;
         _timer.Stop();
         Session.Stop();
+    }
+
+    /// Copy of the whole buffer for the cross-tab search (UI thread only: `_all` is not thread-safe, LogLine is immutable).
+    public LogLine[] Snapshot() => _all.ToArray();
+
+    /// Selects `line` and scrolls to it, clearing the level/text filters if they hide it. The caller selects the tab.
+    public RevealResult Reveal(LogLine line)
+    {
+        if (!_all.Contains(line)) return RevealResult.NotFound; // trimmed away or cleared
+        var cleared = !_visible.Contains(line);
+        if (cleared)
+        {
+            // Not through Checked/Filter_Changed alone: they skip the rebuild while the view is not loaded yet (tab not shown).
+            _hiddenLevels.Clear();
+            foreach (var cb in new[] { ErrorCheck, WarnCheck, InfoCheck, DebugCheck }) cb.IsChecked = true;
+            FilterBox.Clear();
+            _filter = null;
+            Rebuild();
+        }
+        FollowButton.IsChecked = false;
+        Lines.SelectedItem = line;
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => Lines.ScrollIntoView(line));
+        return cleared ? RevealResult.ShownFiltersCleared : RevealResult.Shown;
     }
 
     private bool Follow => FollowButton.IsChecked == true;

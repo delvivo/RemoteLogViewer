@@ -64,6 +64,7 @@
     <li><a href="#avvisi">Error alerts</a></li>
     <li><a href="#vista">Session toolbar</a></li>
     <li><a href="#filtri">Filters, context and search</a></li>
+    <li><a href="#ricerca-avanzata">Advanced search across sessions</a></li>
     <li><a href="#precedenti">Older lines</a></li>
     <li><a href="#salva">Saving and copying</a></li>
     <li><a href="#stati">Session states</a></li>
@@ -187,6 +188,18 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <h3>Search</h3>
 <p><kbd>Ctrl</kbd>+<kbd>F</kbd> moves the cursor to the search box. Matching lines are highlighted in yellow; <kbd>F3</kbd> and <kbd>Shift</kbd>+<kbd>F3</kbd> jump to the next or previous result. Unlike the filter, search does not hide any line.</p>
 
+<h2 id="ricerca-avanzata">Advanced search across sessions</h2>
+<p>The <strong>Search…</strong> button or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> opens a window that searches the lines already read in <em>all</em> open sessions, even if their tab is not visible and regardless of each tab's own filters. The window stays open while you use the tabs (also in Side by side).</p>
+<ul>
+  <li><strong>Text</strong> (<kbd>Enter</kbd> to search), with optional <strong>Regex</strong>; <strong>Match case</strong> and <strong>Whole word</strong> are off by default.</li>
+  <li><strong>Levels</strong>: only the ticked ERROR/WARN/INFO/DEBUG; the lines of a stack trace have the level of the line that opens it. With a partial filter, lines without a level are excluded.</li>
+  <li><strong>From / To</strong>: date and time range (bounds included, both optional; a date alone means from the start or until the end of that day; a time alone is not allowed). The timestamp is read at the start of the line (<code>2026-10-01 12:34:56,789</code>, <code>01/10/2026 12:34:56</code> or just <code>12:34:56</code>: then the date is the session's). Lines without a timestamp, like a stack trace, inherit the one of the previous line of the same session.</li>
+  <li>With empty text and at least one filter on, all the lines that satisfy it are listed.</li>
+  <li>Results are grouped by tab (<code>Name · N</code>), one row per match, highlighted. There are at most 10,000: beyond that the search stops and tells you. They are a snapshot: press <strong>Search</strong> again to refresh, <strong>Cancel</strong> stops a long search.</li>
+  <li><strong>Double-click</strong> (or <kbd>Enter</kbd>) on a result selects the tab and scrolls the line into view. If the tab's filters hide it, they are cleared and the <em>Filters cleared</em> notice appears; if the line is no longer in the buffer, you are told.</li>
+  <li><strong>Export…</strong> saves the shown results to a UTF-8 file, one <code># Name (N)</code> block per session.</li>
+</ul>
+
 <h2 id="precedenti">Older lines</h2>
 <p>When opening, only the last <em>Initial lines</em> of the file are read. <strong>▲ Older</strong> loads another block of the same size (1000 lines if <em>Initial lines</em> is 0) and puts it above the lines already present. Reading new lines continues and the view does not jump.</p>
 <ul>
@@ -220,6 +233,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td><kbd>F2</kbd></td><td>Session list</td><td>Edits the session / renames the collection</td></tr>
   <tr><td><kbd>Del</kbd></td><td>Session list</td><td>Deletes</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Session</td><td>Go to the search box</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd></td><td>Main window</td><td>Opens the <a href="#ricerca-avanzata">advanced search</a> across all sessions</td></tr>
   <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Session</td><td>Next / previous result</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Log lines</td><td>Copies the selected lines</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Session</td><td>Saves the visible lines</td></tr>

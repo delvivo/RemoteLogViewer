@@ -23,6 +23,7 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"
 - **Per-level counters** in the checkboxes (`ERROR 12`): entries in the buffer (a stack trace counts as 1), independent of the filters, reset by *Clear*.
 - **Context** (0–50) next to the filter: shows N lines before/after each filtered line, like `grep -C N`; context lines are dimmed, groups are separated by `--`.
 - **▲ Older**: loads another block (= *Initial lines*, 1000 if 0) above the lines already read without interrupting the tail; disabled at the start of the file, after a rotation, or when the session is not active.
+- **Search…** / Ctrl+Shift+F: advanced search across *all* open sessions in a non-modal window: text or regex, match case, whole word, level filter, date+time range; results grouped by tab (max 10,000, snapshot of the buffers); double-click jumps to the line in its tab (clearing that tab's filters if they hide it); *Export…* saves the results to a file.
 - **Save…** / Ctrl+S: saves the visible lines (filters and context applied) to a UTF-8 `.log`.
 - **Alerts**: red badge with the number of ERRORs on tabs that are not visible (reset by selecting them; no badge in Side by side) and taskbar flashing if the app is not in the foreground. Lines read at opening do not raise alerts.
 - **Reopening at startup**: on close, open tabs, order, selection and Side by side are remembered; at start they are reopened without questions (sessions with a date on "today" → current date, fixed date → same date).

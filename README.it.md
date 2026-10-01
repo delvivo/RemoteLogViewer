@@ -23,6 +23,7 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"
 - **Contatori per livello** nelle checkbox (`ERROR 12`): voci nel buffer (uno stack trace conta 1), indipendenti dai filtri, azzerati da *Pulisci*.
 - **Contesto** (0–50) accanto al filtro: mostra N righe prima/dopo ogni riga filtrata, come `grep -C N`; righe di contesto attenuate, gruppi separati da `--`.
 - **▲ Precedenti**: carica sopra le righe già lette un altro blocco (= *Righe iniziali*, 1000 se 0) senza interrompere il tail; disabilitato a inizio file, dopo una rotazione o con sessione non attiva.
+- **Cerca…** / Ctrl+Maiusc+F: ricerca avanzata tra *tutte* le sessioni aperte in una finestra non modale: testo o regex, maiuscole/minuscole, parola intera, filtro per livello, intervallo data+ora; risultati raggruppati per scheda (max 10.000, istantanea dei buffer); il doppio click salta alla riga nella sua scheda (azzerando i filtri della scheda se la nascondono); *Esporta…* salva i risultati in un file.
 - **Salva…** / Ctrl+S: salva le righe visibili (filtri e contesto applicati) in un `.log` UTF-8.
 - **Avvisi**: badge rosso con il numero di ERROR sulle schede non visibili (azzerato selezionandole; niente badge in Affianca) e lampeggio della taskbar se l'app non è in primo piano. Le righe lette all'apertura non avvisano.
 - **Riapertura all'avvio**: alla chiusura si memorizzano schede aperte, ordine, selezione e Affianca; all'avvio vengono riaperte senza domande (sessioni con data su "oggi" → data corrente, data fissa → stessa data).

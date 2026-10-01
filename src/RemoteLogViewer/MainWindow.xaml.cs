@@ -476,6 +476,31 @@ public partial class MainWindow : Window
         Relayout();
     }
 
+    public static readonly RoutedCommand Search = new();
+    private SearchWindow? _search;
+
+    private void Search_Executed(object sender, ExecutedRoutedEventArgs e)
+    {
+        if (_search != null)
+        {
+            if (_search.WindowState == WindowState.Minimized) _search.WindowState = WindowState.Normal;
+            _search.Activate();
+            return;
+        }
+        _search = new SearchWindow(() => Tabs.Items.Cast<TabItem>().Select(t => (LogView)t.Tag).ToList(), RevealLine) { Owner = this };
+        _search.Closed += (_, _) => _search = null;
+        _search.Show();
+    }
+
+    private RevealResult RevealLine(LogView view, LogLine line)
+    {
+        var tab = Tabs.Items.Cast<TabItem>().FirstOrDefault(t => t.Tag == view);
+        if (tab == null) return RevealResult.NotFound; // session closed since the search
+        var result = view.Reveal(line);
+        if (result != RevealResult.NotFound && SideBySideButton.IsChecked != true) Tabs.SelectedItem = tab;
+        return result;
+    }
+
     private void Credentials_Click(object sender, RoutedEventArgs e) => new CredentialsWindow(_tree, Save) { Owner = this }.ShowDialog();
 
     private void SideBySide_Click(object sender, RoutedEventArgs e) => Relayout();
