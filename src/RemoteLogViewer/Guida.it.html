@@ -68,6 +68,7 @@
     <li><a href="#salva">Salvare e copiare</a></li>
     <li><a href="#stati">Stati della sessione</a></li>
     <li><a href="#tasti">Scorciatoie da tastiera</a></li>
+    <li><a href="#lingua">Lingua</a></li>
     <li><a href="#problemi">Problemi comuni</a></li>
   </ol>
 </nav>
@@ -225,6 +226,9 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td>Tasto centrale del mouse</td><td>Titolo della scheda</td><td>Chiude la scheda</td></tr>
 </table>
 
+<h2 id="lingua">Lingua</h2>
+<p>L'interfaccia e questa guida sono disponibili in italiano e in inglese. Scegli la lingua con il selettore <strong>Lingua</strong> nella barra in alto: la scelta viene salvata (file <code>%APPDATA%\RemoteLogViewer\lang.txt</code>) e il cambio è immediato, senza riavviare l'app (una guida già aperta nel browser resta nella lingua precedente: riaprila con F1). Alla prima esecuzione si usa la lingua di Windows (italiano, altrimenti inglese).</p>
+
 <h2 id="problemi">Problemi comuni</h2>
 <h3>Errore "credenziali diverse" (1219)</h3>
 <p>Windows ammette una sola identità per server. Se esiste già una connessione allo stesso server con un altro utente (per esempio un'unità mappata), chiudila con <code>net use \\server\share /delete</code>, oppure usa le stesse credenziali.</p>
@@ -233,7 +237,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <h3>Una mappatura esistente non viene rimossa</h3>
 <p>È voluto: l'app chiude solo le connessioni che ha aperto lei.</p>
 <h3>La guida non si apre</h3>
-<p>La guida viene scritta in <code>%TEMP%\RemoteLogViewer\guida.html</code> e aperta con il browser predefinito. Se l'apertura non riesce, l'app mostra il percorso del file: puoi aprirlo a mano.</p>
+<p>La guida viene scritta in <code>%TEMP%\RemoteLogViewer\guide.it.html</code> e aperta con il browser predefinito. Se l'apertura non riesce, l'app mostra il percorso del file: puoi aprirlo a mano.</p>
 </main>
 </div>
 </body>

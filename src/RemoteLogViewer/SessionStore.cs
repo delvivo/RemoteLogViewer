@@ -34,7 +34,7 @@ public class SessionStore(string path)
         catch (JsonException)
         {
             File.Move(path, path + ".bak", true);
-            Warning = $"File sessioni corrotto, salvato come {path}.bak.";
+            Warning = L.F("File sessioni corrotto, salvato come {0}.bak.", path);
             return new SessionTree();
         }
     }
@@ -47,9 +47,9 @@ public class SessionStore(string path)
     {
         ExportFile? f;
         try { f = JsonSerializer.Deserialize<ExportFile>(File.ReadAllText(file), Json); }
-        catch (JsonException) { throw new InvalidDataException("File non valido."); }
-        if (f?.Format != ExportFile.FormatId) throw new InvalidDataException("File non riconosciuto.");
-        if (f.Version > 1) throw new InvalidDataException("Versione del file non supportata.");
+        catch (JsonException) { throw new InvalidDataException(L.T("File non valido.")); }
+        if (f?.Format != ExportFile.FormatId) throw new InvalidDataException(L.T("File non riconosciuto."));
+        if (f.Version > 1) throw new InvalidDataException(L.T("Versione del file non supportata."));
         f.Collections ??= [];
         f.Sessions ??= [];
         return f;

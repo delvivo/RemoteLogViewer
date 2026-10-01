@@ -12,7 +12,8 @@
 
   <ItemGroup>
     <Resource Include="app.ico" />
-    <EmbeddedResource Include="Guida.html" LogicalName="RemoteLogViewer.Guida.html" />
+    <EmbeddedResource Include="Guida.it.html" WithCulture="false" LogicalName="RemoteLogViewer.Guida.it.html" />
+    <EmbeddedResource Include="Guida.en.html" WithCulture="false" LogicalName="RemoteLogViewer.Guida.en.html" />
   </ItemGroup>
 
 </Project>

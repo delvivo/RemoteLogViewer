@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-WPF desktop app (.NET 10, `net10.0-windows`, Windows only) to tail log files on remote SMB shares. It replaces `New-SmbMapping` + `Get-Content -Tail N -Wait`. The UI text is in Italian. There are no external NuGet dependencies in the app; DPAPI (`ProtectedData`) is included with the WindowsDesktop framework.
+WPF desktop app (.NET 10, `net10.0-windows`, Windows only) to tail log files on remote SMB shares. It replaces `New-SmbMapping` + `Get-Content -Tail N -Wait`. The UI is localized (it/en, see Localization below); Italian is the source language. There are no external NuGet dependencies in the app; DPAPI (`ProtectedData`) is included with the WindowsDesktop framework.
 
 ## Commands
 
@@ -52,7 +52,7 @@ The data flow crosses threads, so it only makes sense when you read several file
 4. **`SmbConnection`** is a P/Invoke wrapper around `WNetAddConnection2`/`WNetCancelConnection2`, with no local drive name:
    - Connections are ref-counted per share across sessions.
    - A connection is only cancelled if the app opened it; `ERROR_ALREADY_ASSIGNED` (85) means the user's existing mapping, which is left alone.
-   - Errors become `SmbException` with Italian messages.
+   - Errors become `SmbException` with localized messages (`L.T`).
    - Error 1219 (same server, different credentials) is a Windows limitation, not a bug.
 5. **`SessionStore`** reads and writes `%APPDATA%\RemoteLogViewer\sessions.json` using camelCase JSON:
    - Writes are atomic (a temp file, then a move).
@@ -64,8 +64,14 @@ The data flow crosses threads, so it only makes sense when you read several file
 6. **`MainWindow`**:
    - Sidebar is a `TreeView` of `CollectionNode`/`SessionNode` **rebuilt from `SessionTree` after every change** (`RebuildTree(select)`); expansion state lives in `_expanded`, selection is restored by object. The context menu is built on `ContextMenuOpening` from the node under the mouse (empty space = root actions).
    - **Workspace:** `Window_Closing` stores open tabs (`OpenTab { SessionId, Date, FollowToday }`), selected index and Affianca into `SessionTree.Workspace` (`workspace` in `sessions.json`, never exported) and saves; `Window_Loaded` reopens them via `Open(config, date)` (skips `DateDialog`; `FollowToday` → today; missing sessions skipped).
-   - **Help:** `F1`/*Guida* = `ApplicationCommands.Help`: the embedded resource `Guida.html` (`LogicalName` `RemoteLogViewer.Guida.html`) is written to `%TEMP%\RemoteLogViewer\guida.html` with `%VERSION%` replaced by the assembly informational version, then opened with the shell.
+   - **Help:** `F1`/*Guida* = `ApplicationCommands.Help`: the embedded resource for the current language (`Guida.it.html` / `Guida.en.html`, `LogicalName` `RemoteLogViewer.Guida.<lang>.html`, with `WithCulture="false"` or MSBuild treats `.it.` as a satellite culture) is written to `%TEMP%\RemoteLogViewer\guide.<lang>.html` with `%VERSION%` replaced by the assembly informational version, then opened with the shell.
    - The `TabItem`s are the source of truth, and each one's `Tag` holds its `LogView`. `Relayout()` detaches every `LogView` and re-parents it into either the tabs or the `UniformGrid` for "Affianca" (side-by-side), in tab order. Call it after any add, close, toggle or tab drag. Tab drag moves the `TabItem` only; the `LogView`/session is untouched.
+
+## Localization
+
+- **`L`** (`L.cs`): the Italian text is the key, the English one lives in the `En` table. `L.T("it")` / `L.F("it {0}", args)` in code, `{local:T 'it'}` markup extension in XAML (inside the quotes escape `\` as `\\` and `'` as `\'`). A missing entry silently falls back to Italian, so add every new string to `En`.
+- `L.Lang` defaults to `"it"` (tests assert Italian messages); `App()` calls `L.Init()`: `%APPDATA%\RemoteLogViewer\lang.txt`, else the OS UI language (it, otherwise en). It also sets the culture; `DateDialog` sets its WPF `Language` (calendar month names). Switching language (toolbar `LangBox` → `L.SetLang`) is live: it writes `lang.txt`, bumps `LocSource.Version` (every `{local:T}` / `L.Bind` is a binding on it, so XAML text refreshes) and raises `L.Changed` for text set from code (`LogView` refreshes status/counters; `ActiveSession.StatusText` is translated on read). Code that sets localized text once from code on a long-lived control must use `L.Bind` or subscribe to `L.Changed` (and unsubscribe on close).
+- Stored data that embeds localized text (e.g. the `(copia)`/`(copy)` suffix of duplicated names) is written in the language active at that moment.
 
 ## Gotchas
 
@@ -84,7 +90,7 @@ The data flow crosses threads, so it only makes sense when you read several file
    - **Not on a `feature/*` branch** (e.g. `develop`): before implementing, create `feature/<name>`, where `<name>` is the feature name chosen by spec-kit (e.g. `feature/001-remote-log-viewer`).
    - **Already on a `feature/*` branch**: stay on it and don't create a new branch. The spec-kit feature name must be rooted in the current feature: `<current-feature>-<short-name>`. For example, on `feature/001-remote-log-viewer` it becomes `specs/001-remote-log-viewer-<short-name>/`, passed as `SPECIFY_FEATURE_DIRECTORY`.
 3. **After every change**, update `README.md` and this `CLAUDE.md` if the change affects what they describe: features, commands, architecture, gotchas.
-4. **After every user-visible change** (features, buttons, commands, keyboard shortcuts, messages, behaviour), update the user guide `src/RemoteLogViewer/Guida.html` too (Italian, self-contained HTML: no external resources; keep the shortcuts table complete).
+4. **After every user-visible change** (features, buttons, commands, keyboard shortcuts, messages, behaviour), update **both** user guides `src/RemoteLogViewer/Guida.it.html` and `Guida.en.html` too (self-contained HTML: no external resources; keep the shortcuts table complete; same section ids, a test checks it). Same for `README.md` (English) and `README.it.md` (Italian), and add the English text to `L.cs` for every new UI string.
 
 ## Spec-kit workflow
 

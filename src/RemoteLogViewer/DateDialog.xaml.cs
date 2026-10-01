@@ -20,8 +20,9 @@ public partial class DateDialog : Window
     public DateDialog(SessionConfig config)
     {
         InitializeComponent();
+        Language = System.Windows.Markup.XmlLanguage.GetLanguage(L.Lang); // calendar month/day names
         _config = config;
-        Title = $"Avvia \"{config.Name}\"";
+        Title = L.F("Avvia \"{0}\"", config.Name);
         _connect = Task.Run(() =>
         {
             try { SmbConnection.Connect(config.SharePath, config.UserName, SessionStore.Unprotect(config.ProtectedPassword)); return null; }
@@ -36,8 +37,8 @@ public partial class DateDialog : Window
     {
         var month = new DateTime(Cal.DisplayDate.Year, Cal.DisplayDate.Month, 1);
         if (Cal.DisplayMode != CalendarMode.Month || !_probedMonths.Add(month)) return;
-        Status.Text = "Verifica dei file disponibili…";
-        if (await _connect is { } error) { Status.Text = $"Impossibile verificare i file: {error}"; return; }
+        Status.Text = L.T("Verifica dei file disponibili…");
+        if (await _connect is { } error) { Status.Text = L.F("Impossibile verificare i file: {0}", error); return; }
 
         var days = Enumerable.Range(0, DateTime.DaysInMonth(month.Year, month.Month)).Select(i => month.AddDays(i)).ToList();
         // ponytail: one File.Exists per day, works for any placeholder position/format; ~31 SMB stats per month
@@ -48,7 +49,7 @@ public partial class DateDialog : Window
             _exists[d] = ok;
             if (!ok && d != DateTime.Today && d != Cal.SelectedDate) Cal.BlackoutDates.Add(new CalendarDateRange(d));
         }
-        Status.Text = "I giorni barrati non hanno un file di log.";
+        Status.Text = L.T("I giorni barrati non hanno un file di log.");
         UpdatePreview();
     }
 
@@ -66,9 +67,9 @@ public partial class DateDialog : Window
     private void UpdatePreview()
     {
         OkButton.IsEnabled = Cal.SelectedDate != null;
-        if (Cal.SelectedDate is not { } d) { Preview.Text = "Scegli una data."; return; }
-        var note = _exists.TryGetValue(d, out var ok) ? ok ? " (file presente)" : " (file non trovato: la sessione resterà in attesa)" : "";
-        Preview.Text = $"Anteprima: {_config.ResolvePath(d)}{note}";
+        if (Cal.SelectedDate is not { } d) { Preview.Text = L.T("Scegli una data."); return; }
+        var note = _exists.TryGetValue(d, out var ok) ? ok ? L.T(" (file presente)") : L.T(" (file non trovato: la sessione resterà in attesa)") : "";
+        Preview.Text = L.F("Anteprima: {0}", _config.ResolvePath(d)) + note;
     }
 
     private void Ok_Click(object sender, RoutedEventArgs e)

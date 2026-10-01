@@ -34,9 +34,9 @@ public partial class CredentialsWindow : Window
         UserBox.Text = c?.UserName ?? "";
         PasswordBox.Clear();
         if (c?.ProtectedPassword != null && SessionStore.Unprotect(c.ProtectedPassword) == null)
-            ShowResult("Password salvata non leggibile su questo PC/utente: reinseriscila.", false);
+            ShowResult(L.T("Password salvata non leggibile su questo PC/utente: reinseriscila."), false);
         else
-            ShowResult(c == null ? "Nuova credenziale." : $"Usata da {_tree.CountUsing(c.Id)} sessioni.", null);
+            ShowResult(c == null ? L.T("Nuova credenziale.") : L.F("Usata da {0} sessioni.", _tree.CountUsing(c.Id)), null);
     }
 
     private void New_Click(object sender, RoutedEventArgs e)
@@ -52,10 +52,10 @@ public partial class CredentialsWindow : Window
         var name = NameBox.Text.Trim();
         var user = UserBox.Text.Trim();
         var errors = new List<string>();
-        if (name.Length == 0) errors.Add("Nome obbligatorio.");
+        if (name.Length == 0) errors.Add(L.T("Nome obbligatorio."));
         else if (_tree.Credentials.Any(x => x != c && string.Equals(x.Name, name, StringComparison.CurrentCultureIgnoreCase)))
-            errors.Add("Esiste già una credenziale con questo nome.");
-        if (user.Length == 0) errors.Add("Utente obbligatorio.");
+            errors.Add(L.T("Esiste già una credenziale con questo nome."));
+        if (user.Length == 0) errors.Add(L.T("Utente obbligatorio."));
         if (errors.Count > 0) { ShowResult(string.Join("\n", errors), false); return; }
 
         if (c == null) _tree.Credentials.Add(c = new Credential());
@@ -64,15 +64,15 @@ public partial class CredentialsWindow : Window
         if (PasswordBox.Password.Length > 0) c.ProtectedPassword = SessionStore.Protect(PasswordBox.Password);
         _save();
         Refresh(c);
-        ShowResult($"Salvata. Usata da {_tree.CountUsing(c.Id)} sessioni (le sessioni già aperte la useranno alla prossima apertura).", true);
+        ShowResult(L.F("Salvata. Usata da {0} sessioni (le sessioni già aperte la useranno alla prossima apertura).", _tree.CountUsing(c.Id)), true);
     }
 
     private void Delete_Click(object sender, RoutedEventArgs e)
     {
         if (Current is not { } c) return;
         var n = _tree.CountUsing(c.Id);
-        var question = n == 0 ? $"Eliminare la credenziale \"{c.Name}\"?"
-            : $"La credenziale \"{c.Name}\" è usata da {n} sessioni, che useranno utente/password propri (se vuoti, l'utente Windows corrente). Eliminarla?";
+        var question = n == 0 ? L.F("Eliminare la credenziale \"{0}\"?", c.Name)
+            : L.F("La credenziale \"{0}\" è usata da {1} sessioni, che useranno utente/password propri (se vuoti, l'utente Windows corrente). Eliminarla?", c.Name, n);
         if (MessageBox.Show(this, question, Title, MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
         _tree.DeleteCredential(c.Id);
         _save();

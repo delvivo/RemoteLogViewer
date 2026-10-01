@@ -25,13 +25,13 @@ public static partial class DatePath
         foreach (Match m in Placeholder().Matches(path))
         {
             var fmt = m.Groups[1].Value;
-            if (fmt.Length == 0) { errors.Add("Formato data vuoto."); continue; }
-            if (HasTimeComponent(fmt)) { errors.Add("Il formato data non può contenere ore/minuti/secondi."); continue; }
+            if (fmt.Length == 0) { errors.Add(L.T("Formato data vuoto.")); continue; }
+            if (HasTimeComponent(fmt)) { errors.Add(L.T("Il formato data non può contenere ore/minuti/secondi.")); continue; }
             string resolved;
             try { resolved = Sample.ToString(fmt, CultureInfo.InvariantCulture); }
-            catch (FormatException) { errors.Add($"Formato data non valido: {fmt}."); continue; }
+            catch (FormatException) { errors.Add(L.F("Formato data non valido: {0}.", fmt)); continue; }
             if (resolved.IndexOfAny(@"\/:*?""<>|".ToCharArray()) >= 0)
-                errors.Add("Il formato data produce caratteri non ammessi nel percorso.");
+                errors.Add(L.T("Il formato data produce caratteri non ammessi nel percorso."));
         }
         return errors;
     }

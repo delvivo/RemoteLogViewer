@@ -16,7 +16,7 @@ public partial class MainWindow : Window
 {
     private const string TreeDragFormat = "rlv-tree-item";
     private const string TabDragFormat = "rlv-tab";
-    private const string ExportFilter = "Collezioni Remote Log Viewer (*.rlv.json)|*.rlv.json|JSON (*.json)|*.json";
+    private static string ExportFilter => L.T("Collezioni Remote Log Viewer (*.rlv.json)|*.rlv.json|JSON (*.json)|*.json");
 
     private readonly SessionStore _store = new(SessionStore.DefaultPath);
     private readonly SessionTree _tree;
@@ -29,12 +29,19 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        LangBox.ItemsSource = new Dictionary<string, string> { ["it"] = "Italiano", ["en"] = "English" };
+        LangBox.SelectedValue = L.Lang;
         _tree = _store.Load();
         RebuildTree();
         if (_store.Warning != null) Loaded += (_, _) => MessageBox.Show(this, _store.Warning, Title, MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 
     private void Save() => _store.Save(_tree);
+
+    private void Lang_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (LangBox.SelectedValue is string lang) L.SetLang(lang);
+    }
 
     // ---- saved sessions tree ----
 
@@ -91,7 +98,7 @@ public partial class MainWindow : Window
     {
         var copy = s.Clone();
         copy.Id = Guid.NewGuid();
-        copy.Name += " (copia)";
+        copy.Name += L.T(" (copia)");
         AddSession(copy);
     }
 
@@ -133,7 +140,7 @@ public partial class MainWindow : Window
 
     private void DeleteSession(SessionConfig s)
     {
-        if (!Confirm($"Eliminare la sessione \"{s.Name}\"?")) return;
+        if (!Confirm(L.F("Eliminare la sessione \"{0}\"?", s.Name))) return;
         _tree.Sessions.Remove(s);
         Save();
         RebuildTree();
@@ -143,8 +150,8 @@ public partial class MainWindow : Window
     {
         int sessions = _tree.CountSessions(c.Id), collections = _tree.CountCollections(c.Id);
         var question = sessions + collections == 0
-            ? $"Eliminare la collezione \"{c.Name}\"?"
-            : $"Eliminare la collezione \"{c.Name}\" con {sessions} sessioni e {collections} sottocollezioni?";
+            ? L.F("Eliminare la collezione \"{0}\"?", c.Name)
+            : L.F("Eliminare la collezione \"{0}\" con {1} sessioni e {2} sottocollezioni?", c.Name, sessions, collections);
         if (!Confirm(question)) return;
         _tree.Delete(c.Id); // open tabs keep running: they use a clone of the config
         Save();
@@ -158,8 +165,8 @@ public partial class MainWindow : Window
 
     private void NewCollection(Guid? parentId)
     {
-        var name = TextDialog.Ask(this, "Nuova collezione", "_Nome", "",
-            n => _tree.NameTaken(parentId, n) ? "Esiste già una collezione con questo nome." : null);
+        var name = TextDialog.Ask(this, L.T("Nuova collezione"), L.T("_Nome"), "",
+            n => _tree.NameTaken(parentId, n) ? L.T("Esiste già una collezione con questo nome.") : null);
         if (name == null) return;
         var c = new SessionCollection { Name = name, ParentId = parentId };
         _tree.Collections.Add(c);
@@ -169,8 +176,8 @@ public partial class MainWindow : Window
 
     private void Rename(SessionCollection c)
     {
-        var name = TextDialog.Ask(this, "Rinomina collezione", "_Nome", c.Name,
-            n => _tree.NameTaken(c.ParentId, n, c.Id) ? "Esiste già una collezione con questo nome." : null);
+        var name = TextDialog.Ask(this, L.T("Rinomina collezione"), L.T("_Nome"), c.Name,
+            n => _tree.NameTaken(c.ParentId, n, c.Id) ? L.T("Esiste già una collezione con questo nome.") : null);
         if (name == null) return;
         c.Name = name;
         Save();
@@ -224,7 +231,7 @@ public partial class MainWindow : Window
         if (tvi != null) tvi.IsSelected = true;
         var menu = SessionTreeView.ContextMenu!;
         menu.Items.Clear();
-        void Add(string header, Action action) => menu.Items.Add(Item(header, action));
+        void Add(string header, Action action) => menu.Items.Add(Item(L.T(header), action));
         void Sep() => menu.Items.Add(new Separator());
 
         switch (tvi?.DataContext)
@@ -261,8 +268,8 @@ public partial class MainWindow : Window
 
     private MenuItem MoveMenu(object item, Guid? current)
     {
-        var menu = new MenuItem { Header = "Sposta in…" };
-        menu.Items.Add(Item("(radice)", () => MoveTo(item, null), current != null));
+        var menu = new MenuItem { Header = L.T("Sposta in…") };
+        menu.Items.Add(Item(L.T("(radice)"), () => MoveTo(item, null), current != null));
         foreach (var (c, path) in _tree.Collections.Select(c => (c, _tree.PathOf(c.Id))).OrderBy(x => x.Item2, StringComparer.CurrentCultureIgnoreCase))
         {
             var ok = c.Id != current && (item is not SessionCollection moving || _tree.CanMove(moving.Id, c.Id));
@@ -284,7 +291,7 @@ public partial class MainWindow : Window
 
     private void Export(Guid? collectionId, string suggestedName)
     {
-        var dlg = new SaveFileDialog { Filter = ExportFilter, FileName = suggestedName + ".rlv.json", Title = "Esporta collezione" };
+        var dlg = new SaveFileDialog { Filter = ExportFilter, FileName = suggestedName + ".rlv.json", Title = L.T("Esporta collezione") };
         if (dlg.ShowDialog(this) != true) return;
         try
         {
@@ -292,13 +299,13 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            MessageBox.Show(this, $"Esportazione non riuscita: {ex.Message}", Title, MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, L.F("Esportazione non riuscita: {0}", ex.Message), Title, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     private void Import(Guid? targetId)
     {
-        var dlg = new OpenFileDialog { Filter = ExportFilter, Title = "Importa collezione" };
+        var dlg = new OpenFileDialog { Filter = ExportFilter, Title = L.T("Importa collezione") };
         if (dlg.ShowDialog(this) != true) return;
         try
         {
@@ -308,12 +315,12 @@ public partial class MainWindow : Window
             if (first is SessionCollection c) _expanded.Add(c.Id);
             Save();
             RebuildTree(first);
-            MessageBox.Show(this, $"Importate {file.Sessions.Count} sessioni. Le password non sono incluse: inseriscile con Modifica.",
+            MessageBox.Show(this, L.F("Importate {0} sessioni. Le password non sono incluse: inseriscile con Modifica.", file.Sessions.Count),
                 Title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
         {
-            MessageBox.Show(this, $"Importazione non riuscita: {ex.Message}", Title, MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, L.F("Importazione non riuscita: {0}", ex.Message), Title, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -401,9 +408,10 @@ public partial class MainWindow : Window
         var badge = new Border
         {
             Background = new SolidColorBrush(Color.FromRgb(0xD3, 0x2F, 0x2F)), CornerRadius = new CornerRadius(7), Padding = new Thickness(5, 0, 5, 0),
-            Margin = new Thickness(6, 0, 0, 0), Visibility = Visibility.Collapsed, ToolTip = "Errori arrivati mentre la scheda non era visibile",
+            Margin = new Thickness(6, 0, 0, 0), Visibility = Visibility.Collapsed, 
             Child = new TextBlock { Foreground = Brushes.White, FontSize = 11, FontWeight = FontWeights.SemiBold },
         };
+        badge.SetBinding(ToolTipProperty, L.Bind("Errori arrivati mentre la scheda non era visibile"));
         var header = new StackPanel { Orientation = Orientation.Horizontal };
         header.Children.Add(dot);
         header.Children.Add(title);
@@ -417,7 +425,7 @@ public partial class MainWindow : Window
             tab.ToolTip = session.Path;
             ((TextBlock)badge.Child).Text = view.UnreadErrors.ToString();
             badge.Visibility = view.UnreadErrors > 0 ? Visibility.Visible : Visibility.Collapsed;
-            System.Windows.Automation.AutomationProperties.SetName(tab, view.UnreadErrors > 0 ? $"{session.DisplayName} ({view.UnreadErrors} errori)" : session.DisplayName);
+            System.Windows.Automation.AutomationProperties.SetName(tab, view.UnreadErrors > 0 ? L.F("{0} ({1} errori)", session.DisplayName, view.UnreadErrors) : session.DisplayName);
         };
         System.Windows.Automation.AutomationProperties.SetName(tab, session.DisplayName);
         view.ErrorsArrived += _ => { if (!IsActive) Flash(); };
@@ -552,11 +560,11 @@ public partial class MainWindow : Window
 
     private void Help_Executed(object sender, ExecutedRoutedEventArgs e)
     {
-        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "RemoteLogViewer", "guida.html");
+        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "RemoteLogViewer", L.GuideFile);
         try
         {
             var asm = Assembly.GetExecutingAssembly();
-            using var res = asm.GetManifestResourceStream("RemoteLogViewer.Guida.html")!;
+            using var res = asm.GetManifestResourceStream(L.GuideResource)!;
             var version = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "";
             Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
             File.WriteAllText(path, new StreamReader(res).ReadToEnd().Replace("%VERSION%", version));
@@ -564,7 +572,7 @@ public partial class MainWindow : Window
         }
         catch (Exception ex)
         {
-            MessageBox.Show(this, $"Impossibile aprire la guida ({ex.Message}).\nFile: {path}", Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+            MessageBox.Show(this, L.F("Impossibile aprire la guida ({0}).\nFile: {1}", ex.Message, path), Title, MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
 }

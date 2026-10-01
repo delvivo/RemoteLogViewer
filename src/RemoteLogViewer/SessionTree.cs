@@ -95,7 +95,7 @@ public class SessionTree(List<SessionCollection> collections, List<SessionConfig
 
     public void Move(SessionCollection c, Guid? parentId)
     {
-        if (!CanMove(c.Id, parentId)) throw new InvalidOperationException("Una collezione non può essere spostata dentro sé stessa.");
+        if (!CanMove(c.Id, parentId)) throw new InvalidOperationException(L.T("Una collezione non può essere spostata dentro sé stessa."));
         if (c.ParentId == parentId) return;
         c.Name = UniqueName(parentId, c.Name, c.Id);
         c.ParentId = parentId;
@@ -207,7 +207,7 @@ public class SessionTree(List<SessionCollection> collections, List<SessionConfig
     public SessionCollection Duplicate(Guid id)
     {
         var file = Export(id, keepPasswords: true);
-        file.Collections[0].Name += " (copia)"; // [0] is the exported root
+        file.Collections[0].Name += L.T(" (copia)"); // [0] is the exported root
         return (SessionCollection)Import(file, Find(id)!.ParentId, keepPasswords: true)!;
     }
 
@@ -230,6 +230,6 @@ public class SessionTree(List<SessionCollection> collections, List<SessionConfig
                 return true;
             });
         }
-        if (!ok) throw new InvalidDataException("File non valido.");
+        if (!ok) throw new InvalidDataException(L.T("File non valido."));
     }
 }

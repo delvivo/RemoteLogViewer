@@ -48,14 +48,22 @@ public partial class LogView : UserControl
             StatusChanged?.Invoke();
         };
         Session.StateChanged += () => Dispatcher.BeginInvoke(UpdateStatus);
+        L.Changed += OnLanguageChanged;
         _timer.Tick += (_, _) => Drain();
         _timer.Start();
         UpdateStatus();
         Session.Start();
     }
 
+    private void OnLanguageChanged()
+    {
+        UpdateStatus();
+        UpdateCount();
+    }
+
     public void Close()
     {
+        L.Changed -= OnLanguageChanged;
         _timer.Stop();
         Session.Stop();
     }
@@ -139,8 +147,8 @@ public partial class LogView : UserControl
         WarnCheck.Content = $"WARN {_counts[(int)LogLevel.Warn]}";
         InfoCheck.Content = $"INFO {_counts[(int)LogLevel.Info]}";
         DebugCheck.Content = $"DEBUG {_counts[(int)LogLevel.Debug]}";
-        var matches = _search.Length == 0 ? "" : $" · {_all.Count(l => l.IsMatch)} trovate";
-        CountLabel.Text = _visible.Count == _all.Count ? $"{_all.Count} righe{matches}" : $"{_visible.Count}/{_all.Count} righe{matches}";
+        var matches = _search.Length == 0 ? "" : L.F(" · {0} trovate", _all.Count(l => l.IsMatch));
+        CountLabel.Text = _visible.Count == _all.Count ? L.F("{0} righe{1}", _all.Count, matches) : L.F("{0}/{1} righe{2}", _visible.Count, _all.Count, matches);
     }
 
     private void UpdateStatus()
@@ -154,7 +162,7 @@ public partial class LogView : UserControl
             SessionState.Stopped => Brushes.Gray,
             _ => Brushes.Orange,
         };
-        StartStopButton.Content = Session.State is SessionState.Stopped or SessionState.Error ? "Avvia" : "Stop";
+        StartStopButton.Content = Session.State is SessionState.Stopped or SessionState.Error ? L.T("Avvia") : L.T("Stop");
         OlderButton.IsEnabled = Session.CanLoadOlder && Session.State == SessionState.Running;
         StatusChanged?.Invoke();
     }
@@ -183,10 +191,10 @@ public partial class LogView : UserControl
         var n = Math.Min(wanted, MaxLines - _all.Count);
         if (n <= 0)
         {
-            Info($"Buffer pieno ({MaxLines:N0} righe): usa Pulisci per fare spazio.");
+            Info(L.F("Buffer pieno ({0:N0} righe): usa Pulisci per fare spazio.", MaxLines));
             return;
         }
-        if (n < wanted) Info($"Verranno caricate solo {n:N0} righe: il buffer è limitato a {MaxLines:N0}.");
+        if (n < wanted) Info(L.F("Verranno caricate solo {0:N0} righe: il buffer è limitato a {1:N0}.", n, MaxLines));
         Session.RequestOlder(n);
     }
 
@@ -198,9 +206,9 @@ public partial class LogView : UserControl
         var name = string.Concat(Session.Config.Name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
         var dlg = new SaveFileDialog
         {
-            Filter = "Log (*.log)|*.log|Tutti i file (*.*)|*.*",
+            Filter = L.T("Log (*.log)|*.log|Tutti i file (*.*)|*.*"),
             FileName = $"{name}_{DateTime.Now:yyyyMMdd_HHmmss}.log",
-            Title = "Salva righe visibili",
+            Title = L.T("Salva righe visibili"),
         };
         if (dlg.ShowDialog(Window.GetWindow(this)) != true) return;
         try
@@ -209,7 +217,7 @@ public partial class LogView : UserControl
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            Info($"Salvataggio non riuscito: {ex.Message}", MessageBoxImage.Error);
+            Info(L.F("Salvataggio non riuscito: {0}", ex.Message), MessageBoxImage.Error);
         }
     }
 

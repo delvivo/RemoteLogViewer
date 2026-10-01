@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Remote Log Viewer Guide</title>
+<!-- User guide: update it with every user-visible change (features, commands, shortcuts, messages). Keep it in sync with Guida.it.html. %VERSION% is replaced when it is opened. -->
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1f2328; --muted: #59636e; --border: #d1d9e0; --accent: #0969da;
+    --code-bg: #f3f4f6; --error: #d32f2f; --warn: #e07b00; --debug: #808080; --marker: #4682b4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117; --fg: #e6edf3; --muted: #9198a1; --border: #3d444d; --accent: #4493f8;
+      --code-bg: #1f2428; --error: #f47067; --warn: #f0a04b; --debug: #9198a1; --marker: #79b8ff;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.6 "Segoe UI", system-ui, sans-serif; }
+  .layout { display: flex; max-width: 1150px; margin: 0 auto; }
+  nav { position: sticky; top: 0; align-self: flex-start; width: 250px; flex: none; height: 100vh; overflow-y: auto; padding: 24px 16px; border-right: 1px solid var(--border); font-size: 14px; }
+  nav ol { padding-left: 18px; margin: 8px 0; }
+  nav a { color: var(--fg); text-decoration: none; }
+  nav a:hover { color: var(--accent); }
+  main { flex: 1; min-width: 0; padding: 24px 40px 80px; }
+  h1 { margin: 0 0 4px; font-size: 28px; }
+  .version { color: var(--muted); margin: 0 0 24px; }
+  h2 { margin-top: 40px; padding-bottom: 6px; border-bottom: 1px solid var(--border); font-size: 21px; }
+  h3 { margin-top: 24px; font-size: 17px; }
+  a { color: var(--accent); }
+  code, kbd { font-family: "Cascadia Mono", Consolas, monospace; font-size: 13px; background: var(--code-bg); border-radius: 4px; padding: 1px 5px; }
+  kbd { border: 1px solid var(--border); border-bottom-width: 2px; }
+  pre { background: var(--code-bg); border-radius: 6px; padding: 12px; overflow-x: auto; }
+  pre code { padding: 0; background: none; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td { border: 1px solid var(--border); padding: 6px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--code-bg); }
+  .note { border-left: 4px solid var(--accent); background: var(--code-bg); padding: 8px 14px; border-radius: 0 6px 6px 0; }
+  .err { color: var(--error); font-weight: 600; } .warn { color: var(--warn); font-weight: 600; }
+  .dbg { color: var(--debug); } .mark { color: var(--marker); font-style: italic; }
+  .badge { background: #d32f2f; color: #fff; border-radius: 8px; padding: 0 6px; font-size: 12px; font-weight: 600; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: middle; }
+  @media (max-width: 800px) {
+    .layout { display: block; }
+    nav { position: static; width: auto; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+<nav>
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#intro">Introduction</a></li>
+    <li><a href="#sessioni">Sessions</a></li>
+    <li><a href="#credenziali">Credentials</a></li>
+    <li><a href="#collezioni">Collections</a></li>
+    <li><a href="#export">Export and import</a></li>
+    <li><a href="#data">Date in the path</a></li>
+    <li><a href="#schede">Tabs and Side by side</a></li>
+    <li><a href="#workspace">Reopening at startup</a></li>
+    <li><a href="#avvisi">Error alerts</a></li>
+    <li><a href="#vista">Session toolbar</a></li>
+    <li><a href="#filtri">Filters, context and search</a></li>
+    <li><a href="#precedenti">Older lines</a></li>
+    <li><a href="#salva">Saving and copying</a></li>
+    <li><a href="#stati">Session states</a></li>
+    <li><a href="#tasti">Keyboard shortcuts</a></li>
+    <li><a href="#lingua">Language</a></li>
+    <li><a href="#problemi">Troubleshooting</a></li>
+  </ol>
+</nav>
+<main>
+<h1>Remote Log Viewer</h1>
+<p class="version">User guide · version %VERSION%</p>
+
+<h2 id="intro">Introduction</h2>
+<p>Remote Log Viewer follows log files on Windows network shares (SMB), such as <code>\\server\E$</code>, in real time. It replaces the manual sequence:</p>
+<pre><code>New-SmbMapping -RemotePath "\\server\E$" -UserName "user" -Password "pwd"
+Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"</code></pre>
+<p>The app connects to the share without assigning a drive letter, reads the last lines of the file and shows new ones as they are written (it checks every half second). It handles file rotation, disconnections and files that do not exist yet on its own.</p>
+
+<h2 id="sessioni">Sessions</h2>
+<p>A <strong>session</strong> is a saved configuration: where the file is and how to access it. Sessions appear in the <em>Saved sessions</em> panel on the left.</p>
+<table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td>Name</td><td>Name shown in the list and in the tab title.</td></tr>
+  <tr><td>Share</td><td>In the form <code>\\server\share</code>, for example <code>\\nts11050\E$</code>.</td></tr>
+  <tr><td>Credential</td><td>A <a href="#credenziali">shared credential</a>, or none: in that case the User and Password below are used.</td></tr>
+  <tr><td>User / Password</td><td><code>DOMAIN\user</code>. If you leave the user empty, the current Windows user is used. When you edit a session, an empty password stays the same as before.</td></tr>
+  <tr><td>File</td><td>The path relative to the share (<code>logs\app.log</code>) or the full UNC path, which must be inside the share. It can contain a <a href="#data">variable date</a>.</td></tr>
+  <tr><td>Initial lines</td><td>How many lines to read from the end of the file when opening (0 to 100,000). It is also the number of lines loaded each time with <a href="#precedenti">▲ Older</a>.</td></tr>
+  <tr><td>Encoding</td><td><em>auto</em> (UTF-8), UTF-16 or Windows-1252. If the file starts with a BOM, the encoding given by the BOM always wins.</td></tr>
+</table>
+<p><strong>Test connection</strong> tries to reach the share and the file without saving anything.</p>
+<p>The buttons under the list are: <em>Start</em>, <em>New</em>, <em>Edit</em> (<kbd>F2</kbd>), <em>Duplicate</em>, <em>Delete</em> (<kbd>Del</kbd>) and <em>Collection</em>. To start a session you can also double-click it or press <kbd>Enter</kbd>.</p>
+<p class="note">Passwords are encrypted with DPAPI: only your Windows user, on this PC, can decrypt them. The sessions file is <code>%APPDATA%\RemoteLogViewer\sessions.json</code>.</p>
+
+<h2 id="credenziali">Credentials</h2>
+<p>The <strong>Credentials…</strong> button in the top bar manages user names and passwords shared by several sessions (name, user, password). In a session, pick the credential in the <em>Credential</em> field. When the password changes, you update it once in the credential.</p>
+<ul>
+  <li>Sessions that are already open keep using the previous password until they are reopened.</li>
+  <li>If you delete a credential, the sessions that used it go back to their own user and password.</li>
+  <li>Credentials are never exported.</li>
+</ul>
+
+<h2 id="collezioni">Collections</h2>
+<p><strong>Collections</strong> are folders, also nested (for example <code>PROD › API</code>), used to organize sessions.</p>
+<ul>
+  <li><em>Collection</em> creates a collection inside the selected one.</li>
+  <li>Right-clicking a collection offers: new session, new subcollection, rename, duplicate, move, export, import and delete. Right-clicking empty space offers the root actions.</li>
+  <li>You can drag sessions and collections onto another collection, or onto empty space to move them to the root.</li>
+  <li><em>Duplicate</em> on a collection copies all its content, passwords included, as <code>Name (copy)</code>.</li>
+  <li>Before deleting a collection with content, the app asks for confirmation and tells you how many sessions will be deleted.</li>
+</ul>
+
+<h2 id="export">Export and import</h2>
+<p>Right-click a collection and choose <em>Export…</em>; right-click empty space and choose <em>Export all…</em>. A <code>.rlv.json</code> file is created, to share with colleagues.</p>
+<ul>
+  <li>Passwords are <strong>not</strong> exported. After the import they must be entered again with <em>Edit</em>.</li>
+  <li>Import always adds new copies and never overwrites anything. If a name is already taken it becomes <code>Name (2)</code>.</li>
+  <li>An imported session stays linked to its credential only if that credential already exists on this PC.</li>
+</ul>
+
+<h2 id="data">Date in the path</h2>
+<p>Many logs have a different folder or file for each day. In the <em>File</em> field write <code>{date:format}</code> in place of the date, using the .NET date format:</p>
+<pre><code>DOB\DOB_SDL\log\standard_logs\{date:yyyy_MM_dd}\log.log
+logs\app_{date:yyyy-MM-dd}.log</code></pre>
+<ul>
+  <li>When you start the session, the app asks for the date on a calendar (it proposes today) and shows a preview of the path.</li>
+  <li>The calendar checks which days of the displayed month have a log file: <strong>crossed-out</strong> days have no file and cannot be picked. Today is always selectable: if the file is not there yet, the session waits for it. If the share cannot be reached, the reason appears under the calendar and all days stay selectable.</li>
+  <li>If you picked <strong>today</strong>, at midnight the session switches to the new day's file by itself and shows the line <span class="mark">— new day: … —</span>. If you picked a past date, the session stays on that date.</li>
+  <li>The format may contain only day, month and year (no hours or minutes). A date is not allowed in the share.</li>
+  <li>If only the old logs have the date and the current file does not (e.g. today <code>app.log</code>, yesterday <code>app.2026-09-29.log</code>), put the separator inside the format, quoted, and tick <em>Today's file has no date</em>:
+    <pre><code>logs\app{date:'.'yyyy-MM-dd}.log</code></pre>
+    For today <code>logs\app.log</code> is opened, for other dates the file with the date. At midnight the session stays on <code>app.log</code>: when the server renames it, the app detects it and restarts from the beginning of the new file.</li>
+</ul>
+
+<h2 id="schede">Tabs and Side by side</h2>
+<p>Each session you start opens in a tab. The tab title shows a status dot, the session name (plus the date, if the path contains one), the <a href="#avvisi">error badge</a> if any, and the ✕ button. To close a tab you can also middle-click its title.</p>
+<ul>
+  <li>To reorder tabs, drag a title onto another tab.</li>
+  <li><strong>Side by side</strong> (top bar) shows all open sessions together, in a grid, in the same order as the tabs.</li>
+</ul>
+
+<h2 id="workspace">Reopening at startup</h2>
+<p>When you close the app, the open tabs, their order, the selected tab and the Side by side mode are remembered. On the next start everything is restored without questions.</p>
+<ul>
+  <li>A dated session that was following <em>today</em> reopens on the current date. A session opened on a fixed date reopens on the same date.</li>
+  <li>Sessions deleted in the meantime are ignored.</li>
+  <li>If a session cannot connect, its tab shows the error and the others open normally.</li>
+</ul>
+
+<h2 id="avvisi">Error alerts</h2>
+<ul>
+  <li>When an <span class="err">ERROR</span> line arrives in a tab you are not looking at, a red badge with the number of errors appears on its title, for example <span class="badge">3</span>. The badge disappears when you select the tab.</li>
+  <li>If the app is not in the foreground, its button in the Windows taskbar flashes until you go back to the app.</li>
+  <li>An error followed by its stack trace counts as <strong>one</strong> error.</li>
+  <li>Lines read when the session opens and those loaded with ▲ Older do not raise alerts. In Side by side mode no badge appears, because all sessions are already visible.</li>
+</ul>
+
+<h2 id="vista">Session toolbar</h2>
+<table>
+  <tr><th>Element</th><th>Function</th></tr>
+  <tr><td><span class="dot" style="background:#32cd32"></span> Status</td><td>Dot and text of the <a href="#stati">session state</a>.</td></tr>
+  <tr><td>Stop / Start</td><td>Stops or restarts reading the file.</td></tr>
+  <tr><td>Follow</td><td>Automatic scrolling to new lines. It turns off when you scroll up and turns back on when you return to the bottom.</td></tr>
+  <tr><td>Wrap</td><td>Wraps long lines instead of showing the horizontal scroll bar.</td></tr>
+  <tr><td>Clear</td><td>Empties the view and resets the counters. Reading the file continues.</td></tr>
+  <tr><td>▲ Older</td><td>Loads the <a href="#precedenti">lines before</a> the ones already read.</td></tr>
+  <tr><td>Save…</td><td><a href="#salva">Saves the visible lines</a> to a file (<kbd>Ctrl</kbd>+<kbd>S</kbd>).</td></tr>
+  <tr><td>Filter, Regex, Context</td><td>See <a href="#filtri">Filters, context and search</a>.</td></tr>
+  <tr><td><span class="err">ERROR n</span> <span class="warn">WARN n</span> INFO n <span class="dbg">DEBUG n</span></td><td>The checkboxes show or hide lines of that level. The number is how many entries of that level are in the buffer: a stack trace counts as 1 and the number does not depend on the filters.</td></tr>
+  <tr><td>Search, ▲ ▼</td><td>Highlights the lines containing the text and jumps from one result to the next.</td></tr>
+  <tr><td>Line counter</td><td>Visible lines out of the total, plus the number of search results.</td></tr>
+</table>
+<p>Colors: <span class="err">ERROR</span> (also FATAL and CRITICAL) in red, <span class="warn">WARN</span> in orange, <span class="dbg">DEBUG/TRACE</span> in gray. The app's own service lines are <span class="mark">blue italic</span>. Lines without a level (for example a stack trace) take the level of the previous line.</p>
+<p>The view keeps at most 100,000 lines. Beyond that limit the oldest are discarded.</p>
+
+<h2 id="filtri">Filters, context and search</h2>
+<h3>Filter</h3>
+<p>Shows only the lines containing the text, ignoring case. If you turn on <strong>Regex</strong>, the text is read as a .NET regular expression; an invalid regex turns the border red. The level checkboxes apply together with the filter. Service lines are always visible.</p>
+<h3>Context</h3>
+<p>In the <strong>Context</strong> box you set how many lines to show before and after each line matching the filter (0 to 50), like <code>grep -C</code>. Context lines appear dimmed. Between groups, if they are not contiguous, a <span class="mark">--</span> separator appears. With Follow on, the lines following a match appear as they arrive. Without a filter, context has no effect.</p>
+<h3>Search</h3>
+<p><kbd>Ctrl</kbd>+<kbd>F</kbd> moves the cursor to the search box. Matching lines are highlighted in yellow; <kbd>F3</kbd> and <kbd>Shift</kbd>+<kbd>F3</kbd> jump to the next or previous result. Unlike the filter, search does not hide any line.</p>
+
+<h2 id="precedenti">Older lines</h2>
+<p>When opening, only the last <em>Initial lines</em> of the file are read. <strong>▲ Older</strong> loads another block of the same size (1000 lines if <em>Initial lines</em> is 0) and puts it above the lines already present. Reading new lines continues and the view does not jump.</p>
+<ul>
+  <li>The button is disabled when the start of the file is already loaded, when the session is not active, and after a file rotation (the new file is already read from the start).</li>
+  <li>If the block would exceed the 100,000-line limit, only as many lines as fit are loaded and the app tells you.</li>
+</ul>
+
+<h2 id="salva">Saving and copying</h2>
+<ul>
+  <li><kbd>Ctrl</kbd>+<kbd>S</kbd> or <strong>Save…</strong> save exactly the visible lines to a UTF-8 file, with filters and context applied (separators become <code>--</code> lines). The suggested name is <code>&lt;session&gt;_&lt;yyyyMMdd_HHmmss&gt;.log</code>.</li>
+  <li><kbd>Ctrl</kbd>+<kbd>C</kbd> copies the selected lines. <kbd>Shift</kbd> and <kbd>Ctrl</kbd>+click are for multiple selection.</li>
+</ul>
+
+<h2 id="stati">Session states</h2>
+<table>
+  <tr><th>State</th><th>Meaning</th></tr>
+  <tr><td><span class="dot" style="background:#ffa500"></span> Connecting…</td><td>Connecting to the share.</td></tr>
+  <tr><td><span class="dot" style="background:#32cd32"></span> Active</td><td>The file is being followed.</td></tr>
+  <tr><td><span class="dot" style="background:#ffa500"></span> Waiting for the file…</td><td>The file does not exist (yet): it is checked again every 2 seconds.</td></tr>
+  <tr><td><span class="dot" style="background:#ffa500"></span> Reconnecting…</td><td>The connection dropped after having worked: retry every 5 seconds, then reading resumes from where it stopped.</td></tr>
+  <tr><td><span class="dot" style="background:#ff0000"></span> Error</td><td>The first connection failed (wrong credentials or path). There are no automatic retries: fix the session and press <em>Start</em>.</td></tr>
+  <tr><td><span class="dot" style="background:#808080"></span> Stopped</td><td>Stopped with <em>Stop</em>.</td></tr>
+</table>
+<p>Service lines appear in the view, such as <span class="mark">— file truncated or rotated: reading from the start —</span>, <span class="mark">— disconnected —</span> and <span class="mark">— reconnected —</span>.</p>
+
+<h2 id="tasti">Keyboard shortcuts</h2>
+<table>
+  <tr><th>Key</th><th>Where</th><th>Action</th></tr>
+  <tr><td><kbd>F1</kbd></td><td>Everywhere</td><td>Opens this guide</td></tr>
+  <tr><td><kbd>Enter</kbd></td><td>Session list</td><td>Starts the session / expands or collapses the collection</td></tr>
+  <tr><td><kbd>F2</kbd></td><td>Session list</td><td>Edits the session / renames the collection</td></tr>
+  <tr><td><kbd>Del</kbd></td><td>Session list</td><td>Deletes</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Session</td><td>Go to the search box</td></tr>
+  <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Session</td><td>Next / previous result</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Log lines</td><td>Copies the selected lines</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Session</td><td>Saves the visible lines</td></tr>
+  <tr><td>Middle mouse button</td><td>Tab title</td><td>Closes the tab</td></tr>
+</table>
+
+<h2 id="lingua">Language</h2>
+<p>The interface and this guide are available in Italian and English. Choose the language with the <strong>Language</strong> selector in the top bar: the choice is saved (file <code>%APPDATA%\RemoteLogViewer\lang.txt</code>) and the change is immediate, no restart needed (a guide already open in the browser keeps the previous language: reopen it with F1). On first run the Windows language is used (Italian, otherwise English).</p>
+
+<h2 id="problemi">Troubleshooting</h2>
+<h3>"Different credentials" error (1219)</h3>
+<p>Windows allows only one identity per server. If a connection to the same server with another user already exists (for example a mapped drive), close it with <code>net use \\server\share /delete</code>, or use the same credentials.</p>
+<h3>Password required after an import or on another PC</h3>
+<p>Passwords are not exported, and encrypted ones only work for your Windows user on this PC. Enter them again with <em>Edit</em> or in <em>Credentials…</em>.</p>
+<h3>An existing mapping is not removed</h3>
+<p>This is intentional: the app only closes the connections it opened itself.</p>
+<h3>The guide does not open</h3>
+<p>The guide is written to <code>%TEMP%\RemoteLogViewer\guide.en.html</code> and opened with the default browser. If opening fails, the app shows the file path: you can open it by hand.</p>
+</main>
+</div>
+</body>
+</html>

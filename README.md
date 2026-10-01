@@ -1,32 +1,35 @@
 # Remote Log Viewer
 
-App desktop Windows (WPF, .NET 10) per seguire log su share remote. Sostituisce:
+**English** · [Italiano](README.it.md)
+
+Windows desktop app (WPF, .NET 10) to follow logs on remote shares. It replaces:
 
 ```powershell
 New-SmbMapping -RemotePath "\\server\E$" -UserName "user" -Password "pwd"
 Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"
 ```
 
-## Funzioni
+## Features
 
-- Icona dell'applicazione (`src/RemoteLogViewer/app.ico`): exe e finestra principale.
-- Sessioni salvate (share, utente, password, file, righe iniziali, encoding) in `%APPDATA%\RemoteLogViewer\sessions.json`; password cifrate con DPAPI (utente Windows corrente).
-- **Credenziali** condivise (pulsante *Credenziali…* nella barra): nome + utente + password, selezionabili nel campo *Credenziale* di ogni sessione in alternativa a utente/password propri. Al cambio password si aggiorna solo la credenziale; le sessioni già aperte la usano dalla prossima apertura. Eliminare una credenziale riporta le sessioni che la usavano a utente/password propri. Le credenziali non vengono esportate: l'import ricollega la credenziale solo se esiste già (stesso PC).
-- Tail in tempo reale (polling 500 ms), rilevamento troncamento/rotazione, attesa file mancante, riconnessione automatica.
-- **Collezioni** (cartelle annidabili) per organizzare le sessioni: pulsante *Collezione*, tasto destro per nuova/rinomina/duplica/sposta/elimina, trascinamento di sessioni e collezioni (su spazio vuoto = radice). F2 = modifica/rinomina, Canc = elimina. *Duplica* copia la collezione con tutto il contenuto (password incluse) accanto all'originale come `Nome (copia)`.
-- **Esporta / importa** una collezione (o tutto, tasto destro su spazio vuoto) in un file `.rlv.json`. Le password **non** vengono esportate: dopo l'import vanno reinserite con *Modifica*. L'import aggiunge sempre copie nuove (nomi in conflitto → `Nome (2)`), non sovrascrive nulla.
-- **Data nel percorso**: `{date:<formato>}` nel campo *File*, in una cartella o nel nome, es. `DOB\DOB_SDL\log\standard_logs\{date:yyyy_MM_dd}\log.log` o `logs\app_{date:yyyy-MM-dd}.log`. All'avvio si sceglie la data su un calendario (default oggi, con anteprima del percorso): i giorni del mese visualizzato senza file di log sono barrati e non selezionabili (oggi resta selezionabile: la sessione attende il file). Se la data scelta è oggi, a mezzanotte la sessione passa da sola al file del nuovo giorno (riga `— nuovo giorno —`); una data passata resta fissa. Solo componenti di data (niente ore/minuti), non ammesso nella share. Se solo i log vecchi hanno la data e quello corrente no (es. oggi `app.log`, ieri `app.2026-09-29.log`), scrivi `logs\app{date:'.'yyyy-MM-dd}.log` (separatore tra apici dentro il formato) e spunta *Il file di oggi non ha la data*: per oggi il placeholder sparisce e a mezzanotte la sessione resta sullo stesso file (la rotazione lato server viene rilevata come sempre).
-- Più sessioni in schede (riordinabili trascinandole) o **Affianca** (tutte visibili insieme, nello stesso ordine delle schede).
-- Colori per livello (ERROR/WARN/INFO/DEBUG), filtro per livello (checkbox ERROR/WARN/INFO/DEBUG; le righe senza livello restano sempre visibili), filtro testo/regex, ricerca con evidenziazione (Ctrl+F, F3/Shift+F3), Follow automatico (si ferma scrollando in su), pulsante *A capo* per mandare a capo le righe lunghe invece dello scroll orizzontale, Ctrl+C copia righe, buffer max 100.000 righe.
-- **Contatori per livello** nelle checkbox (`ERROR 12`): voci nel buffer (uno stack trace conta 1), indipendenti dai filtri, azzerati da *Pulisci*.
-- **Contesto** (0–50) accanto al filtro: mostra N righe prima/dopo ogni riga filtrata, come `grep -C N`; righe di contesto attenuate, gruppi separati da `--`.
-- **▲ Precedenti**: carica sopra le righe già lette un altro blocco (= *Righe iniziali*, 1000 se 0) senza interrompere il tail; disabilitato a inizio file, dopo una rotazione o con sessione non attiva.
-- **Salva…** / Ctrl+S: salva le righe visibili (filtri e contesto applicati) in un `.log` UTF-8.
-- **Avvisi**: badge rosso con il numero di ERROR sulle schede non visibili (azzerato selezionandole; niente badge in Affianca) e lampeggio della taskbar se l'app non è in primo piano. Le righe lette all'apertura non avvisano.
-- **Riapertura all'avvio**: alla chiusura si memorizzano schede aperte, ordine, selezione e Affianca; all'avvio vengono riaperte senza domande (sessioni con data su "oggi" → data corrente, data fissa → stessa data).
-- **Guida utente** (F1 o pulsante *Guida*): pagina HTML in italiano, aperta nel browser predefinito, funziona offline.
+- Application icon (`src/RemoteLogViewer/app.ico`): exe and main window.
+- Saved sessions (share, user, password, file, initial lines, encoding) in `%APPDATA%\RemoteLogViewer\sessions.json`; passwords encrypted with DPAPI (current Windows user).
+- Shared **Credentials** (*Credentials…* button in the bar): name + user + password, selectable in each session's *Credential* field instead of its own user/password. When a password changes, only the credential is updated; sessions already open use it from their next opening. Deleting a credential sends the sessions that used it back to their own user/password. Credentials are not exported: import relinks a credential only if it already exists (same PC).
+- Real-time tail (500 ms polling), truncation/rotation detection, waiting for a missing file, automatic reconnection.
+- **Collections** (nestable folders) to organize sessions: *Collection* button, right-click for new/rename/duplicate/move/delete, drag sessions and collections (onto empty space = root). F2 = edit/rename, Del = delete. *Duplicate* copies the collection with all its content (passwords included) next to the original as `Name (copy)`.
+- **Export / import** a collection (or everything, right-click on empty space) to a `.rlv.json` file. Passwords are **not** exported: after the import they must be entered again with *Edit*. Import always adds new copies (conflicting names → `Name (2)`), it never overwrites anything.
+- **Date in the path**: `{date:<format>}` in the *File* field, in a folder or in the name, e.g. `DOB\DOB_SDL\log\standard_logs\{date:yyyy_MM_dd}\log.log` or `logs\app_{date:yyyy-MM-dd}.log`. At start you pick the date on a calendar (default today, with a path preview): days of the displayed month with no log file are crossed out and not selectable (today stays selectable: the session waits for the file). If the chosen date is today, at midnight the session switches by itself to the new day's file (`— new day —` line); a past date stays fixed. Only date components (no hours/minutes), not allowed in the share. If only the old logs have the date and the current one does not (e.g. today `app.log`, yesterday `app.2026-09-29.log`), write `logs\app{date:'.'yyyy-MM-dd}.log` (separator inside the format, quoted) and tick *Today's file has no date*: for today the placeholder disappears and at midnight the session stays on the same file (server-side rotation is detected as usual).
+- Several sessions in tabs (reorderable by dragging) or **Side by side** (all visible together, in tab order).
+- Colors per level (ERROR/WARN/INFO/DEBUG), level filter (ERROR/WARN/INFO/DEBUG checkboxes; lines without a level always stay visible), text/regex filter, search with highlighting (Ctrl+F, F3/Shift+F3), automatic Follow (stops when you scroll up), *Wrap* button to wrap long lines instead of scrolling horizontally, Ctrl+C copies lines, buffer of at most 100,000 lines.
+- **Per-level counters** in the checkboxes (`ERROR 12`): entries in the buffer (a stack trace counts as 1), independent of the filters, reset by *Clear*.
+- **Context** (0–50) next to the filter: shows N lines before/after each filtered line, like `grep -C N`; context lines are dimmed, groups are separated by `--`.
+- **▲ Older**: loads another block (= *Initial lines*, 1000 if 0) above the lines already read without interrupting the tail; disabled at the start of the file, after a rotation, or when the session is not active.
+- **Save…** / Ctrl+S: saves the visible lines (filters and context applied) to a UTF-8 `.log`.
+- **Alerts**: red badge with the number of ERRORs on tabs that are not visible (reset by selecting them; no badge in Side by side) and taskbar flashing if the app is not in the foreground. Lines read at opening do not raise alerts.
+- **Reopening at startup**: on close, open tabs, order, selection and Side by side are remembered; at start they are reopened without questions (sessions with a date on "today" → current date, fixed date → same date).
+- **User guide** (F1 or *Help* button): HTML page in Italian or English, opened in the default browser, works offline.
+- **Language** (it/en): *Language* selector in the bar; it applies to the interface and the guide, and the change is immediate, no restart. Default: the Windows language (Italian, otherwise English). Saved in `%APPDATA%\RemoteLogViewer\lang.txt`.
 
-## Build / avvio
+## Build / run
 
 ```powershell
 dotnet build
@@ -34,11 +37,12 @@ dotnet test
 dotnet run --project src/RemoteLogViewer
 ```
 
-`nuget.config` locale punta a nuget.org (la config NuGet globale può avere feed privati).
+The local `nuget.config` points to nuget.org (the global NuGet config may have private feeds).
 
-## Note
+## Notes
 
-- Connessione share senza lettera di unità (`WNetAddConnection2`); rilasciata alla chiusura della sessione/app. Mappature già esistenti create fuori dall'app non vengono toccate.
-- Errore "credenziali diverse" (1219): Windows ammette una sola identità per server; chiudi la connessione esistente (`net use \\server\share /delete`) o usa le stesse credenziali.
-- Specifiche: `specs/001-remote-log-viewer/`, `specs/001-remote-log-viewer-collections-tabs-datepath/`, `specs/002-usability-improvements/`.
-- Guida utente: `src/RemoteLogViewer/Guida.html` (risorsa incorporata nell'exe).
+- The share connection uses no drive letter (`WNetAddConnection2`); it is released when the session/app closes. Existing mappings created outside the app are left alone.
+- "Different credentials" error (1219): Windows allows only one identity per server; close the existing connection (`net use \\server\share /delete`) or use the same credentials.
+- Translations: the Italian text is the key, English lives in the table in `src/RemoteLogViewer/L.cs` (`L.T("…")` in code, `{local:T '…'}` in XAML). A missing entry falls back to Italian.
+- Specs: `specs/001-remote-log-viewer/`, `specs/001-remote-log-viewer-collections-tabs-datepath/`, `specs/002-usability-improvements/`.
+- User guide: `src/RemoteLogViewer/Guida.it.html` / `Guida.en.html` (resources embedded in the exe).

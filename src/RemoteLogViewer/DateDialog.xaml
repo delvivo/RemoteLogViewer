@@ -1,18 +1,19 @@
 <Window x:Class="RemoteLogViewer.DateDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:RemoteLogViewer"
         Width="480" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
     <StackPanel Margin="12">
-        <Label Content="_Data del log" Target="{Binding ElementName=Cal}" Padding="0,0,0,4" />
+        <Label Content="{local:T '_Data del log'}" Target="{Binding ElementName=Cal}" Padding="0,0,0,4" />
         <Calendar x:Name="Cal" HorizontalAlignment="Left" SelectionMode="SingleDate"
                   SelectedDatesChanged="Cal_SelectedDatesChanged" DisplayDateChanged="Cal_DisplayDateChanged"
                   DisplayModeChanged="Cal_DisplayModeChanged" PreviewMouseUp="Cal_PreviewMouseUp" />
         <TextBlock x:Name="Status" Foreground="Gray" TextWrapping="Wrap" Margin="0,4,0,0" />
         <TextBlock x:Name="Preview" Foreground="Gray" TextWrapping="Wrap" Margin="0,8" />
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="OkButton" Content="Avvia" Padding="16,3" Margin="4,0" IsDefault="True" Click="Ok_Click" />
-            <Button Content="Annulla" Padding="10,3" Margin="4,0" IsCancel="True" />
+            <Button x:Name="OkButton" Content="{local:T 'Avvia'}" Padding="16,3" Margin="4,0" IsDefault="True" Click="Ok_Click" />
+            <Button Content="{local:T 'Annulla'}" Padding="10,3" Margin="4,0" IsCancel="True" />
         </StackPanel>
     </StackPanel>
 </Window>

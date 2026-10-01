@@ -29,15 +29,15 @@ public class SessionConfig
     public List<string> Validate()
     {
         var errors = new List<string>();
-        if (string.IsNullOrWhiteSpace(Name)) errors.Add("Nome obbligatorio.");
+        if (string.IsNullOrWhiteSpace(Name)) errors.Add(L.T("Nome obbligatorio."));
         if (!SharePath.StartsWith(@"\\") || SharePath.TrimStart('\\').Split('\\', StringSplitOptions.RemoveEmptyEntries).Length < 2)
-            errors.Add(@"Share nel formato \\server\share.");
-        if (DatePath.Has(SharePath)) errors.Add("La data non è ammessa nella share.");
-        if (string.IsNullOrWhiteSpace(FilePath)) errors.Add("File obbligatorio.");
+            errors.Add(L.T(@"Share nel formato \\server\share."));
+        if (DatePath.Has(SharePath)) errors.Add(L.T("La data non è ammessa nella share."));
+        if (string.IsNullOrWhiteSpace(FilePath)) errors.Add(L.T("File obbligatorio."));
         else if (FilePath.StartsWith(@"\\") && !ResolvePath(DateTime.Today).StartsWith(SharePath.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase))
-            errors.Add("Il percorso UNC del file deve essere dentro la share.");
+            errors.Add(L.T("Il percorso UNC del file deve essere dentro la share."));
         errors.AddRange(DatePath.Validate(FilePath));
-        if (TailLines is < 0 or > 100_000) errors.Add("Righe iniziali tra 0 e 100000.");
+        if (TailLines is < 0 or > 100_000) errors.Add(L.T("Righe iniziali tra 0 e 100000."));
         return errors;
     }
 
