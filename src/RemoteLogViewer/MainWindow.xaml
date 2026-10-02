@@ -2,7 +2,16 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="clr-namespace:RemoteLogViewer"
-        Title="Remote Log Viewer" Icon="app.ico" Height="720" Width="1280" Closing="Window_Closing">
+        Title="Remote Log Viewer" Icon="app.ico" Height="720" Width="1280" Closing="Window_Closing" Loaded="Window_Loaded"
+        AllowDrop="True" PreviewDragOver="Window_PreviewDragOver" PreviewDrop="Window_PreviewDrop">
+    <Window.CommandBindings>
+        <CommandBinding Command="ApplicationCommands.Help" Executed="Help_Executed" />
+        <CommandBinding Command="{x:Static local:MainWindow.Search}" Executed="Search_Executed" />
+        <CommandBinding Command="ApplicationCommands.Open" Executed="Open_Executed" />
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Key="F" Modifiers="Control+Shift" Command="{x:Static local:MainWindow.Search}" />
+    </Window.InputBindings>
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="260" MinWidth="120" />
@@ -11,14 +20,14 @@
         </Grid.ColumnDefinitions>
 
         <DockPanel Margin="4">
-            <TextBlock DockPanel.Dock="Top" Text="Sessioni salvate" FontWeight="SemiBold" Margin="2,0,0,4" />
+            <TextBlock DockPanel.Dock="Top" Text="{local:T 'Sessioni salvate'}" FontWeight="SemiBold" Margin="2,0,0,4" />
             <UniformGrid DockPanel.Dock="Bottom" Columns="3" Margin="0,4,0,0">
-                <Button Content="Avvia" Margin="1" Click="Start_Click" />
-                <Button Content="Nuova" Margin="1" Click="New_Click" ToolTip="Nuova sessione nella collezione selezionata" />
-                <Button Content="Modifica" Margin="1" Click="Edit_Click" ToolTip="Modifica sessione o rinomina collezione (F2)" />
-                <Button Content="Duplica" Margin="1" Click="Duplicate_Click" />
-                <Button Content="Elimina" Margin="1" Click="Delete_Click" />
-                <Button Content="Collezione" Margin="1" Click="NewCollection_Click" ToolTip="Nuova collezione dentro quella selezionata. Tasto destro per altre azioni (sposta, esporta, importa)" />
+                <Button Content="{local:T 'Avvia'}" Margin="1" Click="Start_Click" />
+                <Button Content="{local:T 'Nuova'}" Margin="1" Click="New_Click" ToolTip="{local:T 'Nuova sessione nella collezione selezionata'}" />
+                <Button Content="{local:T 'Modifica'}" Margin="1" Click="Edit_Click" ToolTip="{local:T 'Modifica sessione o rinomina collezione (F2)'}" />
+                <Button Content="{local:T 'Duplica'}" Margin="1" Click="Duplicate_Click" />
+                <Button Content="{local:T 'Elimina'}" Margin="1" Click="Delete_Click" />
+                <Button Content="{local:T 'Collezione'}" Margin="1" Click="NewCollection_Click" ToolTip="{local:T 'Nuova collezione dentro quella selezionata. Tasto destro per altre azioni (sposta, esporta, importa)'}" />
             </UniformGrid>
             <TreeView x:Name="SessionTreeView" AllowDrop="True" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                       MouseDoubleClick="SessionTree_DoubleClick" KeyDown="SessionTree_KeyDown" ContextMenuOpening="SessionTree_ContextMenuOpening"
@@ -54,14 +63,23 @@
 
         <DockPanel Grid.Column="2">
             <ToolBar DockPanel.Dock="Top">
-                <Button Content="Credenziali…" Click="Credentials_Click" ToolTip="Utente/password condivisi tra più sessioni: cambi la password in un solo punto" />
+                <Button Content="{local:T 'Apri file…'}" Command="ApplicationCommands.Open" ToolTip="{local:T 'Apri un file di log (Ctrl+O)'}" />
                 <Separator />
-                <ToggleButton x:Name="SideBySideButton" Content="Affianca" Checked="SideBySide_Click" Unchecked="SideBySide_Click" ToolTip="Mostra tutte le sessioni aperte contemporaneamente" />
+                <Button Content="{local:T 'Credenziali…'}" Click="Credentials_Click" ToolTip="{local:T 'Utente/password condivisi tra più sessioni: cambi la password in un solo punto'}" />
+                <Separator />
+                <ToggleButton x:Name="SideBySideButton" Content="{local:T 'Affianca'}" Checked="SideBySide_Click" Unchecked="SideBySide_Click" ToolTip="{local:T 'Mostra tutte le sessioni aperte contemporaneamente'}" />
+                <Separator />
+                <Button Content="{local:T 'Cerca…'}" Command="{x:Static local:MainWindow.Search}" ToolTip="{local:T 'Ricerca avanzata tra tutte le sessioni aperte (Ctrl+Maiusc+F)'}" />
+                <Separator />
+                <TextBlock Text="{local:T 'Lingua'}" VerticalAlignment="Center" Margin="0,0,4,0" />
+                <ComboBox x:Name="LangBox" Width="90" DisplayMemberPath="Value" SelectedValuePath="Key" SelectionChanged="Lang_Changed"
+                          ToolTip="{local:T 'Lingua dell\'interfaccia e della guida'}" AutomationProperties.Name="{local:T 'Lingua'}" />
+                <Button Content="{local:T 'Guida'}" Command="ApplicationCommands.Help" ToolTip="{local:T 'Guida utente (F1)'}" />
             </ToolBar>
             <Grid>
                 <TabControl x:Name="Tabs" PreviewMouseMove="Tabs_PreviewMouseMove" PreviewMouseLeftButtonUp="Tabs_PreviewMouseLeftButtonUp" />
                 <UniformGrid x:Name="SideBySideGrid" Visibility="Collapsed" />
-                <TextBlock x:Name="EmptyHint" Text="Doppio click su una sessione salvata per avviarla, oppure crea una Nuova sessione."
+                <TextBlock x:Name="EmptyHint" Text="{local:T 'Doppio click su una sessione salvata per avviarla, oppure crea una Nuova sessione.'}"
                            HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Gray" IsHitTestVisible="False" />
             </Grid>
         </DockPanel>

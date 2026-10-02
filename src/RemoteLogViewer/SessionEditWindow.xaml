@@ -1,7 +1,8 @@
 <Window x:Class="RemoteLogViewer.SessionEditWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Sessione" Width="520" SizeToContent="Height" ResizeMode="NoResize"
+        xmlns:local="clr-namespace:RemoteLogViewer"
+        Title="{local:T 'Sessione'}" Width="520" SizeToContent="Height" ResizeMode="NoResize"
         WindowStartupLocation="CenterOwner" ShowInTaskbar="False">
     <Grid Margin="12">
         <Grid.ColumnDefinitions>
@@ -27,34 +28,37 @@
             <Style TargetType="ComboBox"><Setter Property="Margin" Value="0,4" /></Style>
         </Grid.Resources>
 
-        <Label Grid.Row="0" Content="_Nome" Target="{Binding ElementName=NameBox}" />
+        <Label Grid.Row="0" Content="{local:T '_Nome'}" Target="{Binding ElementName=NameBox}" />
         <TextBox Grid.Row="0" Grid.Column="1" x:Name="NameBox" />
-        <Label Grid.Row="1" Content="_Share" Target="{Binding ElementName=ShareBox}" />
-        <TextBox Grid.Row="1" Grid.Column="1" x:Name="ShareBox" ToolTip="\\server\share, es. \\nts11050\E$" />
-        <Label Grid.Row="2" Content="_Credenziale" Target="{Binding ElementName=CredentialBox}" />
+        <Label Grid.Row="1" Content="{local:T '_Share'}" Target="{Binding ElementName=ShareBox}" />
+        <TextBox Grid.Row="1" Grid.Column="1" x:Name="ShareBox" ToolTip="{local:T '\\\\server\\share, es. \\\\serverName\\E$'}" />
+        <Label Grid.Row="2" Content="{local:T '_Credenziale'}" Target="{Binding ElementName=CredentialBox}" />
         <ComboBox Grid.Row="2" Grid.Column="1" x:Name="CredentialBox" SelectionChanged="CredentialBox_SelectionChanged"
-                  ToolTip="Credenziale salvata (gestiscile con 'Credenziali…'), oppure utente/password solo per questa sessione" />
-        <Label Grid.Row="3" Content="_Utente" Target="{Binding ElementName=UserBox}" />
-        <TextBox Grid.Row="3" Grid.Column="1" x:Name="UserBox" ToolTip="DOMINIO\utente. Vuoto = utente Windows corrente" />
-        <Label Grid.Row="4" Content="_Password" Target="{Binding ElementName=PasswordBox}" />
-        <PasswordBox Grid.Row="4" Grid.Column="1" x:Name="PasswordBox" ToolTip="Vuota in modifica = invariata" />
-        <Label Grid.Row="5" Content="_File" Target="{Binding ElementName=FileBox}" />
+                  ToolTip="{local:T 'Credenziale salvata (gestiscile con \'Credenziali…\'), oppure utente/password solo per questa sessione'}" />
+        <Label Grid.Row="3" Content="{local:T '_Utente'}" Target="{Binding ElementName=UserBox}" />
+        <TextBox Grid.Row="3" Grid.Column="1" x:Name="UserBox" ToolTip="{local:T 'DOMINIO\\utente. Vuoto = utente Windows corrente'}" />
+        <Label Grid.Row="4" Content="{local:T '_Password'}" Target="{Binding ElementName=PasswordBox}" />
+        <PasswordBox Grid.Row="4" Grid.Column="1" x:Name="PasswordBox" ToolTip="{local:T 'Vuota in modifica = invariata'}" />
+        <Label Grid.Row="5" Content="{local:T '_File'}" Target="{Binding ElementName=FileBox}" />
         <StackPanel Grid.Row="5" Grid.Column="1">
             <TextBox x:Name="FileBox" TextChanged="FileBox_TextChanged"
-                     ToolTip="Relativo alla share (logs\app.log) o UNC completo. Usa {date:yyyy_MM_dd} per una data variabile, scelta all'avvio." />
+                     ToolTip="{local:T 'Relativo alla share (logs\\app.log) o UNC completo. Usa {date:yyyy_MM_dd} per una data variabile, scelta all\'avvio.'}" />
+            <CheckBox x:Name="CurrentUndatedBox" Content="{local:T 'Il file di _oggi non ha la data'}" Margin="0,2" Visibility="Collapsed"
+                      Checked="CurrentUndatedBox_Changed" Unchecked="CurrentUndatedBox_Changed"
+                      ToolTip="{local:T 'Solo il file corrente è senza data (es. oggi app.log, ieri app.2026-09-29.log). Metti il separatore nel formato tra apici: app{date:\'.\'yyyy-MM-dd}.log'}" />
             <TextBlock x:Name="FilePreview" Foreground="Gray" FontSize="11" TextWrapping="Wrap" Visibility="Collapsed" Margin="0,0,0,4" />
         </StackPanel>
-        <Label Grid.Row="6" Content="_Righe iniziali" Target="{Binding ElementName=TailBox}" />
+        <Label Grid.Row="6" Content="{local:T '_Righe iniziali'}" Target="{Binding ElementName=TailBox}" />
         <TextBox Grid.Row="6" Grid.Column="1" x:Name="TailBox" Width="100" HorizontalAlignment="Left" />
-        <Label Grid.Row="7" Content="_Encoding" Target="{Binding ElementName=EncodingBox}" />
+        <Label Grid.Row="7" Content="{local:T '_Encoding'}" Target="{Binding ElementName=EncodingBox}" />
         <ComboBox Grid.Row="7" Grid.Column="1" x:Name="EncodingBox" Width="140" HorizontalAlignment="Left" />
 
         <TextBlock Grid.Row="8" Grid.ColumnSpan="2" x:Name="Result" TextWrapping="Wrap" Margin="0,8" />
 
         <StackPanel Grid.Row="9" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button x:Name="TestButton" Content="_Test connessione" Padding="10,3" Margin="4,0" Click="Test_Click" />
-            <Button Content="Salva" Padding="16,3" Margin="4,0" IsDefault="True" Click="Save_Click" />
-            <Button Content="Annulla" Padding="10,3" Margin="4,0" IsCancel="True" />
+            <Button x:Name="TestButton" Content="{local:T '_Test connessione'}" Padding="10,3" Margin="4,0" Click="Test_Click" />
+            <Button Content="{local:T 'Salva'}" Padding="16,3" Margin="4,0" IsDefault="True" Click="Save_Click" />
+            <Button Content="{local:T 'Annulla'}" Padding="10,3" Margin="4,0" IsCancel="True" />
         </StackPanel>
     </Grid>
 </Window>

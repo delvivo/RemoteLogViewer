@@ -1,12 +1,17 @@
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Microsoft.Win32;
 
 namespace RemoteLogViewer;
+
+public enum RevealResult { NotFound, Shown, ShownFiltersCleared }
 
 public partial class LogView : UserControl
 {
@@ -15,13 +20,17 @@ public partial class LogView : UserControl
 
     public ActiveSession Session { get; }
     public event Action? StatusChanged;
+    public event Action<int>? ErrorsArrived; // new ERROR entries (not from the initial read)
     public Brush StatusBrush => StatusDot.Fill;
+    public int UnreadErrors { get; private set; } // ERROR entries arrived while this view was not visible
 
     private readonly List<LogLine> _all = [];
     private ObservableCollection<LogLine> _visible = [];
     private readonly DispatcherTimer _timer = new() { Interval = TimeSpan.FromMilliseconds(200) };
     private Func<string, bool>? _filter;
     private readonly HashSet<LogLevel> _hiddenLevels = [];
+    private readonly int[] _counts = new int[Enum.GetValues<LogLevel>().Length]; // entries per level in _all
+    private ContextFilter _ctx = new(0, _ => true, null);
     private string _search = "";
     private ScrollViewer? _scroll;
 
@@ -33,53 +42,122 @@ public partial class LogView : UserControl
         CommandBindings.Add(new CommandBinding(FindNext, (_, _) => Find(1)));
         CommandBindings.Add(new CommandBinding(FindPrev, (_, _) => Find(-1)));
         CommandBindings.Add(new CommandBinding(FocusSearch, (_, _) => { SearchBox.Focus(); SearchBox.SelectAll(); }));
+        CommandBindings.Add(new CommandBinding(ApplicationCommands.Save, (_, _) => SaveVisible(), (_, e) => e.CanExecute = _visible.Count > 0));
+        IsVisibleChanged += (_, e) =>
+        {
+            if (e.NewValue is not true || UnreadErrors == 0) return;
+            UnreadErrors = 0;
+            StatusChanged?.Invoke();
+        };
         Session.StateChanged += () => Dispatcher.BeginInvoke(UpdateStatus);
+        L.Changed += OnLanguageChanged;
         _timer.Tick += (_, _) => Drain();
         _timer.Start();
         UpdateStatus();
         Session.Start();
     }
 
+    private void OnLanguageChanged()
+    {
+        UpdateStatus();
+        UpdateCount();
+    }
+
     public void Close()
     {
+        L.Changed -= OnLanguageChanged;
         _timer.Stop();
         Session.Stop();
+    }
+
+    /// Copy of the whole buffer for the cross-tab search (UI thread only: `_all` is not thread-safe, LogLine is immutable).
+    public LogLine[] Snapshot() => _all.ToArray();
+
+    /// Selects `line` and scrolls to it, clearing the level/text filters if they hide it. The caller selects the tab.
+    public RevealResult Reveal(LogLine line)
+    {
+        if (!_all.Contains(line)) return RevealResult.NotFound; // trimmed away or cleared
+        var cleared = !_visible.Contains(line);
+        if (cleared)
+        {
+            // Not through Checked/Filter_Changed alone: they skip the rebuild while the view is not loaded yet (tab not shown).
+            _hiddenLevels.Clear();
+            foreach (var cb in new[] { ErrorCheck, WarnCheck, InfoCheck, DebugCheck }) cb.IsChecked = true;
+            FilterBox.Clear();
+            _filter = null;
+            Rebuild();
+        }
+        FollowButton.IsChecked = false;
+        Lines.SelectedItem = line;
+        Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => Lines.ScrollIntoView(line));
+        return cleared ? RevealResult.ShownFiltersCleared : RevealResult.Shown;
     }
 
     private bool Follow => FollowButton.IsChecked == true;
 
     // Lines with no detected level (None) are never hidden by the level filter.
-    private bool Matches(LogLine l) => l.IsMarker || (!_hiddenLevels.Contains(l.Level) && (_filter == null || _filter(l.Text)));
+    private bool LevelOk(LogLine l) => !_hiddenLevels.Contains(l.Level);
+
+    private int ContextLines => int.TryParse(ContextBox.Text, out var n) ? Math.Clamp(n, 0, 50) : 0;
 
     private bool SearchHit(LogLine l) => _search.Length > 0 && l.Text.Contains(_search, StringComparison.OrdinalIgnoreCase);
 
     private void Drain()
     {
-        if (Session.Pending.IsEmpty) return;
+        if (Session.Pending.IsEmpty && Session.Older.IsEmpty) return;
+        var older = false;
+        while (Session.Older.TryDequeue(out var block))
+        {
+            foreach (var l in block) { l.IsMatch = SearchHit(l); Count(l, 1); }
+            _all.InsertRange(0, block);
+            older = true;
+        }
         var added = new List<LogLine>();
+        var errors = 0;
         while (Session.Pending.TryDequeue(out var l))
         {
             l.IsMatch = SearchHit(l);
             _all.Add(l);
-            if (Matches(l)) added.Add(l);
+            Count(l, 1);
+            if (l is { Level: LogLevel.Error, IsEntry: true, IsHistory: false }) errors++;
+            added.AddRange(_ctx.Add(_all, _all.Count - 1));
         }
         if (_all.Count > MaxLines)
         {
             // ponytail: trim in blocks + full rebuild; cheap because it happens once per TrimBlock lines.
             _all.RemoveRange(0, _all.Count - MaxLines + TrimBlock);
+            Array.Clear(_counts);
+            foreach (var l in _all) Count(l, 1);
             Rebuild();
         }
+        else if (older) Rebuild(keepTopLine: true); // indices shifted: replay the whole buffer
         else foreach (var l in added) _visible.Add(l);
         UpdateCount();
         if (Follow) ScrollToEnd();
+        if (errors == 0) return;
+        if (!IsVisible) { UnreadErrors += errors; StatusChanged?.Invoke(); }
+        ErrorsArrived?.Invoke(errors);
     }
 
-    private void Rebuild()
+    private void Count(LogLine l, int delta)
     {
-        _visible = new ObservableCollection<LogLine>(_all.Where(Matches));
+        if (l.IsEntry) _counts[(int)l.Level] += delta;
+    }
+
+    private void Rebuild(bool keepTopLine = false)
+    {
+        _scroll ??= FindChild<ScrollViewer>(Lines);
+        // Item-based scrolling (virtualized ListBox): the offset is the index of the top line.
+        var top = keepTopLine && _scroll != null && (int)_scroll.VerticalOffset < _visible.Count ? _visible[(int)_scroll.VerticalOffset] : null;
+        _ctx = new ContextFilter(_filter == null ? 0 : ContextLines, LevelOk, _filter);
+        var visible = new List<LogLine>();
+        for (var i = 0; i < _all.Count; i++) visible.AddRange(_ctx.Add(_all, i));
+        _visible = new ObservableCollection<LogLine>(visible);
         Lines.ItemsSource = _visible;
         UpdateCount();
         if (Follow) ScrollToEnd();
+        else if (top != null && _visible.IndexOf(top) is var index and >= 0)
+            Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => _scroll?.ScrollToVerticalOffset(index));
     }
 
     private void ScrollToEnd()
@@ -90,8 +168,12 @@ public partial class LogView : UserControl
 
     private void UpdateCount()
     {
-        var matches = _search.Length == 0 ? "" : $" · {_all.Count(l => l.IsMatch)} trovate";
-        CountLabel.Text = _visible.Count == _all.Count ? $"{_all.Count} righe{matches}" : $"{_visible.Count}/{_all.Count} righe{matches}";
+        ErrorCheck.Content = $"ERROR {_counts[(int)LogLevel.Error]}";
+        WarnCheck.Content = $"WARN {_counts[(int)LogLevel.Warn]}";
+        InfoCheck.Content = $"INFO {_counts[(int)LogLevel.Info]}";
+        DebugCheck.Content = $"DEBUG {_counts[(int)LogLevel.Debug]}";
+        var matches = _search.Length == 0 ? "" : L.F(" · {0} trovate", _all.Count(l => l.IsMatch));
+        CountLabel.Text = _visible.Count == _all.Count ? L.F("{0} righe{1}", _all.Count, matches) : L.F("{0}/{1} righe{2}", _visible.Count, _all.Count, matches);
     }
 
     private void UpdateStatus()
@@ -105,7 +187,8 @@ public partial class LogView : UserControl
             SessionState.Stopped => Brushes.Gray,
             _ => Brushes.Orange,
         };
-        StartStopButton.Content = Session.State is SessionState.Stopped or SessionState.Error ? "Avvia" : "Stop";
+        StartStopButton.Content = Session.State is SessionState.Stopped or SessionState.Error ? L.T("Avvia") : L.T("Stop");
+        OlderButton.IsEnabled = Session.CanLoadOlder && Session.State == SessionState.Running;
         StatusChanged?.Invoke();
     }
 
@@ -123,7 +206,44 @@ public partial class LogView : UserControl
     private void Clear_Click(object sender, RoutedEventArgs e)
     {
         _all.Clear();
+        Array.Clear(_counts);
         Rebuild();
+    }
+
+    private void Older_Click(object sender, RoutedEventArgs e)
+    {
+        var wanted = Session.Config.TailLines > 0 ? Session.Config.TailLines : 1000;
+        var n = Math.Min(wanted, MaxLines - _all.Count);
+        if (n <= 0)
+        {
+            Info(L.F("Buffer pieno ({0:N0} righe): usa Pulisci per fare spazio.", MaxLines));
+            return;
+        }
+        if (n < wanted) Info(L.F("Verranno caricate solo {0:N0} righe: il buffer è limitato a {1:N0}.", n, MaxLines));
+        Session.RequestOlder(n);
+    }
+
+    private void Info(string text, MessageBoxImage image = MessageBoxImage.Information) =>
+        MessageBox.Show(Window.GetWindow(this), text, "Remote Log Viewer", MessageBoxButton.OK, image);
+
+    private void SaveVisible()
+    {
+        var name = string.Concat(Session.Config.Name.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
+        var dlg = new SaveFileDialog
+        {
+            Filter = L.T("Log (*.log)|*.log|Tutti i file (*.*)|*.*"),
+            FileName = $"{name}_{DateTime.Now:yyyyMMdd_HHmmss}.log",
+            Title = L.T("Salva righe visibili"),
+        };
+        if (dlg.ShowDialog(Window.GetWindow(this)) != true) return;
+        try
+        {
+            File.WriteAllLines(dlg.FileName, _visible.Select(l => l.Text), new UTF8Encoding(false));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            Info(L.F("Salvataggio non riuscito: {0}", ex.Message), MessageBoxImage.Error);
+        }
     }
 
     private void Lines_ScrollChanged(object sender, ScrollChangedEventArgs e)
@@ -149,6 +269,11 @@ public partial class LogView : UserControl
         }
         else if (text.Length > 0) _filter = s => s.Contains(text, StringComparison.OrdinalIgnoreCase);
         Rebuild();
+    }
+
+    private void Context_Changed(object sender, TextChangedEventArgs e)
+    {
+        if (IsLoaded && _filter != null) Rebuild();
     }
 
     private void Level_Changed(object sender, RoutedEventArgs e)

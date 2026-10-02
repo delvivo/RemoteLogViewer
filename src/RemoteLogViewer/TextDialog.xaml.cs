@@ -26,7 +26,7 @@ public partial class TextDialog : Window
     private void Ok_Click(object sender, RoutedEventArgs e)
     {
         var text = Input.Text.Trim();
-        var error = text.Length == 0 ? "Nome obbligatorio." : _validate?.Invoke(text);
+        var error = text.Length == 0 ? L.T("Nome obbligatorio.") : _validate?.Invoke(text);
         if (error != null) { Error.Text = error; return; }
         DialogResult = true;
     }

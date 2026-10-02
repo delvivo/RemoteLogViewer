@@ -6,7 +6,7 @@ namespace RemoteLogViewer;
 
 public partial class SessionEditWindow : Window
 {
-    private const string InlineCredential = "(utente/password qui sotto)";
+    private static string InlineCredential => L.T("(utente/password qui sotto)");
     private readonly IReadOnlyList<Credential> _credentials;
 
     public SessionConfig Config { get; }
@@ -21,12 +21,13 @@ public partial class SessionEditWindow : Window
         NameBox.Text = Config.Name;
         ShareBox.Text = Config.SharePath;
         UserBox.Text = Config.UserName;
+        CurrentUndatedBox.IsChecked = Config.CurrentUndated;
         FileBox.Text = Config.FilePath;
         TailBox.Text = Config.TailLines.ToString();
         EncodingBox.ItemsSource = new[] { "auto", "utf-8", "utf-16", "windows-1252" };
         EncodingBox.SelectedItem = Config.Encoding;
         if (Config.ProtectedPassword != null && SessionStore.Unprotect(Config.ProtectedPassword) == null)
-            ShowResult("Password salvata non leggibile su questo PC/utente: reinseriscila.", false);
+            ShowResult(L.T("Password salvata non leggibile su questo PC/utente: reinseriscila."), false);
         Loaded += (_, _) => NameBox.Focus();
     }
 
@@ -36,14 +37,20 @@ public partial class SessionEditWindow : Window
         UserBox.IsEnabled = PasswordBox.IsEnabled = inline;
     }
 
-    private void FileBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+    private void FileBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e) => UpdateFilePreview();
+
+    private void CurrentUndatedBox_Changed(object sender, RoutedEventArgs e) => UpdateFilePreview();
+
+    private void UpdateFilePreview()
     {
         var file = FileBox.Text.Trim();
-        if (!DatePath.Has(file)) { FilePreview.Visibility = Visibility.Collapsed; return; }
-        FilePreview.Visibility = Visibility.Visible;
+        if (!DatePath.Has(file)) { FilePreview.Visibility = CurrentUndatedBox.Visibility = Visibility.Collapsed; return; }
+        FilePreview.Visibility = CurrentUndatedBox.Visibility = Visibility.Visible;
         var errors = DatePath.Validate(file);
-        var preview = new SessionConfig { SharePath = ShareBox.Text.Trim().TrimEnd('\\'), FilePath = file };
-        FilePreview.Text = errors.Count > 0 ? string.Join(" ", errors) : $"Anteprima (oggi): {preview.ResolvePath(DateTime.Today)}";
+        var preview = new SessionConfig { SharePath = ShareBox.Text.Trim().TrimEnd('\\'), FilePath = file, CurrentUndated = CurrentUndatedBox.IsChecked == true };
+        FilePreview.Text = errors.Count > 0 ? string.Join(" ", errors)
+            : L.F("Anteprima (oggi): {0}", preview.ResolvePath(DateTime.Today))
+              + (preview.CurrentUndated ? "\n" + L.F("Anteprima (ieri): {0}", preview.ResolvePath(DateTime.Today.AddDays(-1))) : "");
         FilePreview.Foreground = errors.Count > 0 ? Brushes.Red : Brushes.Gray;
     }
 
@@ -54,13 +61,14 @@ public partial class SessionEditWindow : Window
         Config.SharePath = ShareBox.Text.Trim().TrimEnd('\\');
         Config.UserName = UserBox.Text.Trim();
         Config.FilePath = FileBox.Text.Trim();
+        Config.CurrentUndated = CurrentUndatedBox.IsChecked == true && DatePath.Has(Config.FilePath);
         Config.Encoding = (string)EncodingBox.SelectedItem;
         Config.CredentialId = (CredentialBox.SelectedItem as Credential)?.Id;
         if (Config.CredentialId != null) (Config.UserName, Config.ProtectedPassword) = ("", null); // the credential wins
         else if (PasswordBox.Password.Length > 0) Config.ProtectedPassword = SessionStore.Protect(PasswordBox.Password);
         else if (Config.UserName.Length == 0) Config.ProtectedPassword = null;
         var errors = new List<string>();
-        if (int.TryParse(TailBox.Text, out var n)) Config.TailLines = n; else errors.Add("Righe iniziali non valide.");
+        if (int.TryParse(TailBox.Text, out var n)) Config.TailLines = n; else errors.Add(L.T("Righe iniziali non valide."));
         errors.AddRange(Config.Validate());
         return errors;
     }
@@ -68,11 +76,11 @@ public partial class SessionEditWindow : Window
     private async void Test_Click(object sender, RoutedEventArgs e)
     {
         var errors = ReadForm();
-        errors.Remove("Nome obbligatorio.");
+        errors.Remove(L.T("Nome obbligatorio."));
         if (errors.Count > 0) { ShowResult(string.Join("\n", errors), false); return; }
 
         TestButton.IsEnabled = false;
-        ShowResult("Connessione…", null);
+        ShowResult(L.T("Connessione…"), null);
         var c = Config.WithCredential(_credentials);
         var (ok, msg) = await Task.Run(() =>
         {
@@ -83,8 +91,8 @@ public partial class SessionEditWindow : Window
                 {
                     var path = c.ResolvePath(DateTime.Today);
                     return File.Exists(path)
-                        ? (true, $"OK: file trovato ({new FileInfo(path).Length / 1024:N0} KB).")
-                        : (false, "Share OK, ma il file non esiste (la sessione resterà in attesa).");
+                        ? (true, L.F("OK: file trovato ({0:N0} KB).", new FileInfo(path).Length / 1024))
+                        : (false, L.T("Share OK, ma il file non esiste (la sessione resterà in attesa)."));
                 }
                 finally { SmbConnection.Release(c.SharePath); }
             }

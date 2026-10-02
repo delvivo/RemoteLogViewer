@@ -27,6 +27,57 @@ public class ActiveSessionTests : IDisposable
         return got;
     }
 
+    private SessionConfig LocalConfig()
+    {
+        var c = SessionConfig.Local(_local);
+        c.TailLines = 3;
+        return c;
+    }
+
+    // No SMB involved: runs on every machine.
+    [Fact]
+    public async Task Local_file_tails_appends_truncation_and_waits_when_deleted()
+    {
+        File.WriteAllText(_local, "INFO 1\nINFO 2\nERROR 3\n   at stack\nWARN 5\n");
+        var s = new ActiveSession(LocalConfig());
+        Assert.Equal(_local, s.Path);
+        Assert.Equal(Path.GetFileName(_local), s.DisplayName);
+        s.Start();
+        try
+        {
+            var tail = await Collect(s, 3);
+            Assert.Equal(["ERROR 3", "   at stack", "WARN 5"], tail.Select(l => l.Text));
+            Assert.Equal(SessionState.Running, s.State);
+
+            File.AppendAllText(_local, "INFO 6\n");
+            Assert.Equal("INFO 6", Assert.Single(await Collect(s, 1, 2000)).Text);
+
+            File.WriteAllText(_local, "INFO nuovo\n");
+            var after = await Collect(s, 2, 2000);
+            Assert.True(after[0].IsMarker);
+            Assert.Equal("INFO nuovo", after[1].Text);
+
+            File.Delete(_local);
+            await WaitFor(s, SessionState.Waiting);
+
+            File.WriteAllText(_local, "INFO tornato\n");
+            var back = await Collect(s, 2, 4000);
+            Assert.Contains(back, l => l.Text == "INFO tornato");
+            Assert.Equal(SessionState.Running, s.State);
+        }
+        finally { s.Stop(); }
+
+        await Task.Delay(700);
+        Assert.Equal(SessionState.Stopped, s.State);
+    }
+
+    private static async Task WaitFor(ActiveSession s, SessionState state, int timeoutMs = 5000)
+    {
+        var until = DateTime.UtcNow.AddMilliseconds(timeoutMs);
+        while (s.State != state && DateTime.UtcNow < until) await Task.Delay(50);
+        Assert.Equal(state, s.State);
+    }
+
     [Fact]
     public async Task Tails_appends_and_detects_truncation_over_smb()
     {
@@ -81,6 +132,30 @@ public class ActiveSessionTests : IDisposable
             Assert.Equal("local · 2026-01-02", s.DisplayName);
         }
         finally { s.Stop(); await Task.Delay(700); Directory.Delete(root, true); }
+    }
+
+    [Fact]
+    public async Task Undated_current_file_keeps_tailing_across_midnight()
+    {
+        if (Share == null) return;
+
+        File.WriteAllText(_local, "INFO day1\n");
+        var dated = _local[3..].Replace(".log", "{date:'.'yyyy_MM_dd}.log");
+        var config = new SessionConfig { Name = "local", SharePath = Share!, FilePath = dated, TailLines = 3, CurrentUndated = true };
+        var now = new DateTime(2026, 1, 1);
+        var s = new ActiveSession(config, now, () => now);
+        Assert.Equal(Share + @"\" + _local[3..], s.Path);
+        s.Start();
+        try
+        {
+            Assert.Equal("INFO day1", Assert.Single(await Collect(s, 1)).Text);
+            now = new DateTime(2026, 1, 2);
+            File.AppendAllText(_local, "INFO day2\n");
+            var after = await Collect(s, 2, 3000);
+            Assert.Equal(["— nuovo giorno: 2026-01-02 —", "INFO day2"], after.Select(l => l.Text)); // same file, no re-read
+            Assert.Equal(Share + @"\" + _local[3..], s.Path);
+        }
+        finally { s.Stop(); await Task.Delay(700); }
     }
 
     [Fact]

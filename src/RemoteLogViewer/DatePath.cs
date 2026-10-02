@@ -16,19 +16,22 @@ public static partial class DatePath
     public static string Resolve(string path, DateTime date) =>
         Placeholder().Replace(path, m => date.ToString(m.Groups[1].Value, CultureInfo.InvariantCulture));
 
+    /// Path with every placeholder removed (today's undated file, e.g. `app{date:'.'yyyy-MM-dd}.log` → `app.log`).
+    public static string Strip(string path) => Placeholder().Replace(path, "");
+
     public static List<string> Validate(string path)
     {
         var errors = new List<string>();
         foreach (Match m in Placeholder().Matches(path))
         {
             var fmt = m.Groups[1].Value;
-            if (fmt.Length == 0) { errors.Add("Formato data vuoto."); continue; }
-            if (HasTimeComponent(fmt)) { errors.Add("Il formato data non può contenere ore/minuti/secondi."); continue; }
+            if (fmt.Length == 0) { errors.Add(L.T("Formato data vuoto.")); continue; }
+            if (HasTimeComponent(fmt)) { errors.Add(L.T("Il formato data non può contenere ore/minuti/secondi.")); continue; }
             string resolved;
             try { resolved = Sample.ToString(fmt, CultureInfo.InvariantCulture); }
-            catch (FormatException) { errors.Add($"Formato data non valido: {fmt}."); continue; }
+            catch (FormatException) { errors.Add(L.F("Formato data non valido: {0}.", fmt)); continue; }
             if (resolved.IndexOfAny(@"\/:*?""<>|".ToCharArray()) >= 0)
-                errors.Add("Il formato data produce caratteri non ammessi nel percorso.");
+                errors.Add(L.T("Il formato data produce caratteri non ammessi nel percorso."));
         }
         return errors;
     }

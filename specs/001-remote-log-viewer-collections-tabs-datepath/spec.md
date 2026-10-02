@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Aggiungere la possibilità di creare collezioni (stile cartelle, anche annidate). Le collezioni devono poter essere esportabili ed importabili. Aggiungere la possibilità di spostare i tab per cambiarne l'ordine. Aggiungere inoltre la possibilità di gestire dinamicamente un path con date format specifico (e.g. abbiamo il path \\server\E$\DOB\DOB_SDL\log\standard_logs\2026_06_11\log.log, deve essere possibile gestire il campo data così da poter scegliere la data prima di avviare la sessione; in questo caso è una cartella, ma uguale se fosse nel nome del file)."
+**Input**: User description: "Aggiungere la possibilità di creare collezioni (stile cartelle, anche annidate). Le collezioni devono poter essere esportabili ed importabili. Aggiungere la possibilità di spostare i tab per cambiarne l'ordine. Aggiungere inoltre la possibilità di gestire dinamicamente un path con date format specifico (e.g. abbiamo il path \\server\E$\FOLDER\APP_NAME\log\standard_logs\2026_06_11\log.log, deve essere possibile gestire il campo data così da poter scegliere la data prima di avviare la sessione; in questo caso è una cartella, ma uguale se fosse nel nome del file)."
 
 ## Clarifications
 
@@ -29,7 +29,7 @@ Molti log sono organizzati per giorno: la data compare in una cartella (es. `...
 **Acceptance Scenarios**:
 
 1. **Given** una sessione il cui percorso contiene un segnaposto data con formato `yyyy_MM_dd`, **When** l'utente la avvia, **Then** l'app chiede la data (preimpostata a oggi) e mostra l'anteprima del percorso risultante prima di confermare.
-2. **Given** l'utente sceglie l'11/06/2026, **When** conferma, **Then** la sessione segue `\\server\E$\DOB\DOB_SDL\log\standard_logs\2026_06_11\log.log`.
+2. **Given** l'utente sceglie l'11/06/2026, **When** conferma, **Then** la sessione segue `\\server\E$\FOLDER\APP_NAME\log\standard_logs\2026_06_11\log.log`.
 3. **Given** il segnaposto data è nel nome del file (es. `log_{data}.log`), **When** l'utente avvia la sessione, **Then** il comportamento è identico al caso cartella.
 4. **Given** una sessione senza segnaposto data, **When** l'utente la avvia, **Then** non viene chiesta alcuna data (comportamento attuale invariato).
 5. **Given** la data scelta produce un file inesistente, **When** la sessione parte, **Then** la sessione va nello stato "in attesa del file" già esistente, senza errore bloccante.

@@ -14,7 +14,7 @@ public class SessionStore(string path)
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     // v1 had only Sessions; Collections missing → all sessions at root.
-    private record SessionsFile(List<SessionCollection>? Collections, List<SessionConfig>? Sessions, List<Credential>? Credentials);
+    private record SessionsFile(List<SessionCollection>? Collections, List<SessionConfig>? Sessions, List<Credential>? Credentials, Workspace? Workspace);
 
     public string Path => path;
 
@@ -27,19 +27,19 @@ public class SessionStore(string path)
         try
         {
             var f = JsonSerializer.Deserialize<SessionsFile>(File.ReadAllText(path), Json);
-            var tree = new SessionTree(f?.Collections ?? [], f?.Sessions ?? [], f?.Credentials ?? []);
+            var tree = new SessionTree(f?.Collections ?? [], f?.Sessions ?? [], f?.Credentials ?? []) { Workspace = f?.Workspace ?? new() };
             tree.Normalize();
             return tree;
         }
         catch (JsonException)
         {
             File.Move(path, path + ".bak", true);
-            Warning = $"File sessioni corrotto, salvato come {path}.bak.";
+            Warning = L.F("File sessioni corrotto, salvato come {0}.bak.", path);
             return new SessionTree();
         }
     }
 
-    public void Save(SessionTree tree) => WriteAtomic(path, new SessionsFile(tree.Collections, tree.Sessions, tree.Credentials));
+    public void Save(SessionTree tree) => WriteAtomic(path, new SessionsFile(tree.Collections, tree.Sessions, tree.Credentials, tree.Workspace));
 
     public static void WriteExport(string file, ExportFile export) => WriteAtomic(file, export);
 
@@ -47,9 +47,9 @@ public class SessionStore(string path)
     {
         ExportFile? f;
         try { f = JsonSerializer.Deserialize<ExportFile>(File.ReadAllText(file), Json); }
-        catch (JsonException) { throw new InvalidDataException("File non valido."); }
-        if (f?.Format != ExportFile.FormatId) throw new InvalidDataException("File non riconosciuto.");
-        if (f.Version > 1) throw new InvalidDataException("Versione del file non supportata.");
+        catch (JsonException) { throw new InvalidDataException(L.T("File non valido.")); }
+        if (f?.Format != ExportFile.FormatId) throw new InvalidDataException(L.T("File non riconosciuto."));
+        if (f.Version > 1) throw new InvalidDataException(L.T("Versione del file non supportata."));
         f.Collections ??= [];
         f.Sessions ??= [];
         return f;

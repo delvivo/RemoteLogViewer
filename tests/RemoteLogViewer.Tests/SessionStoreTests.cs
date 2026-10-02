@@ -13,7 +13,7 @@ public class SessionStoreTests : IDisposable
         var store = new SessionStore(FilePath);
         var s = new SessionConfig
         {
-            Name = "PROD", SharePath = @"\\nts11050\E$", UserName = @"DOM\me",
+            Name = "PROD", SharePath = @"\\serverName\E$", UserName = @"DOM\me",
             ProtectedPassword = SessionStore.Protect("S3gret0!pw"), FilePath = @"logs\app.log", TailLines = 500, Encoding = "utf-16",
         };
         store.Save(new SessionTree([], [s]));
@@ -23,8 +23,8 @@ public class SessionStoreTests : IDisposable
 
         var loaded = Assert.Single(new SessionStore(FilePath).Load().Sessions);
         Assert.Equal(s.Id, loaded.Id);
-        Assert.Equal(@"\\nts11050\E$", loaded.SharePath);
-        Assert.Equal(@"\\nts11050\E$\logs\app.log", loaded.FullPath);
+        Assert.Equal(@"\\serverName\E$", loaded.SharePath);
+        Assert.Equal(@"\\serverName\E$\logs\app.log", loaded.FullPath);
         Assert.Equal(500, loaded.TailLines);
         Assert.Equal("S3gret0!pw", SessionStore.Unprotect(loaded.ProtectedPassword));
     }
@@ -55,6 +55,77 @@ public class SessionStoreTests : IDisposable
         var tree = new SessionStore(FilePath).Load();
         Assert.Equal("PROD › API", tree.PathOf(api.Id));
         Assert.Equal(api.Id, Assert.Single(tree.Sessions).CollectionId);
+    }
+
+    [Fact]
+    public void Round_trip_keeps_workspace()
+    {
+        var a = new SessionConfig { Name = "a" };
+        var date = new DateTime(2026, 6, 11);
+        var tree = new SessionTree([], [a])
+        {
+            Workspace = new Workspace
+            {
+                Tabs = [new OpenTab { SessionId = a.Id }, new OpenTab { SessionId = a.Id, Date = date, FollowToday = true }],
+                Selected = 1,
+                SideBySide = true,
+            },
+        };
+        new SessionStore(FilePath).Save(tree);
+
+        var ws = new SessionStore(FilePath).Load().Workspace;
+        Assert.Equal(2, ws.Tabs.Count);
+        Assert.Equal(a.Id, ws.Tabs[0].SessionId);
+        Assert.Null(ws.Tabs[0].Date);
+        Assert.Equal(date, ws.Tabs[1].Date);
+        Assert.True(ws.Tabs[1].FollowToday);
+        Assert.Equal(1, ws.Selected);
+        Assert.True(ws.SideBySide);
+    }
+
+    [Fact]
+    public void Round_trip_keeps_local_file_tabs()
+    {
+        var a = new SessionConfig { Name = "a" };
+        var tree = new SessionTree([], [a])
+        {
+            Workspace = new Workspace { Tabs = [new OpenTab { LocalPath = @"C:\x\app.log" }, new OpenTab { SessionId = a.Id }] },
+        };
+        new SessionStore(FilePath).Save(tree);
+
+        var ws = new SessionStore(FilePath).Load().Workspace;
+        Assert.Equal(@"C:\x\app.log", ws.Tabs[0].LocalPath);
+        Assert.Equal(Guid.Empty, ws.Tabs[0].SessionId);
+        Assert.Null(ws.Tabs[1].LocalPath);
+    }
+
+    [Fact]
+    public void Workspace_tab_without_local_path_loads_with_null()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(FilePath, """{ "sessions": [], "workspace": { "tabs": [ { "sessionId": "11111111-1111-1111-1111-111111111111" } ] } }""");
+        Assert.Null(new SessionStore(FilePath).Load().Workspace.Tabs[0].LocalPath);
+    }
+
+    [Fact]
+    public void File_without_workspace_loads_empty_workspace()
+    {
+        Directory.CreateDirectory(_dir);
+        File.WriteAllText(FilePath, """{ "sessions": [] }""");
+        var ws = new SessionStore(FilePath).Load().Workspace;
+        Assert.Empty(ws.Tabs);
+        Assert.Equal(-1, ws.Selected);
+        Assert.False(ws.SideBySide);
+    }
+
+    [Fact]
+    public void Export_never_contains_workspace()
+    {
+        var path = Path.Combine(_dir, "x.rlv.json");
+        var s = new SessionConfig { Name = "s" };
+        var tree = new SessionTree([], [s]) { Workspace = new Workspace { Tabs = [new OpenTab { SessionId = s.Id }] } };
+        SessionStore.WriteExport(path, tree.Export(null));
+        Assert.DoesNotContain("workspace", File.ReadAllText(path));
     }
 
     [Fact]

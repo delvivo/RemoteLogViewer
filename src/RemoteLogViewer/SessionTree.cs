@@ -20,6 +20,22 @@ public class Credential
     public override string ToString() => Name; // ComboBox/ListBox display
 }
 
+/// Tabs open when the app was closed, reopened at the next start (never exported).
+public class Workspace
+{
+    public List<OpenTab> Tabs { get; set; } = [];
+    public int Selected { get; set; } = -1;
+    public bool SideBySide { get; set; }
+}
+
+public class OpenTab
+{
+    public Guid SessionId { get; set; }     // empty for a local file tab
+    public string? LocalPath { get; set; }  // local file tab: reopened if the file still exists
+    public DateTime? Date { get; set; }
+    public bool FollowToday { get; set; } // reopen on the current day, not on Date
+}
+
 /// Portable file for export/import: same shape as sessions.json, never with passwords or credentials.
 public class ExportFile
 {
@@ -38,6 +54,7 @@ public class SessionTree(List<SessionCollection> collections, List<SessionConfig
     public List<SessionCollection> Collections { get; } = collections;
     public List<SessionConfig> Sessions { get; } = sessions;
     public List<Credential> Credentials { get; } = credentials ?? [];
+    public Workspace Workspace { get; set; } = new();
 
     public int CountUsing(Guid credentialId) => Sessions.Count(s => s.CredentialId == credentialId);
 
@@ -79,7 +96,7 @@ public class SessionTree(List<SessionCollection> collections, List<SessionConfig
 
     public void Move(SessionCollection c, Guid? parentId)
     {
-        if (!CanMove(c.Id, parentId)) throw new InvalidOperationException("Una collezione non può essere spostata dentro sé stessa.");
+        if (!CanMove(c.Id, parentId)) throw new InvalidOperationException(L.T("Una collezione non può essere spostata dentro sé stessa."));
         if (c.ParentId == parentId) return;
         c.Name = UniqueName(parentId, c.Name, c.Id);
         c.ParentId = parentId;
@@ -191,7 +208,7 @@ public class SessionTree(List<SessionCollection> collections, List<SessionConfig
     public SessionCollection Duplicate(Guid id)
     {
         var file = Export(id, keepPasswords: true);
-        file.Collections[0].Name += " (copia)"; // [0] is the exported root
+        file.Collections[0].Name += L.T(" (copia)"); // [0] is the exported root
         return (SessionCollection)Import(file, Find(id)!.ParentId, keepPasswords: true)!;
     }
 
@@ -214,6 +231,6 @@ public class SessionTree(List<SessionCollection> collections, List<SessionConfig
                 return true;
             });
         }
-        if (!ok) throw new InvalidDataException("File non valido.");
+        if (!ok) throw new InvalidDataException(L.T("File non valido."));
     }
 }

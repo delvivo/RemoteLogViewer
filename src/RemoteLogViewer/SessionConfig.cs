@@ -14,28 +14,38 @@ public class SessionConfig
     public string Encoding { get; set; } = "auto";
     public Guid? CollectionId { get; set; } // null = root
     public Guid? CredentialId { get; set; } // null = UserName/ProtectedPassword above
+    public bool CurrentUndated { get; set; } // today's file has no date: placeholders resolve to "" for today
+    public bool IsLocal { get; set; }        // file on the local file system: FilePath is absolute, no SMB; never stored in the session list
+
+    /// Config for a local file (opened from the file system, not saved).
+    public static SessionConfig Local(string path)
+    {
+        var full = Path.GetFullPath(path);
+        return new SessionConfig { Name = Path.GetFileName(full), FilePath = full, IsLocal = true };
+    }
 
     /// Display path: date placeholders left unresolved.
     [System.Text.Json.Serialization.JsonIgnore]
-    public string FullPath => Combine(FilePath);
+    public string FullPath => IsLocal ? FilePath : Combine(FilePath);
 
     /// Path to actually open, with `{date:…}` placeholders resolved.
-    public string ResolvePath(DateTime date) => Combine(DatePath.Resolve(FilePath, date));
+    public string ResolvePath(DateTime date, DateTime? today = null) =>
+        IsLocal ? FilePath : Combine(CurrentUndated && date.Date == (today ?? DateTime.Today).Date ? DatePath.Strip(FilePath) : DatePath.Resolve(FilePath, date));
 
     private string Combine(string file) => file.StartsWith(@"\\") ? file : Path.Combine(SharePath.TrimEnd('\\') + "\\", file.TrimStart('\\'));
 
     public List<string> Validate()
     {
         var errors = new List<string>();
-        if (string.IsNullOrWhiteSpace(Name)) errors.Add("Nome obbligatorio.");
+        if (string.IsNullOrWhiteSpace(Name)) errors.Add(L.T("Nome obbligatorio."));
         if (!SharePath.StartsWith(@"\\") || SharePath.TrimStart('\\').Split('\\', StringSplitOptions.RemoveEmptyEntries).Length < 2)
-            errors.Add(@"Share nel formato \\server\share.");
-        if (DatePath.Has(SharePath)) errors.Add("La data non è ammessa nella share.");
-        if (string.IsNullOrWhiteSpace(FilePath)) errors.Add("File obbligatorio.");
+            errors.Add(L.T(@"Share nel formato \\server\share."));
+        if (DatePath.Has(SharePath)) errors.Add(L.T("La data non è ammessa nella share."));
+        if (string.IsNullOrWhiteSpace(FilePath)) errors.Add(L.T("File obbligatorio."));
         else if (FilePath.StartsWith(@"\\") && !ResolvePath(DateTime.Today).StartsWith(SharePath.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase))
-            errors.Add("Il percorso UNC del file deve essere dentro la share.");
+            errors.Add(L.T("Il percorso UNC del file deve essere dentro la share."));
         errors.AddRange(DatePath.Validate(FilePath));
-        if (TailLines is < 0 or > 100_000) errors.Add("Righe iniziali tra 0 e 100000.");
+        if (TailLines is < 0 or > 100_000) errors.Add(L.T("Righe iniziali tra 0 e 100000."));
         return errors;
     }
 

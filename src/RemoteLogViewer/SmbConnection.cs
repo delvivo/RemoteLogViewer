@@ -60,11 +60,11 @@ public static class SmbConnection
 
     public static string Message(int code) => code switch
     {
-        5 => "Accesso negato.",
-        53 or 67 or 1203 => "Server o share non raggiungibile.",
-        86 or 1326 => "Credenziali non valide.",
-        1219 => "Esiste già una connessione a questo server con credenziali diverse. Chiudila (net use \\\\server\\share /delete) o usa le stesse credenziali.",
-        1311 => "Nessun server di accesso disponibile per il dominio.",
+        5 => L.T("Accesso negato."),
+        53 or 67 or 1203 => L.T("Server o share non raggiungibile."),
+        86 or 1326 => L.T("Credenziali non valide."),
+        1219 => L.T("Esiste già una connessione a questo server con credenziali diverse. Chiudila (net use \\\\server\\share /delete) o usa le stesse credenziali."),
+        1311 => L.T("Nessun server di accesso disponibile per il dominio."),
         _ => new Win32Exception(code).Message,
     };
 }

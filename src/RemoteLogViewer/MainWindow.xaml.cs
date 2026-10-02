@@ -1,7 +1,11 @@
+using System.Diagnostics;
 using System.IO;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Microsoft.Win32;
@@ -12,7 +16,7 @@ public partial class MainWindow : Window
 {
     private const string TreeDragFormat = "rlv-tree-item";
     private const string TabDragFormat = "rlv-tab";
-    private const string ExportFilter = "Collezioni Remote Log Viewer (*.rlv.json)|*.rlv.json|JSON (*.json)|*.json";
+    private static string ExportFilter => L.T("Collezioni Remote Log Viewer (*.rlv.json)|*.rlv.json|JSON (*.json)|*.json");
 
     private readonly SessionStore _store = new(SessionStore.DefaultPath);
     private readonly SessionTree _tree;
@@ -25,12 +29,19 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        LangBox.ItemsSource = new Dictionary<string, string> { ["it"] = "Italiano", ["en"] = "English" };
+        LangBox.SelectedValue = L.Lang;
         _tree = _store.Load();
         RebuildTree();
         if (_store.Warning != null) Loaded += (_, _) => MessageBox.Show(this, _store.Warning, Title, MessageBoxButton.OK, MessageBoxImage.Warning);
     }
 
     private void Save() => _store.Save(_tree);
+
+    private void Lang_Changed(object sender, SelectionChangedEventArgs e)
+    {
+        if (LangBox.SelectedValue is string lang) L.SetLang(lang);
+    }
 
     // ---- saved sessions tree ----
 
@@ -87,7 +98,7 @@ public partial class MainWindow : Window
     {
         var copy = s.Clone();
         copy.Id = Guid.NewGuid();
-        copy.Name += " (copia)";
+        copy.Name += L.T(" (copia)");
         AddSession(copy);
     }
 
@@ -129,7 +140,7 @@ public partial class MainWindow : Window
 
     private void DeleteSession(SessionConfig s)
     {
-        if (!Confirm($"Eliminare la sessione \"{s.Name}\"?")) return;
+        if (!Confirm(L.F("Eliminare la sessione \"{0}\"?", s.Name))) return;
         _tree.Sessions.Remove(s);
         Save();
         RebuildTree();
@@ -139,8 +150,8 @@ public partial class MainWindow : Window
     {
         int sessions = _tree.CountSessions(c.Id), collections = _tree.CountCollections(c.Id);
         var question = sessions + collections == 0
-            ? $"Eliminare la collezione \"{c.Name}\"?"
-            : $"Eliminare la collezione \"{c.Name}\" con {sessions} sessioni e {collections} sottocollezioni?";
+            ? L.F("Eliminare la collezione \"{0}\"?", c.Name)
+            : L.F("Eliminare la collezione \"{0}\" con {1} sessioni e {2} sottocollezioni?", c.Name, sessions, collections);
         if (!Confirm(question)) return;
         _tree.Delete(c.Id); // open tabs keep running: they use a clone of the config
         Save();
@@ -154,8 +165,8 @@ public partial class MainWindow : Window
 
     private void NewCollection(Guid? parentId)
     {
-        var name = TextDialog.Ask(this, "Nuova collezione", "_Nome", "",
-            n => _tree.NameTaken(parentId, n) ? "Esiste già una collezione con questo nome." : null);
+        var name = TextDialog.Ask(this, L.T("Nuova collezione"), L.T("_Nome"), "",
+            n => _tree.NameTaken(parentId, n) ? L.T("Esiste già una collezione con questo nome.") : null);
         if (name == null) return;
         var c = new SessionCollection { Name = name, ParentId = parentId };
         _tree.Collections.Add(c);
@@ -165,8 +176,8 @@ public partial class MainWindow : Window
 
     private void Rename(SessionCollection c)
     {
-        var name = TextDialog.Ask(this, "Rinomina collezione", "_Nome", c.Name,
-            n => _tree.NameTaken(c.ParentId, n, c.Id) ? "Esiste già una collezione con questo nome." : null);
+        var name = TextDialog.Ask(this, L.T("Rinomina collezione"), L.T("_Nome"), c.Name,
+            n => _tree.NameTaken(c.ParentId, n, c.Id) ? L.T("Esiste già una collezione con questo nome.") : null);
         if (name == null) return;
         c.Name = name;
         Save();
@@ -220,7 +231,7 @@ public partial class MainWindow : Window
         if (tvi != null) tvi.IsSelected = true;
         var menu = SessionTreeView.ContextMenu!;
         menu.Items.Clear();
-        void Add(string header, Action action) => menu.Items.Add(Item(header, action));
+        void Add(string header, Action action) => menu.Items.Add(Item(L.T(header), action));
         void Sep() => menu.Items.Add(new Separator());
 
         switch (tvi?.DataContext)
@@ -257,8 +268,8 @@ public partial class MainWindow : Window
 
     private MenuItem MoveMenu(object item, Guid? current)
     {
-        var menu = new MenuItem { Header = "Sposta in…" };
-        menu.Items.Add(Item("(radice)", () => MoveTo(item, null), current != null));
+        var menu = new MenuItem { Header = L.T("Sposta in…") };
+        menu.Items.Add(Item(L.T("(radice)"), () => MoveTo(item, null), current != null));
         foreach (var (c, path) in _tree.Collections.Select(c => (c, _tree.PathOf(c.Id))).OrderBy(x => x.Item2, StringComparer.CurrentCultureIgnoreCase))
         {
             var ok = c.Id != current && (item is not SessionCollection moving || _tree.CanMove(moving.Id, c.Id));
@@ -267,7 +278,7 @@ public partial class MainWindow : Window
         return menu;
     }
 
-    // TextBlock header: names like "DOB_SDL" must not turn "_" into an access key.
+    // TextBlock header: names like "APP_NAME" must not turn "_" into an access key.
     private static MenuItem Item(string header, Action action, bool enabled = true)
     {
         var mi = new MenuItem { Header = new TextBlock { Text = header }, IsEnabled = enabled };
@@ -280,7 +291,7 @@ public partial class MainWindow : Window
 
     private void Export(Guid? collectionId, string suggestedName)
     {
-        var dlg = new SaveFileDialog { Filter = ExportFilter, FileName = suggestedName + ".rlv.json", Title = "Esporta collezione" };
+        var dlg = new SaveFileDialog { Filter = ExportFilter, FileName = suggestedName + ".rlv.json", Title = L.T("Esporta collezione") };
         if (dlg.ShowDialog(this) != true) return;
         try
         {
@@ -288,13 +299,13 @@ public partial class MainWindow : Window
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            MessageBox.Show(this, $"Esportazione non riuscita: {ex.Message}", Title, MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, L.F("Esportazione non riuscita: {0}", ex.Message), Title, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
     private void Import(Guid? targetId)
     {
-        var dlg = new OpenFileDialog { Filter = ExportFilter, Title = "Importa collezione" };
+        var dlg = new OpenFileDialog { Filter = ExportFilter, Title = L.T("Importa collezione") };
         if (dlg.ShowDialog(this) != true) return;
         try
         {
@@ -304,12 +315,12 @@ public partial class MainWindow : Window
             if (first is SessionCollection c) _expanded.Add(c.Id);
             Save();
             RebuildTree(first);
-            MessageBox.Show(this, $"Importate {file.Sessions.Count} sessioni. Le password non sono incluse: inseriscile con Modifica.",
+            MessageBox.Show(this, L.F("Importate {0} sessioni. Le password non sono incluse: inseriscile con Modifica.", file.Sessions.Count),
                 Title, MessageBoxButton.OK, MessageBoxImage.Information);
         }
         catch (Exception ex) when (ex is InvalidDataException or IOException or UnauthorizedAccessException)
         {
-            MessageBox.Show(this, $"Importazione non riuscita: {ex.Message}", Title, MessageBoxButton.OK, MessageBoxImage.Error);
+            MessageBox.Show(this, L.F("Importazione non riuscita: {0}", ex.Message), Title, MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 
@@ -380,18 +391,31 @@ public partial class MainWindow : Window
         DateTime? date = null;
         if (DatePath.Has(config.FilePath))
         {
-            var dlg = new DateDialog(config) { Owner = this };
+            var dlg = new DateDialog(config.WithCredential(_tree.Credentials)) { Owner = this };
             if (dlg.ShowDialog() != true) return;
             date = dlg.SelectedDate;
         }
+        Open(config, date);
+    }
+
+    private void Open(SessionConfig config, DateTime? date)
+    {
         var session = new ActiveSession(config.WithCredential(_tree.Credentials), date); // clone: later edits don't touch a running session
         var view = new LogView(session);
         var dot = new Ellipse { Width = 8, Height = 8, Margin = new Thickness(0, 0, 5, 0), Fill = view.StatusBrush };
         var close = new Button { Content = "✕", Padding = new Thickness(3, 0, 3, 0), Margin = new Thickness(6, 0, 0, 0), BorderThickness = new Thickness(0), Background = Brushes.Transparent };
         var title = new TextBlock { Text = session.DisplayName };
+        var badge = new Border
+        {
+            Background = new SolidColorBrush(Color.FromRgb(0xD3, 0x2F, 0x2F)), CornerRadius = new CornerRadius(7), Padding = new Thickness(5, 0, 5, 0),
+            Margin = new Thickness(6, 0, 0, 0), Visibility = Visibility.Collapsed, 
+            Child = new TextBlock { Foreground = Brushes.White, FontSize = 11, FontWeight = FontWeights.SemiBold },
+        };
+        badge.SetBinding(ToolTipProperty, L.Bind("Errori arrivati mentre la scheda non era visibile"));
         var header = new StackPanel { Orientation = Orientation.Horizontal };
         header.Children.Add(dot);
         header.Children.Add(title);
+        header.Children.Add(badge);
         header.Children.Add(close);
         var tab = new TabItem { Header = header, Tag = view, ToolTip = session.Path, AllowDrop = true };
         view.StatusChanged += () =>
@@ -399,14 +423,21 @@ public partial class MainWindow : Window
             dot.Fill = view.StatusBrush;
             title.Text = session.DisplayName; // changes when a "today" session rolls over to the next day
             tab.ToolTip = session.Path;
+            ((TextBlock)badge.Child).Text = view.UnreadErrors.ToString();
+            badge.Visibility = view.UnreadErrors > 0 ? Visibility.Visible : Visibility.Collapsed;
+            System.Windows.Automation.AutomationProperties.SetName(tab, view.UnreadErrors > 0 ? L.F("{0} ({1} errori)", session.DisplayName, view.UnreadErrors) : session.DisplayName);
         };
+        System.Windows.Automation.AutomationProperties.SetName(tab, session.DisplayName);
+        view.ErrorsArrived += _ => { if (!IsActive) Flash(); };
         close.Click += (_, _) => CloseTab(tab);
         tab.MouseUp += (_, e) => { if (e.ChangedButton == MouseButton.Middle) CloseTab(tab); };
 
         // Reorder by dragging the header onto another tab. The LogView stays in Tag, so the session is untouched.
         tab.PreviewMouseLeftButtonDown += (_, e) =>
         {
-            _dragTab = Ancestor<Button>(e.OriginalSource as DependencyObject) == null ? tab : null;
+            // The content (LogView) also routes here through the logical tree: only the header (visual child) starts a drag,
+            // otherwise dragging the log's scrollbar thumb would turn into a tab drag and lose the mouse capture.
+            _dragTab = e.OriginalSource is Visual v && tab.IsAncestorOf(v) && Ancestor<Button>(v) == null ? tab : null;
             _dragStart = e.GetPosition(this);
         };
         tab.DragOver += (_, e) =>
@@ -447,6 +478,95 @@ public partial class MainWindow : Window
         Relayout();
     }
 
+    // ---- local files ----
+
+    private void Open_Executed(object sender, ExecutedRoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog
+        {
+            Multiselect = true,
+            Title = L.T("Apri file di log"),
+            Filter = L.T("Log e testo (*.log;*.txt)|*.log;*.txt|Tutti i file (*.*)|*.*"),
+        };
+        if (dlg.ShowDialog(this) == true) OpenFiles(dlg.FileNames);
+    }
+
+    /// Opens each file in its own tab (dialog or drag & drop). Folders are ignored; a file already open is just selected.
+    private void OpenFiles(IEnumerable<string> paths)
+    {
+        var files = paths.Where(File.Exists).ToList();
+        if (files.Count == 0)
+        {
+            MessageBox.Show(this, L.T("Nessun file valido"), "Remote Log Viewer", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        foreach (var file in files)
+        {
+            var full = System.IO.Path.GetFullPath(file);
+            var existing = Tabs.Items.Cast<TabItem>().FirstOrDefault(t =>
+                ((LogView)t.Tag).Session.Config is { IsLocal: true } c && string.Equals(c.FilePath, full, StringComparison.OrdinalIgnoreCase));
+            if (existing != null) { Tabs.SelectedItem = existing; continue; }
+            try { using var _ = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                MessageBox.Show(this, L.F("Impossibile aprire «{0}»: {1}", full, ex.Message), "Remote Log Viewer", MessageBoxButton.OK, MessageBoxImage.Error);
+                continue;
+            }
+            Open(LocalConfig(full), null);
+        }
+    }
+
+    // Files dragged from Explorer. Tunneling (Preview) so the tab and tree handlers, which reject foreign data, never see them;
+    // internal drags use their own formats (rlv-tab, rlv-tree-item) and are left alone.
+    private void Window_PreviewDragOver(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop)) return;
+        e.Effects = DragDropEffects.Copy;
+        e.Handled = true;
+    }
+
+    private void Window_PreviewDrop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths) return;
+        e.Handled = true;
+        OpenFiles(paths);
+    }
+
+    /// Config for a local file; the title is `folder\name` when another local tab already has that file name.
+    private SessionConfig LocalConfig(string path)
+    {
+        var config = SessionConfig.Local(path);
+        var taken = Tabs.Items.Cast<TabItem>().Any(t => ((LogView)t.Tag).Session.Config is { IsLocal: true } c && c.Name == config.Name);
+        if (taken && System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(config.FilePath)) is { Length: > 0 } dir)
+            config.Name = System.IO.Path.Combine(dir, config.Name);
+        return config;
+    }
+
+    public static readonly RoutedCommand Search = new();
+    private SearchWindow? _search;
+
+    private void Search_Executed(object sender, ExecutedRoutedEventArgs e)
+    {
+        if (_search != null)
+        {
+            if (_search.WindowState == WindowState.Minimized) _search.WindowState = WindowState.Normal;
+            _search.Activate();
+            return;
+        }
+        _search = new SearchWindow(() => Tabs.Items.Cast<TabItem>().Select(t => (LogView)t.Tag).ToList(), RevealLine) { Owner = this };
+        _search.Closed += (_, _) => _search = null;
+        _search.Show();
+    }
+
+    private RevealResult RevealLine(LogView view, LogLine line)
+    {
+        var tab = Tabs.Items.Cast<TabItem>().FirstOrDefault(t => t.Tag == view);
+        if (tab == null) return RevealResult.NotFound; // session closed since the search
+        var result = view.Reveal(line);
+        if (result != RevealResult.NotFound && SideBySideButton.IsChecked != true) Tabs.SelectedItem = tab;
+        return result;
+    }
+
     private void Credentials_Click(object sender, RoutedEventArgs e) => new CredentialsWindow(_tree, Save) { Owner = this }.ShowDialog();
 
     private void SideBySide_Click(object sender, RoutedEventArgs e) => Relayout();
@@ -481,9 +601,77 @@ public partial class MainWindow : Window
         EmptyHint.Visibility = tabs.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    // ---- workspace: tabs reopened at the next start ----
+
+    private void Window_Loaded(object sender, RoutedEventArgs e)
+    {
+        var ws = _tree.Workspace;
+        foreach (var t in ws.Tabs)
+        {
+            if (t.LocalPath != null)
+            {
+                if (File.Exists(t.LocalPath)) Open(LocalConfig(t.LocalPath), null); // gone since last time: skipped silently
+                continue;
+            }
+            if (_tree.Sessions.FirstOrDefault(s => s.Id == t.SessionId) is not { } config) continue; // deleted meanwhile
+            DateTime? date = !DatePath.Has(config.FilePath) ? null : t.FollowToday ? DateTime.Today : t.Date ?? DateTime.Today;
+            Open(config, date);
+        }
+        SideBySideButton.IsChecked = ws.SideBySide;
+        if (ws.Selected >= 0 && ws.Selected < Tabs.Items.Count) Tabs.SelectedIndex = ws.Selected;
+    }
+
     private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        foreach (TabItem t in Tabs.Items) ((LogView)t.Tag).Close();
+        var views = Tabs.Items.Cast<TabItem>().Select(t => (LogView)t.Tag).ToList();
+        _tree.Workspace = new Workspace
+        {
+            Tabs = views.Select(v => v.Session.Config.IsLocal
+                ? new OpenTab { LocalPath = v.Session.Config.FilePath }
+                : new OpenTab { SessionId = v.Session.Config.Id, Date = v.Session.Date, FollowToday = v.Session.FollowToday }).ToList(),
+            Selected = Tabs.SelectedIndex,
+            SideBySide = SideBySideButton.IsChecked == true,
+        };
+        try { Save(); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { } // closing must never fail
+        foreach (var v in views) v.Close();
+    }
+
+    // ---- alerts ----
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct FLASHWINFO { public uint cbSize; public IntPtr hwnd; public uint dwFlags; public uint uCount; public uint dwTimeout; }
+
+    [DllImport("user32.dll")]
+    private static extern bool FlashWindowEx(ref FLASHWINFO info);
+
+    /// Taskbar button flashes until the window comes back to the foreground.
+    private void Flash()
+    {
+        const uint FLASHW_ALL = 3, FLASHW_TIMERNOFG = 12;
+        var info = new FLASHWINFO { hwnd = new WindowInteropHelper(this).Handle, dwFlags = FLASHW_ALL | FLASHW_TIMERNOFG };
+        info.cbSize = (uint)Marshal.SizeOf(info);
+        FlashWindowEx(ref info);
+    }
+
+    // ---- user guide ----
+
+    private void Help_Executed(object sender, ExecutedRoutedEventArgs e)
+    {
+        var path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "RemoteLogViewer", L.GuideFile);
+        try
+        {
+            var asm = Assembly.GetExecutingAssembly();
+            using var res = asm.GetManifestResourceStream(L.GuideResource)!;
+            var version = asm.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split('+')[0] ?? "";
+            Directory.CreateDirectory(System.IO.Path.GetDirectoryName(path)!);
+            File.WriteAllText(path, new StreamReader(res).ReadToEnd().Replace("%VERSION%", version));
+            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, L.F("Impossibile aprire la guida ({0}).\nFile: {1}", ex.Message, path), Title, MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 }
 

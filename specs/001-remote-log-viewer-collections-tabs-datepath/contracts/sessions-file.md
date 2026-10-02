@@ -11,12 +11,12 @@ Percorso invariato: `%APPDATA%\RemoteLogViewer\sessions.json`. Scrittura atomica
   "sessions": [
     {
       "id": "3f1c…",
-      "name": "DOB standard",
+      "name": "FOLDER standard",
       "collectionId": "b2…",
       "sharePath": "\\\\server\\E$",
       "userName": "DOMAIN\\me",
       "protectedPassword": "AQAAANCM…",
-      "filePath": "DOB\\DOB_SDL\\log\\standard_logs\\{date:yyyy_MM_dd}\\log.log",
+      "filePath": "FOLDER\\APP_NAME\\log\\standard_logs\\{date:yyyy_MM_dd}\\log.log",
       "tailLines": 1000,
       "encoding": "auto"
     }

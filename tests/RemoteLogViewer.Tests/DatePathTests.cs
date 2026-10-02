@@ -11,7 +11,7 @@ public class DatePathTests
     public void Has(string path, bool expected) => Assert.Equal(expected, DatePath.Has(path));
 
     [Theory]
-    [InlineData(@"DOB\standard_logs\{date:yyyy_MM_dd}\log.log", @"DOB\standard_logs\2026_06_11\log.log")]
+    [InlineData(@"FOLDER\standard_logs\{date:yyyy_MM_dd}\log.log", @"FOLDER\standard_logs\2026_06_11\log.log")]
     [InlineData(@"logs\log_{date:yyyy-MM-dd}.log", @"logs\log_2026-06-11.log")]
     [InlineData(@"{date:yyyy}\{date:MM}\{date:yyyyMMdd}.log", @"2026\06\20260611.log")]
     [InlineData(@"plain\log.log", @"plain\log.log")]

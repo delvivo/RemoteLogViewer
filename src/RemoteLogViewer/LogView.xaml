@@ -11,21 +11,25 @@
         <WrapPanel DockPanel.Dock="Top" Margin="2">
             <Ellipse x:Name="StatusDot" Width="10" Height="10" Margin="4,0" Fill="Gray" VerticalAlignment="Center" />
             <TextBlock x:Name="StatusLabel" VerticalAlignment="Center" MinWidth="120" MaxWidth="400" TextTrimming="CharacterEllipsis" Margin="0,0,8,0" />
-            <Button x:Name="StartStopButton" Content="Stop" Width="60" Margin="2" Click="StartStop_Click" />
-            <ToggleButton x:Name="FollowButton" Content="Follow" IsChecked="True" Width="60" Margin="2" Checked="Follow_Click" ToolTip="Scorrimento automatico" />
-            <ToggleButton x:Name="WrapButton" Content="A capo" Width="60" Margin="2" ToolTip="Manda a capo le righe lunghe" />
-            <Button Content="Pulisci" Width="60" Margin="2" Click="Clear_Click" />
-            <TextBlock Text="Filtro:" VerticalAlignment="Center" Margin="10,0,4,0" />
-            <TextBox x:Name="FilterBox" Width="160" Margin="2" VerticalContentAlignment="Center" TextChanged="Filter_Changed" ToolTip="Mostra solo le righe che contengono il testo" />
+            <Button x:Name="StartStopButton" Content="{local:T 'Stop'}" Width="60" Margin="2" Click="StartStop_Click" />
+            <ToggleButton x:Name="FollowButton" Content="Follow" IsChecked="True" Width="60" Margin="2" Checked="Follow_Click" ToolTip="{local:T 'Scorrimento automatico'}" />
+            <ToggleButton x:Name="WrapButton" Content="{local:T 'A capo'}" Width="60" Margin="2" ToolTip="{local:T 'Manda a capo le righe lunghe'}" />
+            <Button Content="{local:T 'Pulisci'}" Width="60" Margin="2" Click="Clear_Click" />
+            <Button x:Name="OlderButton" Content="{local:T '▲ Precedenti'}" Margin="2" Padding="4,0" IsEnabled="False" Click="Older_Click" ToolTip="{local:T 'Carica righe precedenti a quelle lette'}" />
+            <Button Content="{local:T 'Salva…'}" Width="60" Margin="2" Command="ApplicationCommands.Save" ToolTip="{local:T 'Salva le righe visibili in un file (Ctrl+S)'}" />
+            <TextBlock Text="{local:T 'Filtro:'}" VerticalAlignment="Center" Margin="10,0,4,0" />
+            <TextBox x:Name="FilterBox" Width="160" Margin="2" VerticalContentAlignment="Center" TextChanged="Filter_Changed" ToolTip="{local:T 'Mostra solo le righe che contengono il testo'}" />
             <CheckBox x:Name="RegexCheck" Content="Regex" VerticalAlignment="Center" Margin="2,0,6,0" Checked="Filter_Changed" Unchecked="Filter_Changed" />
-            <CheckBox Content="ERROR" Tag="Error" IsChecked="True" Foreground="#D32F2F" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="Mostra righe ERROR" />
-            <CheckBox Content="WARN" Tag="Warn" IsChecked="True" Foreground="#E07B00" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="Mostra righe WARN" />
-            <CheckBox Content="INFO" Tag="Info" IsChecked="True" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="Mostra righe INFO" />
-            <CheckBox Content="DEBUG" Tag="Debug" IsChecked="True" Foreground="Gray" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="Mostra righe DEBUG/TRACE" />
-            <TextBlock Text="Cerca:" VerticalAlignment="Center" Margin="6,0,4,0" />
+            <TextBlock Text="{local:T 'Contesto:'}" VerticalAlignment="Center" Margin="2,0,4,0" />
+            <TextBox x:Name="ContextBox" Text="0" Width="30" Margin="2" VerticalContentAlignment="Center" TextChanged="Context_Changed" ToolTip="{local:T 'Righe mostrate prima e dopo ogni riga filtrata (0–50)'}" />
+            <CheckBox x:Name="ErrorCheck" Content="ERROR" Tag="Error" IsChecked="True" Foreground="#D32F2F" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="{local:T 'Mostra righe ERROR'}" />
+            <CheckBox x:Name="WarnCheck" Content="WARN" Tag="Warn" IsChecked="True" Foreground="#E07B00" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="{local:T 'Mostra righe WARN'}" />
+            <CheckBox x:Name="InfoCheck" Content="INFO" Tag="Info" IsChecked="True" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="{local:T 'Mostra righe INFO'}" />
+            <CheckBox x:Name="DebugCheck" Content="DEBUG" Tag="Debug" IsChecked="True" Foreground="Gray" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="{local:T 'Mostra righe DEBUG/TRACE'}" />
+            <TextBlock Text="{local:T 'Cerca:'}" VerticalAlignment="Center" Margin="6,0,4,0" />
             <TextBox x:Name="SearchBox" Width="160" Margin="2" VerticalContentAlignment="Center" TextChanged="Search_Changed" ToolTip="Ctrl+F, F3 / Shift+F3" />
-            <Button Content="▲" Width="24" Margin="2" Command="{x:Static local:LogView.FindPrev}" ToolTip="Precedente (Shift+F3)" />
-            <Button Content="▼" Width="24" Margin="2" Command="{x:Static local:LogView.FindNext}" ToolTip="Successiva (F3)" />
+            <Button Content="▲" Width="24" Margin="2" Command="{x:Static local:LogView.FindPrev}" ToolTip="{local:T 'Precedente (Shift+F3)'}" />
+            <Button Content="▼" Width="24" Margin="2" Command="{x:Static local:LogView.FindNext}" ToolTip="{local:T 'Successiva (F3)'}" />
             <TextBlock x:Name="CountLabel" VerticalAlignment="Center" Margin="8,0" Foreground="Gray" />
         </WrapPanel>
         <ListBox x:Name="Lines" SelectionMode="Extended" FontFamily="Cascadia Mono, Consolas" FontSize="12"
@@ -56,6 +60,9 @@
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Level}" Value="Debug">
                             <Setter Property="Foreground" Value="Gray" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsContext}" Value="True">
+                            <Setter Property="Opacity" Value="0.55" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding IsMarker}" Value="True">
                             <Setter Property="Foreground" Value="SteelBlue" />

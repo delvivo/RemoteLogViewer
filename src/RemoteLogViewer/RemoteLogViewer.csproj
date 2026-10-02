@@ -7,11 +7,13 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>1.0.0</Version>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <Resource Include="app.ico" />
+    <EmbeddedResource Include="Guida.it.html" WithCulture="false" LogicalName="RemoteLogViewer.Guida.it.html" />
+    <EmbeddedResource Include="Guida.en.html" WithCulture="false" LogicalName="RemoteLogViewer.Guida.en.html" />
   </ItemGroup>
 
 </Project>
