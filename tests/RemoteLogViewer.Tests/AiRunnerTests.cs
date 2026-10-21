@@ -42,6 +42,24 @@ public class AiRunnerTests
     }
 
     [Fact]
+    public void CurrentPath_includes_the_registry_user_path_not_only_the_inherited_one()
+    {
+        var path = AiRunner.CurrentPath().Split(';');
+        var user = Environment.ExpandEnvironmentVariables(Environment.GetEnvironmentVariable("PATH", EnvironmentVariableTarget.User) ?? "")
+            .Split(';', StringSplitOptions.RemoveEmptyEntries).Select(d => d.Trim()).Where(d => d.Length > 0);
+
+        Assert.All(user, d => Assert.Contains(d, path, StringComparer.OrdinalIgnoreCase));
+        Assert.Contains(Environment.SystemDirectory, path, StringComparer.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void CanResolve_uses_the_given_path()
+    {
+        Assert.False(AiRunner.CanResolve("findstr x", @"C:\nonesiste"));
+        Assert.True(AiRunner.CanResolve("findstr x", Environment.SystemDirectory));
+    }
+
+    [Fact]
     public void CanResolve_finds_builtins_path_and_absolute_commands()
     {
         Assert.True(AiRunner.CanResolve("findstr /n \"^\""));

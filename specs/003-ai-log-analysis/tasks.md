@@ -106,6 +106,8 @@ Ogni stringa UI nuova va aggiunta alla tabella `En` di src/RemoteLogViewer/L.cs 
 
 - [X] T030 Gemini CLI deprecato → preset `antigravity` "Antigravity CLI" (`agy --add-dir . -p="Read the file input.md in the current directory and follow the instructions it contains."`) in src/RemoteLogViewer/Ai.cs; `agy` ignora lo stdin di testo e con `--mode plan` non risponde, quindi src/RemoteLogViewer/AiRunner.cs scrive l'input anche in `input.md` (`AiRunner.InputFile`) nella cartella di lavoro; test in tests/RemoteLogViewer.Tests/AiRunnerTests.cs e AiTests.cs; spec, research, guide, README, CLAUDE.md aggiornati
 
+- [X] T031 "Comando non trovato: agy" nell'app mentre da un terminale nuovo funziona: il PATH del processo è quello all'avvio dell'app. src/RemoteLogViewer/AiRunner.cs: `CurrentPath()` rilegge PATH macchina + utente dal registro (più quello ereditato), usato da `CanResolve` e passato a `cmd`; test in tests/RemoteLogViewer.Tests/AiRunnerTests.cs
+
 ## Dependencies & Execution Order
 
 - Setup (T001) → Foundational (T002–T007) → US1 (T008–T012, incluso T011a consenso) → US2 (T013–T018) → US3 (T019–T023) → US4 (T024) → Polish (T025–T028).

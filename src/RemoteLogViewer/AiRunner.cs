@@ -20,7 +20,8 @@ public static class AiRunner
     /// rate-limited provider) would otherwise look stuck.
     public static async Task<AiRunResult> RunAsync(string command, string stdin, Action<string> onOutput, CancellationToken ct, Action<string>? onError = null)
     {
-        if (!CanResolve(command)) return new(NotFoundExitCode, "", false);
+        var path = CurrentPath();
+        if (!CanResolve(command, path)) return new(NotFoundExitCode, "", false);
         var dir = Path.Combine(Path.GetTempPath(), "RemoteLogViewer", "ai-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
         var utf8 = new UTF8Encoding(false);
@@ -38,6 +39,7 @@ public static class AiRunner
             WorkingDirectory = dir,
         };
         psi.Environment["NO_COLOR"] = "1";
+        psi.Environment["PATH"] = path;
         using var p = new Process { StartInfo = psi };
         try
         {
@@ -89,7 +91,7 @@ public static class AiRunner
 
     /// cmd's exit code for an unknown command is not reliable (1 on some Windows builds, not 9009),
     /// so the first token is resolved like cmd does: built-in, or a file on PATH with a PATHEXT extension.
-    public static bool CanResolve(string command)
+    public static bool CanResolve(string command, string? path = null)
     {
         var t = command.TrimStart(' ', '\t', '@', '(');
         var exe = t.StartsWith('"') ? t[1..].Split('"')[0] : t.Split([' ', '\t', '|', '<', '>', '&', ')'], 2)[0];
@@ -97,8 +99,21 @@ public static class AiRunner
         if (Builtins.Contains(exe)) return true;
         string[] exts = Path.HasExtension(exe) ? [""] : (Environment.GetEnvironmentVariable("PATHEXT") ?? ".COM;.EXE;.BAT;.CMD").Split(';', StringSplitOptions.RemoveEmptyEntries);
         string[] dirs = exe.IndexOfAny(['\\', '/', ':']) >= 0 ? [""]
-            : (Environment.GetEnvironmentVariable("PATH") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries);
+            : (path ?? CurrentPath()).Split(';', StringSplitOptions.RemoveEmptyEntries);
         return dirs.Any(d => exts.Any(e => File.Exists(Path.Combine(d.Trim('"'), exe + e))));
+    }
+
+    /// PATH as a new terminal would see it: machine + user from the registry, then the inherited one. The app's own
+    /// PATH is frozen at its start, so a CLI installed afterwards (e.g. `agy`) would be "not found" until a restart.
+    public static string CurrentPath()
+    {
+        var parts = new[] { EnvironmentVariableTarget.Machine, EnvironmentVariableTarget.User, EnvironmentVariableTarget.Process }
+            .Select(t => Environment.GetEnvironmentVariable("PATH", t) ?? "")
+            .SelectMany(p => Environment.ExpandEnvironmentVariables(p).Split(';', StringSplitOptions.RemoveEmptyEntries))
+            .Select(d => d.Trim())
+            .Where(d => d.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+        return string.Join(';', parts);
     }
 
     private static void Kill(Process p)
