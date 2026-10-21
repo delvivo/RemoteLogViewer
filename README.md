@@ -9,6 +9,19 @@ New-SmbMapping -RemotePath "\\server\E$" -UserName "user" -Password "pwd"
 Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"
 ```
 
+![Live tail: new lines scroll in, a red badge counts errors arriving on a hidden tab](docs/images/live-tail.gif)
+
+## Screenshots
+
+*All sessions, servers and log lines below are fake demo data.*
+
+| | |
+|---|---|
+| ![Main window: session tree with collections, tabs, colored levels and per-level counters](docs/images/main.png) | ![Regex filter with 2 lines of context, groups separated by --](docs/images/filter.png) |
+| Sessions in collections, tabs, colors and counters per level | Text/regex filter with `grep -C`-style context |
+| ![Side by side: three sessions visible at once](docs/images/side-by-side.png) | ![Advanced search across all open sessions, ERROR and WARN only](docs/images/search.png) |
+| *Side by side* | *Search…* across all open sessions |
+
 ## Features
 
 - Application icon (`src/RemoteLogViewer/app.ico`): exe and main window.

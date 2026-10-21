@@ -9,6 +9,19 @@ New-SmbMapping -RemotePath "\\server\E$" -UserName "user" -Password "pwd"
 Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"
 ```
 
+![Tail in tempo reale: le nuove righe scorrono, un badge rosso conta gli errori arrivati su una scheda nascosta](docs/images/live-tail.gif)
+
+## Screenshot
+
+*Sessioni, server e righe di log qui sotto sono dati demo inventati. Le immagini mostrano l'interfaccia in inglese.*
+
+| | |
+|---|---|
+| ![Finestra principale: albero sessioni con collezioni, schede, livelli colorati e contatori per livello](docs/images/main.png) | ![Filtro regex con 2 righe di contesto, gruppi separati da --](docs/images/filter.png) |
+| Sessioni in collezioni, schede, colori e contatori per livello | Filtro testo/regex con contesto stile `grep -C` |
+| ![Affianca: tre sessioni visibili insieme](docs/images/side-by-side.png) | ![Ricerca avanzata su tutte le sessioni aperte, solo ERROR e WARN](docs/images/search.png) |
+| *Affianca* | *Cerca…* su tutte le sessioni aperte |
+
 ## Funzioni
 
 - Icona dell'applicazione (`src/RemoteLogViewer/app.ico`): exe e finestra principale.
