@@ -8,9 +8,11 @@
         <CommandBinding Command="ApplicationCommands.Help" Executed="Help_Executed" />
         <CommandBinding Command="{x:Static local:MainWindow.Search}" Executed="Search_Executed" />
         <CommandBinding Command="ApplicationCommands.Open" Executed="Open_Executed" />
+        <CommandBinding Command="{x:Static local:MainWindow.Ai}" Executed="Ai_Executed" />
     </Window.CommandBindings>
     <Window.InputBindings>
         <KeyBinding Key="F" Modifiers="Control+Shift" Command="{x:Static local:MainWindow.Search}" />
+        <KeyBinding Key="I" Modifiers="Control+Shift" Command="{x:Static local:MainWindow.Ai}" />
     </Window.InputBindings>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -70,6 +72,7 @@
                 <ToggleButton x:Name="SideBySideButton" Content="{local:T 'Affianca'}" Checked="SideBySide_Click" Unchecked="SideBySide_Click" ToolTip="{local:T 'Mostra tutte le sessioni aperte contemporaneamente'}" />
                 <Separator />
                 <Button Content="{local:T 'Cerca…'}" Command="{x:Static local:MainWindow.Search}" ToolTip="{local:T 'Ricerca avanzata tra tutte le sessioni aperte (Ctrl+Maiusc+F)'}" />
+                <Button Content="{local:T 'Analisi IA…'}" Command="{x:Static local:MainWindow.Ai}" ToolTip="{local:T 'Analizza i log con uno strumento IA (Ctrl+Maiusc+I)'}" />
                 <Separator />
                 <TextBlock Text="{local:T 'Lingua'}" VerticalAlignment="Center" Margin="0,0,4,0" />
                 <ComboBox x:Name="LangBox" Width="90" DisplayMemberPath="Value" SelectedValuePath="Key" SelectionChanged="Lang_Changed"

@@ -73,6 +73,9 @@ public partial class LogView : UserControl
     /// Copy of the whole buffer for the cross-tab search (UI thread only: `_all` is not thread-safe, LogLine is immutable).
     public LogLine[] Snapshot() => _all.ToArray();
 
+    /// Texts of the visible (filtered) lines, as saved by Ctrl+S. UI thread only.
+    public string[] VisibleTexts() => _visible.Select(l => l.Text).ToArray();
+
     /// Selects `line` and scrolls to it, clearing the level/text filters if they hide it. The caller selects the tab.
     public RevealResult Reveal(LogLine line)
     {
@@ -238,7 +241,7 @@ public partial class LogView : UserControl
         if (dlg.ShowDialog(Window.GetWindow(this)) != true) return;
         try
         {
-            File.WriteAllLines(dlg.FileName, _visible.Select(l => l.Text), new UTF8Encoding(false));
+            File.WriteAllLines(dlg.FileName, VisibleTexts(), new UTF8Encoding(false));
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

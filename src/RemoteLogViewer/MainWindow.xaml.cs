@@ -558,6 +558,22 @@ public partial class MainWindow : Window
         _search.Show();
     }
 
+    public static readonly RoutedCommand Ai = new();
+    private AiWindow? _ai;
+
+    private void Ai_Executed(object sender, ExecutedRoutedEventArgs e)
+    {
+        if (_ai != null)
+        {
+            if (_ai.WindowState == WindowState.Minimized) _ai.WindowState = WindowState.Normal;
+            _ai.Activate();
+            return;
+        }
+        _ai = new AiWindow(() => Tabs.Items.Cast<TabItem>().Select(t => (LogView)t.Tag).ToList(), (Tabs.SelectedItem as TabItem)?.Tag as LogView) { Owner = this };
+        _ai.Closed += (_, _) => _ai = null;
+        _ai.Show();
+    }
+
     private RevealResult RevealLine(LogView view, LogLine line)
     {
         var tab = Tabs.Items.Cast<TabItem>().FirstOrDefault(t => t.Tag == view);
