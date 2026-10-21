@@ -6,7 +6,7 @@ Tutti i tipi sono puri (nessun tipo WPF) salvo dove indicato; file `src/RemoteLo
 
 | Campo | Tipo | Note |
 |---|---|---|
-| Id | string | `claude`, `codex`, `opencode`, `gemini`, `custom`; chiave stabile in `ai.json` |
+| Id | string | `claude`, `codex`, `opencode`, `antigravity`, `custom`; chiave stabile in `ai.json` |
 | Name | string | nome visualizzato (non localizzato, tranne "Personalizzato") |
 | DefaultCommand | string | vedi research R2 |
 

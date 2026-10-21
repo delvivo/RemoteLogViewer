@@ -95,14 +95,14 @@ public class AiTests
     public void SetCommand_with_default_or_empty_removes_the_override()
     {
         var s = new AiSettings();
-        s.SetCommand("gemini", "gemini -p x");
-        Assert.Equal("gemini -p x", s.CommandFor("gemini"));
+        s.SetCommand("antigravity", "agy -p=x");
+        Assert.Equal("agy -p=x", s.CommandFor("antigravity"));
 
-        s.SetCommand("gemini", AiTool.Get("gemini").DefaultCommand);
+        s.SetCommand("antigravity", AiTool.Get("antigravity").DefaultCommand);
         Assert.Empty(s.Commands);
-        s.SetCommand("gemini", "x");
-        s.SetCommand("gemini", "  ");
-        Assert.Equal(AiTool.Get("gemini").DefaultCommand, s.CommandFor("gemini"));
+        s.SetCommand("antigravity", "x");
+        s.SetCommand("antigravity", "  ");
+        Assert.Equal(AiTool.Get("antigravity").DefaultCommand, s.CommandFor("antigravity"));
     }
 
     [Fact]

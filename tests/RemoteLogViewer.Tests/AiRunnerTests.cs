@@ -77,6 +77,14 @@ public class AiRunnerTests
     }
 
     [Fact]
+    public async Task Input_is_also_written_to_a_file_in_the_working_folder()
+    {
+        var (result, output) = await Run("type " + AiRunner.InputFile, "contenuto è\n");
+        Assert.Equal(0, result.ExitCode);
+        Assert.Contains("contenuto è", output);
+    }
+
+    [Fact]
     public async Task Working_folder_is_temporary_and_removed()
     {
         var (_, output) = await Run("cd");

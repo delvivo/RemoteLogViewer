@@ -17,7 +17,8 @@ public record AiTool(string Id, string BaseName, string DefaultCommand)
         new("claude", "Claude Code", "claude -p --tools \"\" --no-session-persistence"),
         new("codex", "Codex", "codex exec --skip-git-repo-check --sandbox read-only --ephemeral -"),
         new("opencode", "OpenCode", "opencode run --agent plan --print-logs --log-level WARN"), // logs: otherwise it retries provider errors silently
-        new("gemini", "Gemini CLI (Antigravity)", "gemini --approval-mode plan -p \"Follow the instructions above.\""),
+        // agy ignores plain stdin and --mode plan makes it explore with (denied) shell commands: it reads AiRunner.InputFile instead.
+        new("antigravity", "Antigravity CLI", "agy --add-dir . -p=\"Read the file input.md in the current directory and follow the instructions it contains.\""),
         new("custom", "Personalizzato", "claude -p"),
     ];
 

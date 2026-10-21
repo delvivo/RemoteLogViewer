@@ -56,7 +56,7 @@ Ottenuto il report, l'utente lo salva su file per allegarlo a un ticket o inviar
 
 ### User Story 3 - Scegliere lo strumento e personalizzare il comando (Priority: P2)
 
-L'utente usa uno strumento diverso (Codex, OpenCode, Gemini/Antigravity) o vuole cambiare le opzioni (modello, flag). Sceglie da un elenco di strumenti preimpostati oppure modifica il comando; la scelta e il comando personalizzato vengono ricordati alla riapertura dell'applicazione.
+L'utente usa uno strumento diverso (Codex, OpenCode, Antigravity CLI) o vuole cambiare le opzioni (modello, flag). Sceglie da un elenco di strumenti preimpostati oppure modifica il comando; la scelta e il comando personalizzato vengono ricordati alla riapertura dell'applicazione.
 
 **Why this priority**: Gli strumenti disponibili variano da PC a PC; senza personalizzazione la funzione è inutilizzabile per chi non ha lo strumento predefinito.
 
@@ -64,7 +64,7 @@ L'utente usa uno strumento diverso (Codex, OpenCode, Gemini/Antigravity) o vuole
 
 **Acceptance Scenarios**:
 
-1. **Given** l'elenco strumenti, **When** l'utente lo apre, **Then** trova almeno Claude Code, Codex, OpenCode, Gemini/Antigravity e Personalizzato, ciascuno con il comando mostrato e modificabile.
+1. **Given** l'elenco strumenti, **When** l'utente lo apre, **Then** trova almeno Claude Code, Codex, OpenCode, Antigravity CLI e Personalizzato, ciascuno con il comando mostrato e modificabile.
 2. **Given** un comando modificato per uno strumento, **When** l'utente riapre l'app e la finestra, **Then** trova lo stesso strumento selezionato e lo stesso comando.
 3. **Given** un comando modificato, **When** l'utente preme "Ripristina", **Then** torna il comando predefinito dello strumento.
 4. **Given** uno strumento non installato o un comando inesistente, **When** l'utente avvia, **Then** compare un messaggio chiaro ("comando non trovato: …") senza blocchi dell'app.
@@ -107,7 +107,7 @@ Oltre ai prompt preimpostati, l'utente scrive una domanda propria ("perché alle
 - **FR-002**: La finestra MUST elencare le schede aperte con una casella di selezione ciascuna (preselezionata la scheda attiva) e aggiornare l'elenco quando le schede vengono aperte o chiuse.
 - **FR-003**: Il sistema MUST passare allo strumento, per ogni scheda selezionata, le righe attualmente visibili (stessi filtri del salvataggio), precedute da un'intestazione con il nome della scheda e il percorso del file.
 - **FR-004**: Il sistema MUST limitare la quantità di log inviata (limite fisso di 1 MB di testo complessivo, ripartito tra le schede selezionate) mantenendo le righe più recenti di ciascuna scheda e indicare nella finestra quante righe sono state escluse.
-- **FR-005**: Il sistema MUST offrire strumenti preimpostati (Claude Code, Codex, OpenCode, Gemini CLI (Antigravity)) e uno "Personalizzato", ciascuno con un comando modificabile e ripristinabile al predefinito.
+- **FR-005**: Il sistema MUST offrire strumenti preimpostati (Claude Code, Codex, OpenCode, Antigravity CLI) e uno "Personalizzato", ciascuno con un comando modificabile e ripristinabile al predefinito.
 - **FR-006**: Il sistema MUST ricordare tra un avvio e l'altro lo strumento selezionato, i comandi modificati e l'ultimo prompt usato.
 - **FR-007**: Il sistema MUST offrire prompt preimpostati (almeno "Report errori" e "Riepilogo") che si inseriscono nella casella del prompt, modificabile o sostituibile con testo libero.
 - **FR-008**: Il sistema MUST eseguire lo strumento come processo esterno senza finestra di console, passando prompt e log senza limiti dovuti alla lunghezza della riga di comando, in una cartella di lavoro temporanea vuota (rimossa al termine). I comandi preimpostati MUST avviare lo strumento in modalità non interattiva e in sola lettura o senza strumenti (nessuna scrittura/modifica di file, nessun comando eseguito); la lettura di altri file del PC non è esclusa da tutti gli strumenti e va documentata. Per il comando personalizzato il comportamento è responsabilità dell'utente.
@@ -144,8 +144,8 @@ Oltre ai prompt preimpostati, l'utente scrive una domanda propria ("perché alle
 - Interazione one-shot: ogni avvio è indipendente, nessuna conversazione multi-turno.
 - Nella finestra la risposta (tipicamente Markdown) è mostrata come testo grezzo a carattere fisso; la versione formattata è solo nel browser, tramite "Apri formattato".
 - Limite di dimensione dei log inviati: 1 MB fisso (non configurabile), ripartito tra le schede selezionate mantenendo le righe più recenti.
-- Prompt e log vengono consegnati solo tramite input standard; la cartella di lavoro temporanea resta vuota.
-- Antigravity non ha una modalità prompt non interattiva: il preset usa Gemini CLI (stessi modelli Google), chiamato "Gemini CLI (Antigravity)".
+- Prompt e log vengono consegnati tramite input standard e, per gli strumenti che non lo leggono, come file `input.md` nella cartella di lavoro temporanea.
+- Gemini CLI è deprecato da Google: il preset Google è Antigravity CLI (`agy`), che non legge lo stdin di testo e riceve l'input da un file nella cartella di lavoro temporanea.
 - I comandi preimpostati usano la modalità non interattiva e sola lettura/senza strumenti (vedi FR-008).
 - Le impostazioni IA vengono salvate accanto alle altre impostazioni dell'app (`%APPDATA%\RemoteLogViewer`).
 - I risultati della ricerca avanzata non sono una sorgente di input in questa versione (scelta dell'utente: schede selezionate).

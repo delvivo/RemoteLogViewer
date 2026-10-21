@@ -8,11 +8,12 @@ namespace RemoteLogViewer;
 public record AiRunResult(int? ExitCode, string Error, bool Cancelled);
 
 /// Runs an AI CLI: `cmd /d /s /c "<command>"` (resolves npm `.cmd` shims via PATHEXT) in an empty temp folder,
-/// writes `stdin` and closes it, streams stdout to `onOutput` (background thread). Cancel kills the whole process tree.
+/// writes `stdin` there as `input.md` too (for tools that read files instead of stdin, e.g. Antigravity CLI) and to stdin, then closes it, streams stdout to `onOutput` (background thread). Cancel kills the whole process tree.
 public static class AiRunner
 {
     public const int NotFoundExitCode = 9009; // cmd: "is not recognized as an internal or external command"
     public const int MaxError = 4096;
+    public const string InputFile = "input.md";
     private static readonly Regex Ansi = new(@"\x1B\[[0-9;?]*[ -/]*[@-~]", RegexOptions.Compiled);
 
     /// `onError` gets each non-empty stderr line as it arrives (background thread): tools that retry silently (e.g. a
@@ -23,6 +24,7 @@ public static class AiRunner
         var dir = Path.Combine(Path.GetTempPath(), "RemoteLogViewer", "ai-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
         var utf8 = new UTF8Encoding(false);
+        File.WriteAllText(Path.Combine(dir, InputFile), stdin, utf8);
         var psi = new ProcessStartInfo("cmd.exe", "/d /s /c \"" + command + "\"")
         {
             UseShellExecute = false,

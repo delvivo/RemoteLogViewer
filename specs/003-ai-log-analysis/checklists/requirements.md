@@ -31,5 +31,5 @@
 
 ## Notes
 
-- Tool names (Claude Code, Codex, OpenCode, Gemini/Antigravity) are user-requested product choices, not implementation details.
+- Tool names (Claude Code, Codex, OpenCode, Antigravity CLI) are user-requested product choices, not implementation details.
 - Delivery mechanism (stdin vs temp file) and per-tool flags deferred to `/speckit-plan`.

@@ -24,13 +24,22 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"
 - **Contesto** (0–50) accanto al filtro: mostra N righe prima/dopo ogni riga filtrata, come `grep -C N`; righe di contesto attenuate, gruppi separati da `--`.
 - **▲ Precedenti**: carica sopra le righe già lette un altro blocco (= *Righe iniziali*, 1000 se 0) senza interrompere il tail; disabilitato a inizio file, dopo una rotazione o con sessione non attiva.
 - **Cerca…** / Ctrl+Maiusc+F: ricerca avanzata tra *tutte* le sessioni aperte in una finestra non modale: testo o regex, maiuscole/minuscole, parola intera, filtro per livello, intervallo data+ora; risultati raggruppati per scheda (max 10.000, istantanea dei buffer); il doppio click salta alla riga nella sua scheda (azzerando i filtri della scheda se la nascondono); *Esporta…* salva i risultati in un file.
-- **Analisi IA…** / Ctrl+Maiusc+I: invia le righe visibili delle schede spuntate (max 1 MB, si tengono le più recenti) con un prompt (*Report errori*, *Riepilogo* o una domanda libera) a uno strumento IA a riga di comando già installato e autenticato: Claude Code (`claude -p --tools "" --no-session-persistence`), Codex (`codex exec --skip-git-repo-check --sandbox read-only --ephemeral -`), OpenCode (`opencode run --agent plan --print-logs --log-level WARN`), Gemini CLI (`gemini --approval-mode plan -p …`; Antigravity non ha una modalità non interattiva, si usa Gemini CLI) o un comando personalizzato (eseguito con `cmd`, prompt e log su stdin). La risposta compare man mano nella finestra e si può annullare, copiare, aprire formattata nel browser o esportare in `.md`/`.html`. Conferma al primo uso di ogni strumento; impostazioni in `%APPDATA%\RemoteLogViewer\ai.json`.
+- **Analisi IA…** / Ctrl+Maiusc+I: invia le righe visibili delle schede spuntate (max 1 MB, si tengono le più recenti) con un prompt (*Report errori*, *Riepilogo* o una domanda libera) a uno strumento IA a riga di comando già installato e autenticato: Claude Code (`claude -p --tools "" --no-session-persistence`), Codex (`codex exec --skip-git-repo-check --sandbox read-only --ephemeral -`), OpenCode (`opencode run --agent plan --print-logs --log-level WARN`), Antigravity CLI (`agy --add-dir . -p="Read the file input.md in the current directory and follow the instructions it contains."`: `agy` ignora lo stdin di testo, quindi l'input viene scritto anche in `input.md` nella cartella di lavoro temporanea) o un comando personalizzato (eseguito con `cmd`, prompt e log su stdin). La risposta compare man mano nella finestra e si può annullare, copiare, aprire formattata nel browser o esportare in `.md`/`.html`. Conferma al primo uso di ogni strumento; impostazioni in `%APPDATA%\RemoteLogViewer\ai.json`.
 - **Apri file…** / Ctrl+O (o trascinamento da Esplora risorse): apre un log locale (`.log`, `.txt`, qualunque file di testo) in una nuova scheda, senza sessione, credenziali né SMB: ultime 1000 righe poi Follow, stessi filtri/ricerca/ricerca avanzata/avvisi delle sessioni remote. Non entra nell'elenco sessioni; viene ricordato e riaperto all'avvio se il file esiste ancora.
 - **Salva…** / Ctrl+S: salva le righe visibili (filtri e contesto applicati) in un `.log` UTF-8.
 - **Avvisi**: badge rosso con il numero di ERROR sulle schede non visibili (azzerato selezionandole; niente badge in Affianca) e lampeggio della taskbar se l'app non è in primo piano. Le righe lette all'apertura non avvisano.
 - **Riapertura all'avvio**: alla chiusura si memorizzano schede aperte, ordine, selezione e Affianca; all'avvio vengono riaperte senza domande (sessioni con data su "oggi" → data corrente, data fissa → stessa data).
 - **Guida utente** (F1 o pulsante *Guida*): pagina HTML in italiano o inglese, aperta nel browser predefinito, funziona offline.
 - **Lingua** (it/en): selettore *Lingua* nella barra; vale per interfaccia e guida, il cambio è immediato, senza riavvio. Default: lingua di Windows (italiano, altrimenti inglese). Salvata in `%APPDATA%\RemoteLogViewer\lang.txt`.
+
+## Installazione
+
+Ogni release GitHub (tag `v*`) ha due download:
+
+- `RemoteLogViewer-vX.Y.Z-setup.exe`: installer per utente (`%LOCALAPPDATA%\Programs\RemoteLogViewer`, senza diritti di amministratore), con collegamento nel menu Start e disinstallazione. Eseguire il setup di una versione più recente aggiorna quella installata. Sessioni e impostazioni in `%APPDATA%\RemoteLogViewer` restano.
+- `RemoteLogViewer-vX.Y.Z-win-x64.zip`: exe singolo portabile.
+
+L'installer è generato da `.github/workflows/installer.yml` (Inno Setup, script `installer/RemoteLogViewer.iss`) dopo che il workflow di release è andato a buon fine.
 
 ## Build / avvio
 

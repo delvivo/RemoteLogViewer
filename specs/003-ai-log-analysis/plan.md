@@ -6,7 +6,7 @@
 
 ## Summary
 
-Finestra non modale `AiWindow` (Ctrl+Maiusc+I, toolbar "Analisi IA…") che invia le righe visibili delle schede scelte, precedute da un prompt (preset "Report errori"/"Riepilogo" o libero), a una CLI IA esterna (Claude Code, Codex, OpenCode, Gemini CLI/Antigravity, personalizzato). La CLI gira in `cmd /c` in una cartella temporanea, riceve tutto su stdin, in modalità non interattiva e sola lettura; l'output compare progressivamente, si può annullare (kill dell'albero), copiare, aprire formattato nel browser o esportare in `.md`/`.html`.
+Finestra non modale `AiWindow` (Ctrl+Maiusc+I, toolbar "Analisi IA…") che invia le righe visibili delle schede scelte, precedute da un prompt (preset "Report errori"/"Riepilogo" o libero), a una CLI IA esterna (Claude Code, Codex, OpenCode, Antigravity CLI, personalizzato). La CLI gira in `cmd /c` in una cartella temporanea, riceve tutto su stdin, in modalità non interattiva e sola lettura; l'output compare progressivamente, si può annullare (kill dell'albero), copiare, aprire formattato nel browser o esportare in `.md`/`.html`.
 
 Approccio: logica pura e testata (`AiInput` limite 1 MB water-filling, `AiSettings` persistenza in `ai.json`, `MarkdownHtml` convertitore minimo, `AiReport` export), esecuzione processo isolata in `AiRunner` (testata con comandi di sistema), UI sottile. Nessuna nuova dipendenza.
 

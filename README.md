@@ -24,13 +24,22 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"
 - **Context** (0–50) next to the filter: shows N lines before/after each filtered line, like `grep -C N`; context lines are dimmed, groups are separated by `--`.
 - **▲ Older**: loads another block (= *Initial lines*, 1000 if 0) above the lines already read without interrupting the tail; disabled at the start of the file, after a rotation, or when the session is not active.
 - **Search…** / Ctrl+Shift+F: advanced search across *all* open sessions in a non-modal window: text or regex, match case, whole word, level filter, date+time range; results grouped by tab (max 10,000, snapshot of the buffers); double-click jumps to the line in its tab (clearing that tab's filters if they hide it); *Export…* saves the results to a file.
-- **AI analysis…** / Ctrl+Shift+I: sends the visible lines of the checked tabs (max 1 MB, most recent lines kept) plus a prompt (*Error report*, *Summary* or your own question) to a command-line AI tool already installed and signed in: Claude Code (`claude -p --tools "" --no-session-persistence`), Codex (`codex exec --skip-git-repo-check --sandbox read-only --ephemeral -`), OpenCode (`opencode run --agent plan --print-logs --log-level WARN`), Gemini CLI (`gemini --approval-mode plan -p …`; Antigravity has no headless mode, use Gemini CLI) or a custom command (run with `cmd`, prompt and logs on stdin). The answer streams into the window and can be cancelled, copied, opened formatted in the browser or exported as `.md`/`.html`. Confirmation the first time each tool is used; settings in `%APPDATA%\RemoteLogViewer\ai.json`.
+- **AI analysis…** / Ctrl+Shift+I: sends the visible lines of the checked tabs (max 1 MB, most recent lines kept) plus a prompt (*Error report*, *Summary* or your own question) to a command-line AI tool already installed and signed in: Claude Code (`claude -p --tools "" --no-session-persistence`), Codex (`codex exec --skip-git-repo-check --sandbox read-only --ephemeral -`), OpenCode (`opencode run --agent plan --print-logs --log-level WARN`), Antigravity CLI (`agy --add-dir . -p="Read the file input.md in the current directory and follow the instructions it contains."`: `agy` ignores plain stdin, so the input is also written to `input.md` in the temporary working folder) or a custom command (run with `cmd`, prompt and logs on stdin). The answer streams into the window and can be cancelled, copied, opened formatted in the browser or exported as `.md`/`.html`. Confirmation the first time each tool is used; settings in `%APPDATA%\RemoteLogViewer\ai.json`.
 - **Open file…** / Ctrl+O (or drag & drop from Explorer): opens a local log (`.log`, `.txt`, any text file) in a new tab, with no session, credentials or SMB: last 1000 lines then Follow, same filters/search/advanced search/alerts as remote sessions. Not saved in the session list; remembered and reopened at startup if the file still exists.
 - **Save…** / Ctrl+S: saves the visible lines (filters and context applied) to a UTF-8 `.log`.
 - **Alerts**: red badge with the number of ERRORs on tabs that are not visible (reset by selecting them; no badge in Side by side) and taskbar flashing if the app is not in the foreground. Lines read at opening do not raise alerts.
 - **Reopening at startup**: on close, open tabs, order, selection and Side by side are remembered; at start they are reopened without questions (sessions with a date on "today" → current date, fixed date → same date).
 - **User guide** (F1 or *Help* button): HTML page in Italian or English, opened in the default browser, works offline.
 - **Language** (it/en): *Language* selector in the bar; it applies to the interface and the guide, and the change is immediate, no restart. Default: the Windows language (Italian, otherwise English). Saved in `%APPDATA%\RemoteLogViewer\lang.txt`.
+
+## Install
+
+Each GitHub release (tag `v*`) has two downloads:
+
+- `RemoteLogViewer-vX.Y.Z-setup.exe`: per-user installer (`%LOCALAPPDATA%\Programs\RemoteLogViewer`, no admin rights), with a Start menu shortcut and an uninstaller. Running the setup of a newer version updates the installed one in place. Sessions and settings in `%APPDATA%\RemoteLogViewer` are kept.
+- `RemoteLogViewer-vX.Y.Z-win-x64.zip`: portable single exe.
+
+The installer is built by `.github/workflows/installer.yml` (Inno Setup, script `installer/RemoteLogViewer.iss`) after the release workflow succeeds.
 
 ## Build / run
 

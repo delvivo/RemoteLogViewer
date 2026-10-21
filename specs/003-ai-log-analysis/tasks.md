@@ -104,6 +104,8 @@ Ogni stringa UI nuova va aggiunta alla tabella `En` di src/RemoteLogViewer/L.cs 
 
 - [X] T029 OpenCode collegato a Requesty restava >11 min senza output: il provider rifiutava per rate limit e OpenCode ritentava in silenzio. src/RemoteLogViewer/AiRunner.cs: stderr letto riga per riga con callback `onError`; src/RemoteLogViewer/AiWindow.xaml.cs: ultima riga di stderr nello stato durante l'esecuzione (tooltip col testo intero); preset OpenCode con `--print-logs --log-level WARN` (src/RemoteLogViewer/Ai.cs); `CanResolve` accetta comandi che iniziano con `(`; test in tests/RemoteLogViewer.Tests/AiRunnerTests.cs; guide, README, research aggiornati
 
+- [X] T030 Gemini CLI deprecato → preset `antigravity` "Antigravity CLI" (`agy --add-dir . -p="Read the file input.md in the current directory and follow the instructions it contains."`) in src/RemoteLogViewer/Ai.cs; `agy` ignora lo stdin di testo e con `--mode plan` non risponde, quindi src/RemoteLogViewer/AiRunner.cs scrive l'input anche in `input.md` (`AiRunner.InputFile`) nella cartella di lavoro; test in tests/RemoteLogViewer.Tests/AiRunnerTests.cs e AiTests.cs; spec, research, guide, README, CLAUDE.md aggiornati
+
 ## Dependencies & Execution Order
 
 - Setup (T001) → Foundational (T002–T007) → US1 (T008–T012, incluso T011a consenso) → US2 (T013–T018) → US3 (T019–T023) → US4 (T024) → Polish (T025–T028).
