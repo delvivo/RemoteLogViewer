@@ -9,3 +9,5 @@ Thumbs.db
 __pycache__/
 *.pyc
 *_wpftmp.csproj
+publish/
+dist/
