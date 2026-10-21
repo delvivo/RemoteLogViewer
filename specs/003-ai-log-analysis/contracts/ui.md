@@ -32,7 +32,7 @@
 | Prompt preset | `ComboBox` (Report errori, Riepilogo); selezione → sostituisce il testo del prompt. |
 | Avvia | abilitato se: nessuna analisi in corso, ≥1 scheda spuntata, prompt e comando non vuoti. Primo uso dello strumento → `MessageBox` Sì/No di consenso; No → non parte. |
 | Annulla | abilitato solo durante l'analisi; termina l'albero di processi. |
-| Stato | `In corso… mm:ss` / `Completato in mm:ss` / `Annullato` / `Errore (codice N)` / `Nessuna risposta`; + "N righe escluse per limite 1 MB" se `Dropped > 0`. Localizzato live (`L.Changed`). |
+| Stato | `In corso… mm:ss · <ultima riga stderr>` / `Completato in mm:ss` / `Annullato` / `Errore (codice N)` / `Nessuna risposta`; + "N righe escluse per limite 1 MB" se `Dropped > 0`. Localizzato live (`L.Changed`). |
 | Risposta | `TextBox` sola lettura, accodamento a blocchi dal timer UI; testo già ricevuto conservato su annulla/errore; in errore viene accodato stderr. |
 | Copia / Apri formattato / Esporta… | abilitati se risposta non vuota e nessuna analisi in corso. Esporta: `SaveFileDialog` filtri `Markdown (*.md)` e `HTML (*.html)`, UTF-8 senza BOM. |
 

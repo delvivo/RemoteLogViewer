@@ -16,7 +16,7 @@ public record AiTool(string Id, string BaseName, string DefaultCommand)
     [
         new("claude", "Claude Code", "claude -p --tools \"\" --no-session-persistence"),
         new("codex", "Codex", "codex exec --skip-git-repo-check --sandbox read-only --ephemeral -"),
-        new("opencode", "OpenCode", "opencode run --agent plan"),
+        new("opencode", "OpenCode", "opencode run --agent plan --print-logs --log-level WARN"), // logs: otherwise it retries provider errors silently
         new("gemini", "Gemini CLI (Antigravity)", "gemini --approval-mode plan -p \"Follow the instructions above.\""),
         new("custom", "Personalizzato", "claude -p"),
     ];

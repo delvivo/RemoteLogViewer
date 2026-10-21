@@ -30,10 +30,23 @@ public class AiRunnerTests
     }
 
     [Fact]
+    public async Task Stderr_lines_are_reported_while_running()
+    {
+        var lines = new List<string>();
+        var result = await AiRunner.RunAsync("(echo primo 1>&2) & echo. 1>&2 & (echo secondo 1>&2) & echo fatto", "", _ => { },
+            CancellationToken.None, l => { lock (lines) lines.Add(l.Trim()); });
+
+        Assert.Equal(0, result.ExitCode);
+        Assert.Equal(["primo", "secondo"], lines); // blank lines skipped
+        Assert.Contains("secondo", result.Error);
+    }
+
+    [Fact]
     public void CanResolve_finds_builtins_path_and_absolute_commands()
     {
         Assert.True(AiRunner.CanResolve("findstr /n \"^\""));
         Assert.True(AiRunner.CanResolve("@for /l %i in (1,1,2) do @echo x"));
+        Assert.True(AiRunner.CanResolve("(echo a) & echo b"));
         Assert.True(AiRunner.CanResolve("\"C:\\Windows\\System32\\cmd.exe\" /c ver"));
         Assert.False(AiRunner.CanResolve("nonesiste_xyz -p"));
         Assert.False(AiRunner.CanResolve("   "));

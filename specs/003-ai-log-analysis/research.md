@@ -12,7 +12,7 @@
 |---|---|---|
 | Claude Code | `claude -p --tools "" --no-session-persistence` | `-p` senza argomento usa stdin come prompt; `--tools ""` disabilita tutti gli strumenti (nessun accesso a file/comandi); niente sessione salvata. |
 | Codex | `codex exec --skip-git-repo-check --sandbox read-only --ephemeral -` | `-` = prompt da stdin; la cartella temporanea non è un repo git; sandbox in sola lettura; stdout = solo messaggio finale, avanzamento su stderr. |
-| OpenCode | `opencode run --agent plan` | senza `message` legge stdin; l'agente `plan` è in sola lettura; le domande interattive sono negate in modalità non interattiva. |
+| OpenCode | `opencode run --agent plan --print-logs --log-level WARN` | senza `message` legge stdin; l'agente `plan` è in sola lettura; le domande interattive sono negate in modalità non interattiva. `--print-logs --log-level WARN`: senza, gli errori del provider (es. rate limit Requesty) vengono ritentati in silenzio e lo strumento sembra bloccato. |
 | Gemini CLI (Antigravity) | `gemini --approval-mode plan -p "Follow the instructions above."` | headless solo con `-p`, il cui testo è **accodato** a stdin; `plan` = sola lettura. |
 | Personalizzato | `claude -p` | qualunque comando che legge stdin e scrive stdout. |
 
@@ -24,7 +24,7 @@
 - **Rationale**: le CLI npm sono shim `.cmd` (`gemini.cmd`, `codex.cmd`), che `Process.Start` senza shell non risolve; `cmd /c` applica PATH+PATHEXT e dà all'utente la stessa sintassi del prompt dei comandi. `/s` + virgolette esterne preserva le virgolette interne del comando. Kill dell'albero perché `cmd` → `node` → figli.
 - **Comando non trovato**: il codice d'uscita di `cmd` non è affidabile (su questa build di Windows 11 è 1, non 9009), quindi prima dell'avvio `AiRunner.CanResolve` risolve il primo token come fa `cmd` (comando interno o file su PATH con estensione PATHEXT); se non risolto non parte e restituisce 9009 → messaggio localizzato "Comando non trovato: …".
 - **Verifica reale (2026-10-21)**: preset Claude Code e OpenCode rispondono; Gemini CLI accetta i flag ma l'account individuale riceve `IneligibleTierError` (Google ha dismesso Gemini CLI per i privati a favore di Antigravity): l'app mostra errore + messaggio dello strumento.
-- **Streaming**: lettura `StandardOutput.ReadAsync(char[])` a blocchi, accodati e mostrati dal thread UI; stderr raccolto a parte (mostrato solo se exit ≠ 0 o nessun output). Sequenze ANSI rimosse con regex (`\x1B\[[0-9;?]*[ -/]*[@-~]`).
+- **Streaming**: lettura `StandardOutput.ReadAsync(char[])` a blocchi, accodati e mostrati dal thread UI; stderr letto riga per riga in parallelo: l'ultima riga non vuota compare nello stato durante l'esecuzione (un provider che rifiuta e lo strumento che ritenta non sembrano più un blocco), gli ultimi 4 KB nella risposta se exit ≠ 0 o nessun output. Sequenze ANSI rimosse con regex (`\x1B\[[0-9;?]*[ -/]*[@-~]`).
 - **Nota**: Claude Code `-p` in formato `text` stampa la risposta alla fine (non token per token); è il comportamento dello strumento, accettato (SC-002 = mostrare appena lo strumento produce). `stream-json` richiederebbe parsing per strumento: fuori ambito.
 
 ## R4 — Limite 1 MB

@@ -25,6 +25,7 @@ public partial class AiWindow : Window
     private string _toolId;
     private bool _refreshing;
     private Func<string> _status = () => "";
+    private volatile string? _lastError; // last stderr line of the running tool, shown in the status
 
     public AiWindow(Func<IReadOnlyList<LogView>> views, LogView? active)
     {
@@ -157,7 +158,11 @@ public partial class AiWindow : Window
         RefreshStatus();
     }
 
-    private void RefreshStatus() => StatusLabel.Text = _status();
+    private void RefreshStatus()
+    {
+        StatusLabel.Text = _status();
+        StatusLabel.ToolTip = StatusLabel.Text.Length > 0 ? StatusLabel.Text : null; // long tool messages are trimmed
+    }
 
     private async void Start_Click(object sender, RoutedEventArgs e)
     {
@@ -183,16 +188,17 @@ public partial class AiWindow : Window
         var cts = _cts = new CancellationTokenSource();
         _report = null;
         _pending.Clear();
+        _lastError = null;
         OutputBox.Clear();
         _clock.Restart();
         _timer.Start();
-        SetStatus(() => L.F("In corso… {0}", Elapsed()) + Dropped(input.Dropped));
+        SetStatus(() => L.F("In corso… {0}", Elapsed()) + Dropped(input.Dropped) + (_lastError is { } last ? " · " + last.Trim() : ""));
         UpdateButtons();
 
         AiRunResult result;
         try
         {
-            result = await AiRunner.RunAsync(command, input.Text, _pending.Enqueue, cts.Token);
+            result = await AiRunner.RunAsync(command, input.Text, _pending.Enqueue, cts.Token, line => _lastError = line);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or InvalidOperationException)
         {

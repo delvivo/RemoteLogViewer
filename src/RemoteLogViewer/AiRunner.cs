@@ -15,7 +15,9 @@ public static class AiRunner
     public const int MaxError = 4096;
     private static readonly Regex Ansi = new(@"\x1B\[[0-9;?]*[ -/]*[@-~]", RegexOptions.Compiled);
 
-    public static async Task<AiRunResult> RunAsync(string command, string stdin, Action<string> onOutput, CancellationToken ct)
+    /// `onError` gets each non-empty stderr line as it arrives (background thread): tools that retry silently (e.g. a
+    /// rate-limited provider) would otherwise look stuck.
+    public static async Task<AiRunResult> RunAsync(string command, string stdin, Action<string> onOutput, CancellationToken ct, Action<string>? onError = null)
     {
         if (!CanResolve(command)) return new(NotFoundExitCode, "", false);
         var dir = Path.Combine(Path.GetTempPath(), "RemoteLogViewer", "ai-" + Guid.NewGuid().ToString("N"));
@@ -39,7 +41,17 @@ public static class AiRunner
         {
             p.Start();
             // Drained in parallel: a full stderr pipe (e.g. Codex progress) would block the tool forever.
-            var error = p.StandardError.ReadToEndAsync();
+            var errorTail = new StringBuilder();
+            var error = Task.Run(async () =>
+            {
+                while (await p.StandardError.ReadLineAsync() is { } line)
+                {
+                    line = Ansi.Replace(line, "");
+                    errorTail.Append(line).Append('\n');
+                    if (errorTail.Length > MaxError) errorTail.Remove(0, errorTail.Length - MaxError);
+                    if (line.Trim().Length > 0) onError?.Invoke(line);
+                }
+            });
             var write = Task.Run(async () =>
             {
                 try
@@ -57,8 +69,8 @@ public static class AiRunner
                 await p.WaitForExitAsync();
             }
             await write;
-            var err = await error;
-            if (err.Length > MaxError) err = err[^MaxError..];
+            await error;
+            var err = errorTail.ToString();
             return ct.IsCancellationRequested ? new(null, err, true) : new(p.ExitCode, err, false);
         }
         finally
@@ -77,8 +89,8 @@ public static class AiRunner
     /// so the first token is resolved like cmd does: built-in, or a file on PATH with a PATHEXT extension.
     public static bool CanResolve(string command)
     {
-        var t = command.TrimStart().TrimStart('@');
-        var exe = t.StartsWith('"') ? t[1..].Split('"')[0] : t.Split([' ', '\t', '|', '<', '>', '&'], 2)[0];
+        var t = command.TrimStart(' ', '\t', '@', '(');
+        var exe = t.StartsWith('"') ? t[1..].Split('"')[0] : t.Split([' ', '\t', '|', '<', '>', '&', ')'], 2)[0];
         if (exe.Length == 0) return false;
         if (Builtins.Contains(exe)) return true;
         string[] exts = Path.HasExtension(exe) ? [""] : (Environment.GetEnvironmentVariable("PATHEXT") ?? ".COM;.EXE;.BAT;.CMD").Split(';', StringSplitOptions.RemoveEmptyEntries);
