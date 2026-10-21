@@ -120,6 +120,8 @@ public static class L
         ["Pulisci"] = "Clear",
         ["▲ Precedenti"] = "▲ Older",
         ["Carica righe precedenti a quelle lette"] = "Load lines before the ones already read",
+        ["⏫ Tutto"] = "⏫ All",
+        ["Carica il file dall'inizio (fino al limite del buffer, 100.000 righe)"] = "Load the file from the start (up to the buffer limit, 100,000 lines)",
         ["Salva…"] = "Save…",
         ["Salva le righe visibili in un file (Ctrl+S)"] = "Save the visible lines to a file (Ctrl+S)",
         ["Filtro:"] = "Filter:",

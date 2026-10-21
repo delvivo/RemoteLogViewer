@@ -28,7 +28,7 @@ The data flow crosses threads, so it only makes sense when you read several file
 1. **`ActiveSession`** runs one background `Task` loop per open session:
    - It connects the share (`SmbConnection`), calls `LogTailer.ReadTail(N)` once, then `Poll()` every 500 ms.
    - It pushes `LogLine`s (built by `LogLevels.Make`: level via `LogLevels.Detect`, which inherits the previous level for stack-trace lines) into a `ConcurrentQueue` called `Pending`. Flags: `IsEntry` = level detected on that line (a stack trace is one entry: counters/badges count entries), `IsHistory` = from the initial `ReadTail` (no alerts; the new-day read-from-start is *not* history).
-   - **Load previous lines:** the UI calls `RequestOlder(n)` (atomic int); the loop, which owns the tailer, runs `ReadBefore(n)` on its next iteration and enqueues the block in `Older` (`ConcurrentQueue<List<LogLine>>`). `CanLoadOlder` (Running && `tailer.HasOlder`) raises `StateChanged` when it changes.
+   - **Load previous lines:** the UI calls `RequestOlder(n)` (atomic int); the loop, which owns the tailer, runs `ReadBefore(n)` on its next iteration and enqueues the block in `Older` (`ConcurrentQueue<List<LogLine>>`). `CanLoadOlder` (Running && `tailer.HasOlder`) raises `StateChanged` when it changes. *▲ Precedenti* asks `TailLines` (1000 if 0), *⏫ Tutto* asks the free buffer space (`MaxLines - _all.Count`): `ReadBefore` stops at the file start by itself.
    - It raises `StateChanged` on the background thread.
    - **State machine:**
      - A failure on the first connect or read goes to `Error`, with no retry. This means wrong credentials or a wrong path.

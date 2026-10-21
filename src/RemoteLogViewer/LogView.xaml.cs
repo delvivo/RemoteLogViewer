@@ -191,7 +191,7 @@ public partial class LogView : UserControl
             _ => Brushes.Orange,
         };
         StartStopButton.Content = Session.State is SessionState.Stopped or SessionState.Error ? L.T("Avvia") : L.T("Stop");
-        OlderButton.IsEnabled = Session.CanLoadOlder && Session.State == SessionState.Running;
+        OlderButton.IsEnabled = AllOlderButton.IsEnabled = Session.CanLoadOlder && Session.State == SessionState.Running;
         StatusChanged?.Invoke();
     }
 
@@ -213,10 +213,15 @@ public partial class LogView : UserControl
         Rebuild();
     }
 
-    private void Older_Click(object sender, RoutedEventArgs e)
+    private void Older_Click(object sender, RoutedEventArgs e) =>
+        LoadOlder(Session.Config.TailLines > 0 ? Session.Config.TailLines : 1000);
+
+    // ponytail: "all" = whatever fits in the buffer; ReadBefore stops at the file start on its own.
+    private void AllOlder_Click(object sender, RoutedEventArgs e) => LoadOlder(null);
+
+    private void LoadOlder(int? wanted)
     {
-        var wanted = Session.Config.TailLines > 0 ? Session.Config.TailLines : 1000;
-        var n = Math.Min(wanted, MaxLines - _all.Count);
+        var n = Math.Min(wanted ?? MaxLines, MaxLines - _all.Count);
         if (n <= 0)
         {
             Info(L.F("Buffer pieno ({0:N0} righe): usa Pulisci per fare spazio.", MaxLines));

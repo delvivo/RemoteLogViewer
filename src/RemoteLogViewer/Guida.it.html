@@ -184,6 +184,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td>A capo</td><td>Manda a capo le righe lunghe invece di mostrare la barra di scorrimento orizzontale.</td></tr>
   <tr><td>Pulisci</td><td>Svuota la vista e azzera i contatori. La lettura del file continua.</td></tr>
   <tr><td>▲ Precedenti</td><td>Carica le <a href="#precedenti">righe precedenti</a> a quelle già lette.</td></tr>
+  <tr><td>⏫ Tutto</td><td>Carica <a href="#precedenti">tutto il file</a> dall'inizio (max 100.000 righe).</td></tr>
   <tr><td>Salva…</td><td><a href="#salva">Salva le righe visibili</a> in un file (<kbd>Ctrl</kbd>+<kbd>S</kbd>).</td></tr>
   <tr><td>Filtro, Regex, Contesto</td><td>Vedi <a href="#filtri">Filtri, contesto e ricerca</a>.</td></tr>
   <tr><td><span class="err">ERROR n</span> <span class="warn">WARN n</span> INFO n <span class="dbg">DEBUG n</span></td><td>Le caselle mostrano o nascondono le righe di quel livello. Il numero indica quante voci di quel livello ci sono nel buffer: uno stack trace conta 1 e il numero non dipende dai filtri.</td></tr>
@@ -229,7 +230,8 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <h2 id="precedenti">Righe precedenti</h2>
 <p>All'apertura vengono lette solo le ultime <em>Righe iniziali</em> del file. <strong>▲ Precedenti</strong> carica un altro blocco della stessa dimensione (1000 righe se <em>Righe iniziali</em> è 0) e lo mette sopra le righe già presenti. La lettura delle nuove righe continua e la vista non salta.</p>
 <ul>
-  <li>Il pulsante è disabilitato quando l'inizio del file è già caricato, quando la sessione non è attiva, e dopo una rotazione del file (il nuovo file viene letto già dall'inizio).</li>
+  <li><strong>⏫ Tutto</strong> carica in un colpo solo tutte le righe rimanenti fino all'inizio del file, entro il limite di 100.000 righe del buffer (se il file è più lungo, restano caricate le 100.000 più recenti).</li>
+  <li>I pulsanti sono disabilitati quando l'inizio del file è già caricato, quando la sessione non è attiva, e dopo una rotazione del file (il nuovo file viene letto già dall'inizio).</li>
   <li>Se il blocco supererebbe il limite di 100.000 righe, ne vengono caricate solo quante ci stanno e l'app te lo segnala.</li>
 </ul>
 

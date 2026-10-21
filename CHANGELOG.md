@@ -2,6 +2,12 @@
 
 All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Load whole file**: new *⏫ All* button next to *▲ Previous* loads every remaining line back to the start of the file in one go. It stays within the 100,000-line buffer: for longer files the most recent 100,000 lines stay loaded.
+
 ## [1.2.0] - 2026-10-21
 
 ### Added

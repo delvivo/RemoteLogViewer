@@ -184,6 +184,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td>Wrap</td><td>Wraps long lines instead of showing the horizontal scroll bar.</td></tr>
   <tr><td>Clear</td><td>Empties the view and resets the counters. Reading the file continues.</td></tr>
   <tr><td>▲ Older</td><td>Loads the <a href="#precedenti">lines before</a> the ones already read.</td></tr>
+  <tr><td>⏫ All</td><td>Loads <a href="#precedenti">the whole file</a> from the start (max 100,000 lines).</td></tr>
   <tr><td>Save…</td><td><a href="#salva">Saves the visible lines</a> to a file (<kbd>Ctrl</kbd>+<kbd>S</kbd>).</td></tr>
   <tr><td>Filter, Regex, Context</td><td>See <a href="#filtri">Filters, context and search</a>.</td></tr>
   <tr><td><span class="err">ERROR n</span> <span class="warn">WARN n</span> INFO n <span class="dbg">DEBUG n</span></td><td>The checkboxes show or hide lines of that level. The number is how many entries of that level are in the buffer: a stack trace counts as 1 and the number does not depend on the filters.</td></tr>
@@ -229,7 +230,8 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <h2 id="precedenti">Older lines</h2>
 <p>When opening, only the last <em>Initial lines</em> of the file are read. <strong>▲ Older</strong> loads another block of the same size (1000 lines if <em>Initial lines</em> is 0) and puts it above the lines already present. Reading new lines continues and the view does not jump.</p>
 <ul>
-  <li>The button is disabled when the start of the file is already loaded, when the session is not active, and after a file rotation (the new file is already read from the start).</li>
+  <li><strong>⏫ All</strong> loads in one go every remaining line up to the start of the file, within the 100,000-line buffer limit (if the file is longer, the most recent 100,000 stay loaded).</li>
+  <li>The buttons are disabled when the start of the file is already loaded, when the session is not active, and after a file rotation (the new file is already read from the start).</li>
   <li>If the block would exceed the 100,000-line limit, only as many lines as fit are loaded and the app tells you.</li>
 </ul>
 

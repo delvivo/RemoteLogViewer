@@ -16,6 +16,7 @@
             <ToggleButton x:Name="WrapButton" Content="{local:T 'A capo'}" Width="60" Margin="2" ToolTip="{local:T 'Manda a capo le righe lunghe'}" />
             <Button Content="{local:T 'Pulisci'}" Width="60" Margin="2" Click="Clear_Click" />
             <Button x:Name="OlderButton" Content="{local:T '▲ Precedenti'}" Margin="2" Padding="4,0" IsEnabled="False" Click="Older_Click" ToolTip="{local:T 'Carica righe precedenti a quelle lette'}" />
+            <Button x:Name="AllOlderButton" Content="{local:T '⏫ Tutto'}" Margin="2" Padding="4,0" IsEnabled="False" Click="AllOlder_Click" ToolTip="{local:T 'Carica il file dall\'inizio (fino al limite del buffer, 100.000 righe)'}" />
             <Button Content="{local:T 'Salva…'}" Width="60" Margin="2" Command="ApplicationCommands.Save" ToolTip="{local:T 'Salva le righe visibili in un file (Ctrl+S)'}" />
             <TextBlock Text="{local:T 'Filtro:'}" VerticalAlignment="Center" Margin="10,0,4,0" />
             <TextBox x:Name="FilterBox" Width="160" Margin="2" VerticalContentAlignment="Center" TextChanged="Filter_Changed" ToolTip="{local:T 'Mostra solo le righe che contengono il testo'}" />
