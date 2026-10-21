@@ -66,6 +66,7 @@
     <li><a href="#vista">Session toolbar</a></li>
     <li><a href="#filtri">Filters, context and search</a></li>
     <li><a href="#ricerca-avanzata">Advanced search across sessions</a></li>
+    <li><a href="#analisi-ia">AI analysis</a></li>
     <li><a href="#precedenti">Older lines</a></li>
     <li><a href="#salva">Saving and copying</a></li>
     <li><a href="#stati">Session states</a></li>
@@ -212,6 +213,19 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li><strong>Export…</strong> saves the shown results to a UTF-8 file, one <code># Name (N)</code> block per session.</li>
 </ul>
 
+<h2 id="analisi-ia">AI analysis</h2>
+<p>The <strong>AI analysis…</strong> button or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> opens a window that has the logs analyzed by a command-line AI tool already installed on the PC, for example to get an <strong>error report</strong> you can export. The window stays open while you use the tabs.</p>
+<ul>
+  <li><strong>Prerequisite</strong>: the tool must be installed, on the PATH and already signed in (log in at least once from a command prompt). The app does not install it and does not manage accounts or keys.</li>
+  <li><strong>Tabs to analyze</strong>: check one or more open tabs (the active one by default). Only the <em>visible lines</em> are sent, as for <a href="#salva">Save</a>: set level or text filters first to focus the analysis. The lines are a snapshot taken at start.</li>
+  <li><strong>Limit</strong>: at most 1 MB of text per analysis, shared among the tabs; each tab keeps its most recent lines and the window tells how many were left out.</li>
+  <li><strong>Tool</strong>: Claude Code (<code>claude -p --tools "" --no-session-persistence</code>), Codex (<code>codex exec --skip-git-repo-check --sandbox read-only --ephemeral -</code>), OpenCode (<code>opencode run --agent plan</code>), Gemini CLI (<code>gemini --approval-mode plan -p &hellip;</code>) or <strong>Custom</strong>. The command can be edited (it runs with <code>cmd</code>: it gets prompt and logs as input and writes the answer to its output); <strong>Reset</strong> goes back to the default. Antigravity has no non-interactive command-line mode: use Gemini CLI, which has the same models.</li>
+  <li><strong>Prompt</strong>: <em>Error report</em> (errors grouped by cause, occurrences, first and last occurrence, causes and actions) or <em>Summary</em>, both editable; or type your own question. Tool, commands and last prompt are remembered.</li>
+  <li><strong>Privacy</strong>: the selected logs are sent to the chosen tool and, for online tools, to its service. The first time you use a tool the app asks for confirmation. The default commands do not write files or run commands, but Codex, Gemini CLI and OpenCode can still read other files on the PC; only Claude Code with <code>--tools ""</code> works with no tools at all. A custom command does whatever that command does.</li>
+  <li><strong>Start</strong> shows the answer as it arrives (Claude Code returns it all at the end); <strong>Cancel</strong> stops the tool. On error the exit code and the tool's message are shown; if the command does not exist, <em>Command not found</em>.</li>
+  <li><strong>Copy</strong> copies the answer; <strong>Open formatted</strong> opens it in the browser with headings and tables; <strong>Export…</strong> saves the report as Markdown (<code>.md</code>) or HTML (<code>.html</code>), with date, tool, tabs and prompt at the top.</li>
+</ul>
+
 <h2 id="precedenti">Older lines</h2>
 <p>When opening, only the last <em>Initial lines</em> of the file are read. <strong>▲ Older</strong> loads another block of the same size (1000 lines if <em>Initial lines</em> is 0) and puts it above the lines already present. Reading new lines continues and the view does not jump.</p>
 <ul>
@@ -247,6 +261,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td><kbd>Del</kbd></td><td>Session list</td><td>Deletes</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Session</td><td>Go to the search box</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd></td><td>Main window</td><td>Opens the <a href="#ricerca-avanzata">advanced search</a> across all sessions</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd></td><td>Main window</td><td>Opens the <a href="#analisi-ia">AI analysis</a> of the logs</td></tr>
   <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Session</td><td>Next / previous result</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Log lines</td><td>Copies the selected lines</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Session</td><td>Saves the visible lines</td></tr>

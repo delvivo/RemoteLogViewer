@@ -66,6 +66,7 @@
     <li><a href="#vista">Barra della sessione</a></li>
     <li><a href="#filtri">Filtri, contesto e ricerca</a></li>
     <li><a href="#ricerca-avanzata">Ricerca avanzata tra le sessioni</a></li>
+    <li><a href="#analisi-ia">Analisi IA</a></li>
     <li><a href="#precedenti">Righe precedenti</a></li>
     <li><a href="#salva">Salvare e copiare</a></li>
     <li><a href="#stati">Stati della sessione</a></li>
@@ -212,6 +213,19 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li><strong>Esporta…</strong> salva i risultati mostrati in un file UTF-8, un blocco <code># Nome (N)</code> per sessione.</li>
 </ul>
 
+<h2 id="analisi-ia">Analisi IA</h2>
+<p>Il pulsante <strong>Analisi IA…</strong> o <kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>I</kbd> apre una finestra che fa analizzare i log a uno strumento IA a riga di comando già installato sul PC, per esempio per ottenere un <strong>report degli errori</strong> da esportare. La finestra resta aperta mentre usi le schede.</p>
+<ul>
+  <li><strong>Prerequisito</strong>: lo strumento deve essere installato, raggiungibile dal PATH e già autenticato (login fatto almeno una volta dal prompt dei comandi). L'app non lo installa e non gestisce account o chiavi.</li>
+  <li><strong>Schede da analizzare</strong>: spunta una o più schede aperte (di default quella attiva). Vengono inviate solo le <em>righe visibili</em>, come per <a href="#salva">Salva</a>: imposta prima i filtri per livello o testo per concentrare l'analisi. Le righe sono una fotografia presa all'avvio.</li>
+  <li><strong>Limite</strong>: al massimo 1 MB di testo per analisi, diviso tra le schede; di ogni scheda si tengono le righe più recenti e la finestra indica quante ne sono state escluse.</li>
+  <li><strong>Strumento</strong>: Claude Code (<code>claude -p --tools "" --no-session-persistence</code>), Codex (<code>codex exec --skip-git-repo-check --sandbox read-only --ephemeral -</code>), OpenCode (<code>opencode run --agent plan</code>), Gemini CLI (<code>gemini --approval-mode plan -p &hellip;</code>) o <strong>Personalizzato</strong>. Il comando si può modificare (eseguito con <code>cmd</code>: riceve prompt e log come input e scrive la risposta in output); <strong>Ripristina</strong> torna al predefinito. Antigravity non ha una modalità a riga di comando non interattiva: usa Gemini CLI, che ha gli stessi modelli.</li>
+  <li><strong>Prompt</strong>: <em>Report errori</em> (errori raggruppati per causa, occorrenze, prima e ultima occorrenza, cause e azioni) o <em>Riepilogo</em>, modificabili; oppure scrivi una domanda libera. Strumento, comandi e ultimo prompt vengono ricordati.</li>
+  <li><strong>Privacy</strong>: i log selezionati vengono inviati allo strumento scelto e, per gli strumenti online, al relativo servizio. La prima volta che usi uno strumento l'app chiede conferma. I comandi predefiniti non scrivono file e non eseguono comandi, ma Codex, Gemini CLI e OpenCode possono comunque leggere altri file del PC; solo Claude Code con <code>--tools ""</code> lavora senza alcuno strumento. Un comando personalizzato fa ciò che il comando prevede.</li>
+  <li><strong>Avvia</strong> mostra la risposta man mano che arriva (Claude Code la restituisce tutta alla fine); <strong>Annulla</strong> termina lo strumento. In caso di errore compaiono il codice di uscita e il messaggio dello strumento; se il comando non esiste, <em>Comando non trovato</em>.</li>
+  <li><strong>Copia</strong> copia la risposta; <strong>Apri formattato</strong> la apre nel browser con titoli e tabelle; <strong>Esporta…</strong> salva il report in Markdown (<code>.md</code>) o HTML (<code>.html</code>), con data, strumento, schede e prompt in testa.</li>
+</ul>
+
 <h2 id="precedenti">Righe precedenti</h2>
 <p>All'apertura vengono lette solo le ultime <em>Righe iniziali</em> del file. <strong>▲ Precedenti</strong> carica un altro blocco della stessa dimensione (1000 righe se <em>Righe iniziali</em> è 0) e lo mette sopra le righe già presenti. La lettura delle nuove righe continua e la vista non salta.</p>
 <ul>
@@ -247,6 +261,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td><kbd>Canc</kbd></td><td>Elenco sessioni</td><td>Elimina</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Sessione</td><td>Vai alla casella di ricerca</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>F</kbd></td><td>Finestra principale</td><td>Apre la <a href="#ricerca-avanzata">ricerca avanzata</a> tra tutte le sessioni</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>I</kbd></td><td>Finestra principale</td><td>Apre l'<a href="#analisi-ia">analisi IA</a> dei log</td></tr>
   <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Sessione</td><td>Risultato successivo / precedente</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Righe del log</td><td>Copia le righe selezionate</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Sessione</td><td>Salva le righe visibili</td></tr>
