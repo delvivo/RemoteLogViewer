@@ -67,6 +67,7 @@
     <li><a href="#vista">Barra della sessione</a></li>
     <li><a href="#filtri">Filtri, contesto e ricerca</a></li>
     <li><a href="#vai-ora">Vai all'ora</a></li>
+    <li><a href="#istogramma">Istogramma degli errori</a></li>
     <li><a href="#ricerca-avanzata">Ricerca avanzata tra le sessioni</a></li>
     <li><a href="#analisi-ia">Analisi IA</a></li>
     <li><a href="#precedenti">Righe precedenti</a></li>
@@ -226,6 +227,10 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <p><strong>Vai all'ora…</strong> (<kbd>Ctrl</kbd>+<kbd>G</kbd>) chiede un'ora, per esempio <code>14:32</code> o <code>14:32:10</code>, anche con la data davanti (<code>2026-10-22 14:32</code> o <code>22/10/2026 14:32</code>). Un'ora senza data si riferisce alla data della sessione (se il percorso ha una <a href="#data">data</a>) oppure a oggi.</p>
 <p>La vista seleziona la prima riga <em>visibile</em> con orario uguale o successivo e Follow si disattiva. Valgono gli stessi formati di orario della <a href="#ricerca-avanzata">ricerca avanzata</a>; le righe senza orario (per esempio uno stack trace) prendono quello della riga precedente. Se nessuna riga arriva a quell'ora, o se le righe non hanno un orario riconoscibile, compare un messaggio. Se l'ora è prima della prima riga letta e ci sono righe più vecchie nel file, l'app ti suggerisce <a href="#precedenti">▲ Precedenti</a>.</p>
 
+<h2 id="istogramma">Istogramma degli errori</h2>
+<p>Sopra le righe, ogni scheda mostra una striscia di barre: una barra per minuto, alta quanto il numero di voci ERROR (e di righe di avviso personalizzato) in quel minuto, cos&igrave; un picco di errori si vede subito. La striscia mostra tanti degli ultimi minuti quanti ne stanno nella larghezza; i minuti senza errori sono posti vuoti. Passando sopra una barra si vedono il minuto e il conteggio.</p>
+<p><strong>Cliccando una barra</strong> viene selezionata la prima riga visibile da quel minuto in poi (Follow disattivato), come in <a href="#vai-ora">Vai all'ora</a>. Le righe senza orario prendono il minuto della riga precedente. <em>Pulisci</em> azzera la striscia; si aggiorna anche all'arrivo di nuove righe e dopo aver caricato le <a href="#precedenti">righe precedenti</a>.</p>
+
 <h2 id="ricerca-avanzata">Ricerca avanzata tra le sessioni</h2>
 <p>Il pulsante <strong>Cerca…</strong> o <kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>F</kbd> apre una finestra che cerca nelle righe già lette di <em>tutte</em> le sessioni aperte, anche se la scheda non è visibile e a prescindere dai filtri della singola scheda. La finestra resta aperta mentre usi le schede (anche in Affianca).</p>
 <ul>
@@ -250,6 +255,8 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li><strong>Avvia</strong> mostra la risposta man mano che arriva (Claude Code la restituisce tutta alla fine); <strong>Annulla</strong> termina lo strumento. Durante l'esecuzione la barra di stato mostra l'ultimo messaggio dello strumento (per esempio un limite di utilizzo del provider): se non arriva niente per molto tempo, guarda lì. In caso di errore compaiono il codice di uscita e il messaggio dello strumento; se il comando non esiste, <em>Comando non trovato</em>.</li>
   <li><strong>Copia</strong> copia la risposta; <strong>Apri formattato</strong> la apre nel browser con titoli e tabelle; <strong>Esporta…</strong> salva il report in Markdown (<code>.md</code>) o HTML (<code>.html</code>), con data, strumento, schede e prompt in testa.</li>
 </ul>
+
+<p><strong>Spiega questa riga</strong>: clicca con il tasto destro su una riga e scegli <em>Spiega questa riga</em>. Si apre (o viene riusata) la finestra di Analisi IA con solo quella scheda selezionata, il prompt <em>Spiega questa riga</em> e, come input, la riga pi&ugrave; le 20 righe visibili prima e dopo (la riga &egrave; segnata con <code>&gt;&gt;&gt;</code>). Controlla e premi <strong>Avvia</strong>; conferma e impostazioni dello strumento sono quelle gi&agrave; descritte. Su uno spazio vuoto o su un separatore il menu non compare.</p>
 
 <h2 id="precedenti">Righe precedenti</h2>
 <p>All'apertura vengono lette solo le ultime <em>Righe iniziali</em> del file. <strong>▲ Precedenti</strong> carica un altro blocco della stessa dimensione (1000 righe se <em>Righe iniziali</em> è 0) e lo mette sopra le righe già presenti. La lettura delle nuove righe continua e la vista non salta.</p>

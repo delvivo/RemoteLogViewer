@@ -20,6 +20,7 @@ public partial class LogView : UserControl
 
     public ActiveSession Session { get; }
     public event Action? StatusChanged;
+    public event Action<LogView, string[]>? ExplainRequested; // excerpt (target line marked) for the AI window
     public event Action<int>? ErrorsArrived; // new ERROR entries and alert lines (not from the initial read)
     public Brush StatusBrush => StatusDot.Fill;
     public int UnreadErrors { get; private set; } // ERROR entries and alert lines arrived while this view was not visible
@@ -33,6 +34,9 @@ public partial class LogView : UserControl
     private ContextFilter _ctx = new(0, _ => true, null);
     private string _search = "";
     private ScrollViewer? _scroll;
+    private readonly ErrorHistogram _hist = new();
+    private LogLine? _menuLine; // line under the mouse when the context menu opened
+    private const int ExplainContext = 20;
 
     public LogView(ActiveSession session)
     {
@@ -123,6 +127,7 @@ public partial class LogView : UserControl
             l.IsMatch = SearchHit(l);
             _all.Add(l);
             Count(l, 1);
+            _hist.Add(l, HistDay);
             if (l is { IsHistory: false } && (l is { Level: LogLevel.Error, IsEntry: true } || l.IsAlert)) errors++; // custom alerts count like errors, once
             added.AddRange(_ctx.Add(_all, _all.Count - 1));
         }
@@ -133,14 +138,45 @@ public partial class LogView : UserControl
             Array.Clear(_counts);
             foreach (var l in _all) Count(l, 1);
             Rebuild();
+            ResetHistogram();
         }
-        else if (older) Rebuild(keepTopLine: true); // indices shifted: replay the whole buffer
+        else if (older) { Rebuild(keepTopLine: true); ResetHistogram(); } // indices shifted: replay the whole buffer
         else foreach (var l in added) _visible.Add(l);
         UpdateCount();
+        RefreshStrip();
         if (Follow) ScrollToEnd();
         if (errors == 0) return;
         if (!IsVisible) { UnreadErrors += errors; StatusChanged?.Invoke(); }
         ErrorsArrived?.Invoke(errors);
+    }
+
+    private DateTime HistDay => Session.Date ?? DateTime.Today;
+
+    private void ResetHistogram()
+    {
+        _hist.Reset();
+        foreach (var l in _all) _hist.Add(l, HistDay);
+        RefreshStrip();
+    }
+
+    private void RefreshStrip() => Strip.Update(_hist.Window(Strip.MaxBars));
+
+    private void Strip_SizeChanged(object sender, SizeChangedEventArgs e) => RefreshStrip();
+
+    private void Strip_MinuteClicked(DateTime minute) => GoTo(minute, minute.ToString("HH:mm"));
+
+    private void Lines_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        DependencyObject? d = e.OriginalSource as DependencyObject;
+        while (d != null && d is not ListBoxItem) d = d is Visual ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
+        _menuLine = (d as ListBoxItem)?.DataContext as LogLine;
+        if (_menuLine is not { IsMarker: false }) e.Handled = true; // no line (or a separator): no menu
+    }
+
+    private void Explain_Click(object sender, RoutedEventArgs e)
+    {
+        var index = _menuLine == null ? -1 : _visible.IndexOf(_menuLine);
+        if (index >= 0) ExplainRequested?.Invoke(this, AiInput.Excerpt(VisibleTexts(), index, ExplainContext));
     }
 
     private void Count(LogLine l, int delta)
@@ -213,6 +249,7 @@ public partial class LogView : UserControl
         _all.Clear();
         Array.Clear(_counts);
         Rebuild();
+        ResetHistogram();
     }
 
     private void Older_Click(object sender, RoutedEventArgs e) =>
@@ -242,9 +279,15 @@ public partial class LogView : UserControl
             t => LogTimestamp.TryParseTarget(t, day, out target) ? null : L.T("Ora non valida (usa HH:mm o HH:mm:ss)"),
             emptyError: L.T("Indica un'ora."));
         if (text == null) return;
+        GoTo(target, text);
+    }
+
+    private void GoTo(DateTime target, string label)
+    {
+        var day = Session.Date ?? DateTime.Today;
         var (index, status) = LogTimestamp.FindAtOrAfter(_visible, target, day);
         if (status == GoToStatus.NoTimestamps) { Info(L.T("Le righe visibili non hanno un orario riconoscibile.")); return; }
-        if (status == GoToStatus.NotFound) { Info(L.F("Nessuna riga visibile alle {0} o dopo.", text)); return; }
+        if (status == GoToStatus.NotFound) { Info(L.F("Nessuna riga visibile alle {0} o dopo.", label)); return; }
         FollowButton.IsChecked = false;
         Lines.SelectedIndex = index;
         Lines.ScrollIntoView(_visible[index]);

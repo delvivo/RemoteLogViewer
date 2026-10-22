@@ -320,6 +320,11 @@ public static class L
         [@"Es. \[E\]|\|ERR\|"] = @"E.g. \[E\]|\|ERR\|",
         ["Le nuove righe che corrispondono avvisano come gli errori (badge sulla scheda, lampeggio della barra delle applicazioni). Es. OutOfMemory|deadlock|timeout"]
             = "New matching lines alert like errors (tab badge, taskbar flash). E.g. OutOfMemory|deadlock|timeout",
+        // error histogram, explain this line
+        ["{0:HH:mm} — {1} errori"] = "{0:HH:mm} — {1} errors",
+        ["Spiega questa riga"] = "Explain this line",
+        ["Spiega la riga del log che inizia con \">>> \" usando le righe attorno come contesto: cosa significa, la causa più probabile e cosa controllare per primo. Sii conciso. Rispondi in italiano."]
+            = "Explain the log line that starts with \">>> \", using the surrounding lines as context: what it means, the most likely cause and what to check first. Be concise. Answer in English.",
         // go to time
         ["Vai all'ora…"] = "Go to time…",
         ["Vai all'ora"] = "Go to time",

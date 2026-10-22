@@ -35,7 +35,8 @@
             <Button Content="▼" Width="24" Margin="2" Command="{x:Static local:LogView.FindNext}" ToolTip="{local:T 'Successiva (F3)'}" />
             <TextBlock x:Name="CountLabel" VerticalAlignment="Center" Margin="8,0" Foreground="Gray" />
         </WrapPanel>
-        <ListBox x:Name="Lines" SelectionMode="Extended" FontFamily="Cascadia Mono, Consolas" FontSize="12"
+        <local:ErrorStrip x:Name="Strip" DockPanel.Dock="Top" Margin="4,0" SizeChanged="Strip_SizeChanged" MinuteClicked="Strip_MinuteClicked" />
+        <ListBox x:Name="Lines" SelectionMode="Extended" ContextMenuOpening="Lines_ContextMenuOpening" FontFamily="Cascadia Mono, Consolas" FontSize="12"
                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
                  ScrollViewer.ScrollChanged="Lines_ScrollChanged">
             <ListBox.Style>
@@ -48,6 +49,11 @@
                     </Style.Triggers>
                 </Style>
             </ListBox.Style>
+            <ListBox.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="{local:T 'Spiega questa riga'}" AutomationProperties.Name="{local:T 'Spiega questa riga'}" Click="Explain_Click" />
+                </ContextMenu>
+            </ListBox.ContextMenu>
             <ListBox.CommandBindings>
                 <CommandBinding Command="ApplicationCommands.Copy" Executed="Copy_Executed" />
             </ListBox.CommandBindings>

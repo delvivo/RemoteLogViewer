@@ -6,6 +6,8 @@ All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](htt
 
 ### Added
 
+- **Error histogram**: a strip above each tab with one bar per minute (ERROR entries and custom alert lines, history included), showing as many of the most recent minutes as fit the width. Hover shows the count; clicking a bar goes to the first visible line of that minute, like *Go to time*.
+- **Explain this line**: context-menu entry on a log line that opens the AI analysis window pre-filled with that tab only, a new *Explain this line* prompt and the line with 20 visible lines of context on each side.
 - **Load whole file**: new *⏫ All* button next to *▲ Previous* loads every remaining line back to the start of the file in one go. It stays within the 100,000-line buffer: for longer files the most recent 100,000 lines stay loaded.
 - **Custom levels**: per-session regexes for ERROR, WARN, INFO and DEBUG, for logs with non-standard level markers (`[E]`, `|ERR|`, `level=50`). The standard detection still applies when none matches.
 - **Custom alerts**: a per-session regex; new matching lines raise the same tab badge and taskbar flash as errors.

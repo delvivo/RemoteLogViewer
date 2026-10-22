@@ -67,6 +67,7 @@
     <li><a href="#vista">Session toolbar</a></li>
     <li><a href="#filtri">Filters, context and search</a></li>
     <li><a href="#vai-ora">Go to time</a></li>
+    <li><a href="#istogramma">Error histogram</a></li>
     <li><a href="#ricerca-avanzata">Advanced search across sessions</a></li>
     <li><a href="#analisi-ia">AI analysis</a></li>
     <li><a href="#precedenti">Older lines</a></li>
@@ -226,6 +227,10 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <p><strong>Go to time…</strong> (<kbd>Ctrl</kbd>+<kbd>G</kbd>) asks for a time, for example <code>14:32</code> or <code>14:32:10</code>, optionally preceded by a date (<code>2026-10-22 14:32</code> or <code>22/10/2026 14:32</code>). A time without a date refers to the session's date (if the path has a <a href="#data">date</a>) or to today.</p>
 <p>The view selects the first <em>visible</em> line at or after that time, and Follow turns off. The time formats are the same as in the <a href="#ricerca-avanzata">advanced search</a>; lines without a time (for example a stack trace) take the one of the previous line. If no line reaches that time, or the lines have no recognizable time, a message appears. If the time is before the first line read and the file has older lines, the app suggests <a href="#precedenti">▲ Older</a>.</p>
 
+<h2 id="istogramma">Error histogram</h2>
+<p>Above the lines, each tab shows a strip of bars: one bar per minute, as tall as the number of ERROR entries (and custom alert lines) in that minute, so a burst of errors is visible at a glance. The strip shows as many of the most recent minutes as fit its width; minutes with no errors are empty slots. Hover a bar to see the minute and the count.</p>
+<p><strong>Click a bar</strong> to select the first visible line at or after that minute (Follow turns off), exactly as <a href="#vai-ora">Go to time</a>. Lines without a time take the previous line's minute. <em>Clear</em> resets the strip; it also updates as new lines arrive and after <a href="#precedenti">older lines</a> are loaded.</p>
+
 <h2 id="ricerca-avanzata">Advanced search across sessions</h2>
 <p>The <strong>Search…</strong> button or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> opens a window that searches the lines already read in <em>all</em> open sessions, even if their tab is not visible and regardless of each tab's own filters. The window stays open while you use the tabs (also in Side by side).</p>
 <ul>
@@ -250,6 +255,8 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li><strong>Start</strong> shows the answer as it arrives (Claude Code returns it all at the end); <strong>Cancel</strong> stops the tool. While it runs, the status bar shows the tool's latest message (for example a provider rate limit): if nothing arrives for a long time, look there. On error the exit code and the tool's message are shown; if the command does not exist, <em>Command not found</em>.</li>
   <li><strong>Copy</strong> copies the answer; <strong>Open formatted</strong> opens it in the browser with headings and tables; <strong>Export…</strong> saves the report as Markdown (<code>.md</code>) or HTML (<code>.html</code>), with date, tool, tabs and prompt at the top.</li>
 </ul>
+
+<p><strong>Explain this line</strong>: right-click a line and choose <em>Explain this line</em>. The AI analysis window opens (or is reused) with only that tab checked, the <em>Explain this line</em> prompt, and, as input, the line and the 20 visible lines before and after it (the line is marked with <code>&gt;&gt;&gt;</code>). Review it and press <strong>Start</strong>; the confirmation and the tool settings are the same as above. Right-clicking empty space or a separator shows no menu.</p>
 
 <h2 id="precedenti">Older lines</h2>
 <p>When opening, only the last <em>Initial lines</em> of the file are read. <strong>▲ Older</strong> loads another block of the same size (1000 lines if <em>Initial lines</em> is 0) and puts it above the lines already present. Reading new lines continues and the view does not jump.</p>
