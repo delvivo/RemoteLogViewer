@@ -8,6 +8,9 @@
         <KeyBinding Key="F" Modifiers="Control" Command="{x:Static local:LogView.FocusSearch}" />
         <KeyBinding Key="G" Modifiers="Control" Command="{x:Static local:LogView.GoToTime}" />
     </UserControl.InputBindings>
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
     <DockPanel>
         <WrapPanel DockPanel.Dock="Top" Margin="2">
             <Ellipse x:Name="StatusDot" Width="10" Height="10" Margin="4,0" Fill="Gray" VerticalAlignment="Center" />
@@ -18,6 +21,7 @@
             <Button Content="{local:T 'Pulisci'}" Width="60" Margin="2" Click="Clear_Click" />
             <Button x:Name="OlderButton" Content="{local:T '▲ Precedenti'}" Margin="2" Padding="4,0" IsEnabled="False" Click="Older_Click" ToolTip="{local:T 'Carica righe precedenti a quelle lette'}" />
             <Button x:Name="AllOlderButton" Content="{local:T '⏫ Tutto'}" Margin="2" Padding="4,0" IsEnabled="False" Click="AllOlder_Click" ToolTip="{local:T 'Carica il file dall\'inizio (fino al limite del buffer, 100.000 righe)'}" />
+            <ToggleButton x:Name="HistButton" Content="{local:T 'Istogramma'}" IsChecked="True" Margin="2" Padding="4,0" ToolTip="{local:T 'Mostra o nasconde l\'istogramma degli errori per minuto'}" />
             <Button Content="{local:T 'Salva…'}" Width="60" Margin="2" Command="ApplicationCommands.Save" ToolTip="{local:T 'Salva le righe visibili in un file (Ctrl+S)'}" />
             <Button Content="{local:T 'Vai all\'ora…'}" Margin="2" Padding="4,0" Command="{x:Static local:LogView.GoToTime}" ToolTip="{local:T 'Seleziona la prima riga visibile a partire da un\'ora (Ctrl+G)'}" />
             <TextBlock Text="{local:T 'Filtro:'}" VerticalAlignment="Center" Margin="10,0,4,0" />
@@ -35,7 +39,10 @@
             <Button Content="▼" Width="24" Margin="2" Command="{x:Static local:LogView.FindNext}" ToolTip="{local:T 'Successiva (F3)'}" />
             <TextBlock x:Name="CountLabel" VerticalAlignment="Center" Margin="8,0" Foreground="Gray" />
         </WrapPanel>
-        <local:ErrorStrip x:Name="Strip" DockPanel.Dock="Top" Margin="4,0" SizeChanged="Strip_SizeChanged" MinuteClicked="Strip_MinuteClicked" />
+        <ScrollViewer x:Name="StripHost" DockPanel.Dock="Top" Margin="4,0" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                      Visibility="{Binding IsChecked, ElementName=HistButton, Converter={StaticResource BoolToVis}}">
+            <local:ErrorStrip x:Name="Strip" HorizontalAlignment="Left" MinuteClicked="Strip_MinuteClicked" />
+        </ScrollViewer>
         <ListBox x:Name="Lines" SelectionMode="Extended" ContextMenuOpening="Lines_ContextMenuOpening" FontFamily="Cascadia Mono, Consolas" FontSize="12"
                  VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling"
                  ScrollViewer.ScrollChanged="Lines_ScrollChanged">

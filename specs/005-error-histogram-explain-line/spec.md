@@ -12,7 +12,7 @@
 
 ### Session 2026-10-22
 
-- Q: Which minutes does the histogram show for a long log? → A: One bar per minute for the most recent minutes that fit the strip width; no horizontal scroll, older minutes out of window.
+- Q: Which minutes does the histogram show for a long log? → A: (revised after use) One bar per minute over the whole series (from the first error minute to the latest minute, capped to the most recent 50,000 minutes), in a horizontally scrollable strip that stays on the newest minute unless the user scrolled back. Older minutes (e.g. after *▲ Precedenti*) are reachable by scrolling. First answer was a fixed most-recent window with no scroll: older minutes were unreachable.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -57,7 +57,7 @@ From the context menu of a log line, the user picks *Spiega questa riga / Explai
 ### Edge Cases
 
 - Lines without a timestamp inherit the previous line's minute (as in search); lines before any timestamp are not counted.
-- Logs spanning many hours/days: the histogram shows only the most recent minutes that fit the width (see FR-006); an empty histogram (no errors) shows an empty strip, not an error.
+- Logs spanning many hours/days: the series is capped (see FR-006); an empty histogram (no errors) shows an empty strip, not an error.
 - Marker lines and context separators are never counted or used as targets.
 - Buffer trim or prepending older lines keeps the histogram consistent with the buffer.
 - Clicking a bar whose lines were trimmed does nothing harmful (message or no-op).
@@ -72,7 +72,8 @@ From the context menu of a log line, the user picks *Spiega questa riga / Explai
 - **FR-003**: Clicking a bar MUST select the first line of that minute and scroll it into view, turning Follow off.
 - **FR-004**: Bars MUST show a tooltip with minute and count.
 - **FR-005**: The histogram MUST update as lines arrive and after clear, trim and load-older.
-- **FR-006**: The histogram MUST show one bar per minute for as many most-recent minutes as fit the strip width, with no horizontal scrolling; older minutes are out of the window.
+- **FR-006**: The histogram MUST show one bar per minute over the whole series (first error minute to latest minute, at most the most recent 50,000 minutes) in a horizontally scrollable strip that follows the newest minute unless the user scrolled back.
+- **FR-006a**: The user MUST be able to hide and show the histogram strip with a toolbar toggle (default shown; not persisted).
 - **FR-007**: The log line context menu MUST include *Spiega questa riga* (it) / *Explain this line* (en).
 - **FR-008**: The command MUST open the existing AI window pre-filled with the line and ±N context lines, restricted to the line's tab, with an explain prompt preselected.
 - **FR-009**: The feature MUST reuse the existing AI input building and execution; no separate execution path or window.

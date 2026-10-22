@@ -27,11 +27,19 @@ public sealed class ErrorHistogram
             _counts[m] = _counts.GetValueOrDefault(m) + 1;
     }
 
-    /// The last `maxBars` consecutive minutes ending at the latest minute seen, empty minutes included.
-    public (DateTime Minute, int Count)[] Window(int maxBars)
+    public const int MaxMinutes = 50_000; // ~35 days; a longer span keeps the most recent minutes
+
+    /// Consecutive minutes from the earliest one with an error (or the latest minute seen, if none) to the latest minute seen,
+    /// empty minutes included, at most MaxMinutes (the most recent).
+    public (DateTime First, int[] Counts) Series()
     {
-        if (_minute == null || maxBars <= 0) return [];
-        var first = _latest.AddMinutes(-(maxBars - 1));
-        return Enumerable.Range(0, maxBars).Select(i => first.AddMinutes(i)).Select(m => (m, _counts.GetValueOrDefault(m))).ToArray();
+        if (_minute == null) return (default, []);
+        var first = _counts.Count > 0 ? _counts.Keys.Min() : _latest;
+        var n = (int)Math.Min((_latest - first).TotalMinutes + 1, MaxMinutes);
+        first = _latest.AddMinutes(-(n - 1));
+        var counts = new int[n];
+        foreach (var (m, c) in _counts)
+            if (m >= first && m <= _latest) counts[(int)(m - first).TotalMinutes] = c;
+        return (first, counts);
     }
 }

@@ -19,16 +19,17 @@ public class ErrorHistogramTests
     {
         var h = Fed(Err("14:31:05 e"), Err("14:31:50 e"), Info("14:32:00 i"), Err("14:34:10 e"));
 
-        Assert.Equal([2, 0, 0, 1], h.Window(4).Select(b => b.Count));
-        Assert.Equal(new DateTime(2026, 10, 1, 14, 34, 0), h.Window(4)[3].Minute);
+        var (first, counts) = h.Series();
+        Assert.Equal([2, 0, 0, 1], counts);
+        Assert.Equal(new DateTime(2026, 10, 1, 14, 31, 0), first);
     }
 
     [Fact]
-    public void Window_ends_at_the_latest_minute_of_any_line()
+    public void Series_ends_at_the_latest_minute_of_any_line()
     {
         var h = Fed(Err("14:31:05 e"), Info("14:33:00 i"));
 
-        Assert.Equal([1, 0, 0], h.Window(3).Select(b => b.Count));
+        Assert.Equal([1, 0, 0], h.Series().Counts);
     }
 
     [Fact]
@@ -36,7 +37,7 @@ public class ErrorHistogramTests
     {
         var h = Fed(Err("14:31:05 e", history: true), new LogLine("14:31:06 deadlock", LogLevel.Info, isAlert: true));
 
-        Assert.Equal([2], h.Window(1).Select(b => b.Count));
+        Assert.Equal([2], h.Series().Counts);
     }
 
     [Fact]
@@ -44,7 +45,7 @@ public class ErrorHistogramTests
     {
         var h = Fed(Err("14:31:05 e"), Err("   at Foo()", entry: false), new LogLine("14:31:07 w", LogLevel.Warn, isEntry: true));
 
-        Assert.Equal([1], h.Window(1).Select(b => b.Count));
+        Assert.Equal([1], h.Series().Counts);
     }
 
     [Fact]
@@ -52,16 +53,26 @@ public class ErrorHistogramTests
     {
         var h = Fed(Err("no time yet"), Info("14:31:00 i"), Err("continuation"), new LogLine("--- new day ---", LogLevel.None, isMarker: true));
 
-        Assert.Equal([1], h.Window(1).Select(b => b.Count)); // the first error came before any timestamp
+        Assert.Equal([1], h.Series().Counts); // the first error came before any timestamp
     }
 
     [Fact]
-    public void Window_is_empty_without_timestamps_or_bars_and_Reset_clears()
+    public void Series_is_empty_without_timestamps_and_Reset_clears()
     {
-        Assert.Empty(Fed(Err("no time")).Window(5));
+        Assert.Empty(Fed(Err("no time")).Series().Counts);
         var h = Fed(Err("14:31:05 e"));
-        Assert.Empty(h.Window(0));
         h.Reset();
-        Assert.Empty(h.Window(5));
+        Assert.Empty(h.Series().Counts);
+    }
+
+    [Fact]
+    public void Series_spans_from_the_first_error_and_is_capped_to_the_most_recent_minutes()
+    {
+        var h = Fed(Err("2026-01-01 00:00:00 old"), Err("2026-10-01 00:00:00 new"));
+
+        var (first, counts) = h.Series();
+        Assert.Equal(ErrorHistogram.MaxMinutes, counts.Length);
+        Assert.Equal(1, counts[^1]);
+        Assert.Equal(new DateTime(2026, 10, 1).AddMinutes(-(ErrorHistogram.MaxMinutes - 1)), first);
     }
 }

@@ -5,12 +5,14 @@ using System.Windows.Media;
 
 namespace RemoteLogViewer;
 
-/// Errors-per-minute bars (see ErrorHistogram.Window). One bar per minute, BarWidth px each; a click raises MinuteClicked.
+/// Errors-per-minute bars (see ErrorHistogram.Series). One bar per minute, BarWidth px each; as wide as the whole series
+/// (the host scrolls it); a click raises MinuteClicked.
 public sealed class ErrorStrip : FrameworkElement
 {
     public const double BarWidth = 6;
 
-    private (DateTime Minute, int Count)[] _bars = [];
+    private DateTime _first;
+    private int[] _bars = [];
     private int _max = 1;
 
     public event Action<DateTime>? MinuteClicked;
@@ -21,13 +23,12 @@ public sealed class ErrorStrip : FrameworkElement
         ToolTipService.SetInitialShowDelay(this, 0);
     }
 
-    /// Bars that fit the current width.
-    public int MaxBars => (int)(ActualWidth / BarWidth);
-
-    public void Update((DateTime Minute, int Count)[] bars)
+    public void Update(DateTime first, int[] counts)
     {
-        _bars = bars;
-        _max = Math.Max(1, bars.Select(b => b.Count).DefaultIfEmpty(0).Max());
+        _first = first;
+        _bars = counts;
+        _max = Math.Max(1, counts.DefaultIfEmpty(0).Max());
+        Width = counts.Length * BarWidth;
         InvalidateVisual();
     }
 
@@ -37,8 +38,8 @@ public sealed class ErrorStrip : FrameworkElement
         var red = Brushes.Firebrick;
         for (var i = 0; i < _bars.Length; i++)
         {
-            if (_bars[i].Count == 0) continue;
-            var h = Math.Max(2, (ActualHeight - 2) * _bars[i].Count / _max);
+            if (_bars[i] == 0) continue;
+            var h = Math.Max(2, (ActualHeight - 2) * _bars[i] / _max);
             dc.DrawRectangle(red, null, new Rect(i * BarWidth, ActualHeight - h, BarWidth - 1, h));
         }
     }
@@ -52,12 +53,12 @@ public sealed class ErrorStrip : FrameworkElement
     protected override void OnMouseMove(MouseEventArgs e)
     {
         var i = BarAt(e);
-        ToolTip = i < 0 ? null : L.F("{0:HH:mm} — {1} errori", _bars[i].Minute, _bars[i].Count);
+        ToolTip = i < 0 ? null : L.F("{0:yyyy-MM-dd HH:mm} — {1} errori", _first.AddMinutes(i), _bars[i]);
     }
 
     protected override void OnMouseLeftButtonUp(MouseButtonEventArgs e)
     {
         var i = BarAt(e);
-        if (i >= 0) MinuteClicked?.Invoke(_bars[i].Minute);
+        if (i >= 0) MinuteClicked?.Invoke(_first.AddMinutes(i));
     }
 }

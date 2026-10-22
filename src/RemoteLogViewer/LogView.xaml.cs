@@ -159,9 +159,14 @@ public partial class LogView : UserControl
         RefreshStrip();
     }
 
-    private void RefreshStrip() => Strip.Update(_hist.Window(Strip.MaxBars));
-
-    private void Strip_SizeChanged(object sender, SizeChangedEventArgs e) => RefreshStrip();
+    // Stays glued to the newest minute unless the user scrolled the strip back.
+    private void RefreshStrip()
+    {
+        var atEnd = StripHost.HorizontalOffset >= StripHost.ScrollableWidth - 1;
+        var (first, counts) = _hist.Series();
+        Strip.Update(first, counts);
+        if (atEnd) StripHost.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => StripHost.ScrollToRightEnd());
+    }
 
     private void Strip_MinuteClicked(DateTime minute) => GoTo(minute, minute.ToString("HH:mm"));
 
