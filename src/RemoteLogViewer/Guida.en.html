@@ -142,10 +142,14 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>If only the old logs have the date and the current file does not (e.g. today <code>app.log</code>, yesterday <code>app.2026-09-29.log</code>), put the separator inside the format, quoted, and tick <em>Today's file has no date</em>:
     <pre><code>logs\app{date:'.'yyyy-MM-dd}.log</code></pre>
     For today <code>logs\app.log</code> is opened, for other dates the file with the date. At midnight the session stays on <code>app.log</code>: when the server renames it, the app detects it and restarts from the beginning of the new file.</li>
+  <li>If the server compresses rotated logs (e.g. yesterday <code>app.2026-09-29.log.gz</code>), write <code>logs\app{date:'.'yyyy-MM-dd}.log.gz</code> with <em>Today's file has no date</em>: for today <code>app.log</code> is opened (no <code>.gz</code>), for other dates the <a href="#archivi-gz">archive</a>.</li>
+  <li>If the same day has several numbered archives (e.g. today <code>hr-portal.log</code>, yesterday <code>hr-portal.log.2026-10-03.0.gz</code>, <code>….1.gz</code>, …), put <code>{n}</code> in place of the number:
+    <pre><code>logs\hr-portal.log{date:'.'yyyy-MM-dd}.{n}.gz</code></pre>
+    For past dates every part of the day is read, in number order (0, 1, 2, … 10), one after the other; for today, with <em>Today's file has no date</em>, <code>{n}</code> (with the dot before it) and <code>.gz</code> are dropped and <code>hr-portal.log</code> is opened. <code>{n}</code> is only allowed in the name of a <code>.gz</code> file.</li>
 </ul>
 
 <h2 id="file-locali">Local files</h2>
-<p>To read a file on your PC (or on a drive Windows can already reach) without creating a session: <strong>Open file…</strong> or <kbd>Ctrl</kbd>+<kbd>O</kbd> opens the file dialog (several files at once are fine; <em>Log and text</em> and <em>All files</em> filters), or drag one or more files from Explorer onto the window.</p>
+<p>To read a file on your PC (or on a drive Windows can already reach) without creating a session: <strong>Open file…</strong> or <kbd>Ctrl</kbd>+<kbd>O</kbd> opens the file dialog (several files at once are fine; <em>Logs, text and archives</em> and <em>All files</em> filters), or drag one or more files from Explorer onto the window.</p>
 <ul>
   <li>Each file opens in a tab named after the file (the full path is in the tooltip; if two files have the same name the title becomes <code>folder\name</code>). A file that is already open is not duplicated: its tab is selected.</li>
   <li>No credentials, no date and no network connection managed by the app: the file is read with your Windows user's permissions. For shares that need a user and password use a <a href="#sessioni">session</a>.</li>
@@ -154,6 +158,9 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>It is not added to the saved sessions list nor to exports. On close it is remembered and reopened at startup if it still exists (otherwise it is silently skipped).</li>
   <li>Folders and non-file items that are dragged in are ignored; a file that cannot be opened (missing, no permission) gives a message and no tab.</li>
 </ul>
+
+<h3 id="archivi-gz">.gz archives</h3>
+<p>A file ending in <code>.gz</code> (a log rotated and compressed by the server), opened as a local file or from a session, is <strong>read-only</strong>: it is decompressed once, with no tail and no Follow. The status becomes <em>Read-only .gz archive (N lines)</em> and the Start/Stop button is disabled. Only the last 100,000 lines are kept (a <span class="mark">— archive: last … lines of … —</span> line says so). The lines count as history: no error alerts. Filters, search, Go to time, Save and AI analysis work as usual.</p>
 
 <h2 id="schede">Tabs and Side by side</h2>
 <p>Each session you start opens in a tab. The tab title shows a status dot, the session name (plus the date, if the path contains one), the <a href="#avvisi">error badge</a> if any, and the ✕ button. To close a tab you can also middle-click its title.</p>

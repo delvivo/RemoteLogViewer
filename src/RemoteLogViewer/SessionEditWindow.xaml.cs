@@ -101,8 +101,8 @@ public partial class SessionEditWindow : Window
                 try
                 {
                     var path = c.ResolvePath(DateTime.Today);
-                    return File.Exists(path)
-                        ? (true, L.F("OK: file trovato ({0:N0} KB).", new FileInfo(path).Length / 1024))
+                    return LogTailer.Exists(path)
+                        ? (true, L.F("OK: file trovato ({0:N0} KB).", LogTailer.Parts(path).Sum(p => new FileInfo(p).Length) / 1024))
                         : (false, L.T("Share OK, ma il file non esiste (la sessione resterà in attesa)."));
                 }
                 finally { SmbConnection.Release(c.SharePath); }

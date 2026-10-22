@@ -486,7 +486,7 @@ public partial class MainWindow : Window
         {
             Multiselect = true,
             Title = L.T("Apri file di log"),
-            Filter = L.T("Log e testo (*.log;*.txt)|*.log;*.txt|Tutti i file (*.*)|*.*"),
+            Filter = L.T("Log, testo e archivi (*.log;*.txt;*.gz)|*.log;*.txt;*.gz|Tutti i file (*.*)|*.*"),
         };
         if (dlg.ShowDialog(this) == true) OpenFiles(dlg.FileNames);
     }

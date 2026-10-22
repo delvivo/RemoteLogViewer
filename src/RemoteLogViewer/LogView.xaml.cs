@@ -192,6 +192,7 @@ public partial class LogView : UserControl
             _ => Brushes.Orange,
         };
         StartStopButton.Content = Session.State is SessionState.Stopped or SessionState.Error ? L.T("Avvia") : L.T("Stop");
+        StartStopButton.IsEnabled = !Session.ArchiveLoaded;
         OlderButton.IsEnabled = AllOlderButton.IsEnabled = Session.CanLoadOlder && Session.State == SessionState.Running;
         StatusChanged?.Invoke();
     }

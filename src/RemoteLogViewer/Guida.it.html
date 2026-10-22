@@ -142,10 +142,14 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>Se la data c'è solo nei log vecchi e il file corrente no (es. oggi <code>app.log</code>, ieri <code>app.2026-09-29.log</code>), metti il separatore dentro il formato tra apici e spunta <em>Il file di oggi non ha la data</em>:
     <pre><code>logs\app{date:'.'yyyy-MM-dd}.log</code></pre>
     Per oggi si apre <code>logs\app.log</code>, per le altre date il file con la data. A mezzanotte la sessione resta su <code>app.log</code>: quando il server lo rinomina, l'app lo rileva e riparte dall'inizio del nuovo file.</li>
+  <li>Se il server comprime i log ruotati (es. ieri <code>app.2026-09-29.log.gz</code>), scrivi <code>logs\app{date:'.'yyyy-MM-dd}.log.gz</code> con <em>Il file di oggi non ha la data</em>: per oggi si apre <code>app.log</code> (senza <code>.gz</code>), per le altre date l'<a href="#archivi-gz">archivio</a>.</li>
+  <li>Se nello stesso giorno ci sono pi&ugrave; archivi numerati (es. oggi <code>hr-portal.log</code>, ieri <code>hr-portal.log.2026-10-03.0.gz</code>, <code>….1.gz</code>, …), metti <code>{n}</code> al posto del numero:
+    <pre><code>logs\hr-portal.log{date:'.'yyyy-MM-dd}.{n}.gz</code></pre>
+    Per le date passate si leggono tutte le parti del giorno, in ordine di numero (0, 1, 2, … 10), una dopo l'altra; per oggi, con <em>Il file di oggi non ha la data</em>, <code>{n}</code> (con il punto che lo precede) e <code>.gz</code> spariscono e si apre <code>hr-portal.log</code>. <code>{n}</code> &egrave; ammesso solo nel nome di un file <code>.gz</code>.</li>
 </ul>
 
 <h2 id="file-locali">File locali</h2>
-<p>Per leggere un file che hai sul PC (o su un'unit&agrave; gi&agrave; accessibile a Windows) senza creare una sessione: <strong>Apri file…</strong> o <kbd>Ctrl</kbd>+<kbd>O</kbd> apre il dialogo di selezione (anche pi&ugrave; file insieme; filtri <em>Log e testo</em> e <em>Tutti i file</em>), oppure trascina uno o pi&ugrave; file da Esplora risorse sulla finestra.</p>
+<p>Per leggere un file che hai sul PC (o su un'unit&agrave; gi&agrave; accessibile a Windows) senza creare una sessione: <strong>Apri file…</strong> o <kbd>Ctrl</kbd>+<kbd>O</kbd> apre il dialogo di selezione (anche pi&ugrave; file insieme; filtri <em>Log, testo e archivi</em> e <em>Tutti i file</em>), oppure trascina uno o pi&ugrave; file da Esplora risorse sulla finestra.</p>
 <ul>
   <li>Ogni file si apre in una scheda con il nome del file (il percorso completo &egrave; nel suggerimento; se due file hanno lo stesso nome il titolo diventa <code>cartella\nome</code>). Un file gi&agrave; aperto non viene duplicato: si seleziona la sua scheda.</li>
   <li>Nessuna credenziale, nessuna data e nessuna connessione di rete gestita dall'app: il file &egrave; letto con i permessi dell'utente Windows. Per le condivisioni che richiedono utente e password usa una <a href="#sessioni">sessione</a>.</li>
@@ -154,6 +158,9 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>Non finisce nell'elenco delle sessioni salvate n&eacute; negli export. Alla chiusura viene ricordato e riaperto all'avvio se esiste ancora (altrimenti viene saltato in silenzio).</li>
   <li>Cartelle ed elementi che non sono file, se trascinati, vengono ignorati; un file che non si pu&ograve; aprire (inesistente, senza permessi) produce un messaggio e nessuna scheda.</li>
 </ul>
+
+<h3 id="archivi-gz">Archivi .gz</h3>
+<p>Un file che finisce con <code>.gz</code> (log ruotato e compresso dal server), aperto da file locale o da una sessione, si legge <strong>in sola lettura</strong>: viene decompresso una volta sola, senza tail n&eacute; Follow. Lo stato diventa <em>Archivio .gz in sola lettura (N righe)</em> e il pulsante Avvia/Stop &egrave; disattivato. Restano solo le ultime 100.000 righe (una riga <span class="mark">— archivio: ultime … righe di … —</span> lo segnala). Le righe sono trattate come storico: niente avvisi di errore. Filtri, ricerca, Vai all'ora, Salva e Analisi IA funzionano come sempre.</p>
 
 <h2 id="schede">Schede e Affianca</h2>
 <p>Ogni sessione avviata si apre in una scheda. Il titolo della scheda mostra un pallino di stato, il nome della sessione (più la data, se il percorso ne contiene una), l'eventuale <a href="#avvisi">badge degli errori</a> e il pulsante ✕. Per chiudere una scheda puoi anche fare click con il tasto centrale sul titolo.</p>

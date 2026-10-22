@@ -10,6 +10,7 @@ All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](htt
 - **Custom levels**: per-session regexes for ERROR, WARN, INFO and DEBUG, for logs with non-standard level markers (`[E]`, `|ERR|`, `level=50`). The standard detection still applies when none matches.
 - **Custom alerts**: a per-session regex; new matching lines raise the same tab badge and taskbar flash as errors.
 - **Go to time** (`Ctrl+G`): selects the first visible line at or after a given time.
+- **.gz archives**: rotated logs compressed by the server (`*.gz`, local or remote) open read-only, decompressed once with no tail (last 100,000 lines, no alerts). With *Today's file has no date*, a `….log.gz` path opens the uncompressed `….log` for today. `{n}` in a `.gz` file name matches numbered parts of the same day (`hr-portal.log.2026-10-03.0.gz`, `.1.gz`, …), read in number order.
 
 ## [1.2.0] - 2026-10-21
 

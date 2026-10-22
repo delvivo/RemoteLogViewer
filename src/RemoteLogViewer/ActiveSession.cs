@@ -21,6 +21,9 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
     public ConcurrentQueue<LogLine> Pending { get; } = new();
     public ConcurrentQueue<List<LogLine>> Older { get; } = new(); // blocks of earlier lines, to put at the top
     public bool CanLoadOlder => _canLoadOlder;
+    public bool IsArchive => LogTailer.IsArchive(Path); // .gz: read once, read-only, no tail
+    public bool ArchiveLoaded { get; private set; }     // a restart would only add the same lines again
+    public const int ArchiveMaxLines = 100_000;         // same as the view buffer
     public SessionState State { get; private set; } = SessionState.Stopped;
     public string StatusText => _statusArgs.Length == 0 ? L.T(_statusKey) : L.F(_statusKey, _statusArgs); // localized when read, so a language switch shows at once
     private string _statusKey = "Ferma";
@@ -68,6 +71,17 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
                     Set(everRead ? SessionState.Reconnecting : SessionState.Connecting, everRead ? "Riconnessione…" : "Connessione…");
                     if (!Config.IsLocal) SmbConnection.Connect(share, Config.UserName, SessionStore.Unprotect(Config.ProtectedPassword));
                     connected = true;
+                }
+                if (IsArchive)
+                {
+                    var parts = LogTailer.Parts(Path);
+                    if (parts.Count == 0) throw new FileNotFoundException(null, Path); // no {n} part yet: wait
+                    var archive = LogTailer.ReadArchive(parts, Config.Encoding, ArchiveMaxLines, out var total);
+                    if (total > archive.Count) Marker(L.F("— archivio: ultime {0:N0} righe di {1:N0} —", archive.Count, total));
+                    Emit(archive, history: true);
+                    ArchiveLoaded = true;
+                    Set(SessionState.Stopped, "Archivio .gz in sola lettura ({0:N0} righe)", total);
+                    break;
                 }
                 if (FollowToday && _today().Date != Date)
                 {
@@ -133,7 +147,7 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
 
         if (connected && !Config.IsLocal) SmbConnection.Release(share);
         _canLoadOlder = false;
-        if (State != SessionState.Error) Set(SessionState.Stopped, "Ferma");
+        if (State is not (SessionState.Error or SessionState.Stopped)) Set(SessionState.Stopped, "Ferma");
     }
 
     private void SetCanLoadOlder(bool value)

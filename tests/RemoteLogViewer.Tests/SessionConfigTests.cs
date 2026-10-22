@@ -64,6 +64,29 @@ public class SessionConfigTests
     }
 
     [Fact]
+    public void CurrentUndated_today_drops_gz_of_rotated_archives()
+    {
+        var c = new SessionConfig { SharePath = @"\\server\E$", FilePath = @"logs\app{date:'.'yyyy-MM-dd}.log.gz", CurrentUndated = true };
+        var today = new DateTime(2026, 9, 30);
+        Assert.Equal(@"\\server\E$\logs\app.log", c.ResolvePath(today, today));
+        Assert.Equal(@"\\server\E$\logs\app.2026-09-29.log.gz", c.ResolvePath(today.AddDays(-1), today));
+
+        c.FilePath = @"logs\hr-portal.log{date:'.'yyyy-MM-dd}.{n}.gz";
+        Assert.Equal(@"\\server\E$\logs\hr-portal.log", c.ResolvePath(today, today));
+        Assert.Equal(@"\\server\E$\logs\hr-portal.log.2026-09-29.{n}.gz", c.ResolvePath(today.AddDays(-1), today));
+    }
+
+    [Theory]
+    [InlineData(@"logs\app.{n}.gz", true)]
+    [InlineData(@"logs\app.{n}.log", false)]
+    [InlineData(@"logs{n}\app.gz", false)]
+    public void Progressive_only_in_gz_file_name(string file, bool valid)
+    {
+        var c = new SessionConfig { Name = "x", SharePath = @"\\server\E$", FilePath = file };
+        Assert.Equal(valid, c.Validate().Count == 0);
+    }
+
+    [Fact]
     public void Invalid_patterns_are_reported_by_field()
     {
         var c = new SessionConfig { Name = "x", SharePath = @"\\server\E$", FilePath = "a.log", WarnPattern = "[", AlertPattern = "(" };

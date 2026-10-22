@@ -266,7 +266,10 @@ public static class L
         ["Apri file…"] = "Open file…",
         ["Apri un file di log (Ctrl+O)"] = "Open a log file (Ctrl+O)",
         ["Apri file di log"] = "Open log file",
-        ["Log e testo (*.log;*.txt)|*.log;*.txt|Tutti i file (*.*)|*.*"] = "Log and text (*.log;*.txt)|*.log;*.txt|All files (*.*)|*.*",
+        ["Log, testo e archivi (*.log;*.txt;*.gz)|*.log;*.txt;*.gz|Tutti i file (*.*)|*.*"] = "Logs, text and archives (*.log;*.txt;*.gz)|*.log;*.txt;*.gz|All files (*.*)|*.*",
+        ["— archivio: ultime {0:N0} righe di {1:N0} —"] = "— archive: last {0:N0} lines of {1:N0} —",
+        ["Archivio .gz in sola lettura ({0:N0} righe)"] = "Read-only .gz archive ({0:N0} lines)",
+        ["Il progressivo {n} è ammesso solo nel nome di un file .gz."] = "The {n} progressive is only allowed in the name of a .gz file.",
         ["Impossibile aprire «{0}»: {1}"] = "Cannot open \"{0}\": {1}",
         ["Nessun file valido"] = "No valid file",
 

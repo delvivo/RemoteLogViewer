@@ -41,9 +41,9 @@ public partial class DateDialog : Window
         if (await _connect is { } error) { Status.Text = L.F("Impossibile verificare i file: {0}", error); return; }
 
         var days = Enumerable.Range(0, DateTime.DaysInMonth(month.Year, month.Month)).Select(i => month.AddDays(i)).ToList();
-        // ponytail: one File.Exists per day, works for any placeholder position/format; ~31 SMB stats per month
+        // ponytail: one existence check per day ({n}: one listing), works for any placeholder position/format; ~31 SMB stats per month
         var found = await Task.Run(() => days.AsParallel().WithDegreeOfParallelism(8)
-            .Select(d => (d, File.Exists(_config.ResolvePath(d)))).ToList());
+            .Select(d => (d, LogTailer.Exists(_config.ResolvePath(d)))).ToList());
         foreach (var (d, ok) in found)
         {
             _exists[d] = ok;
