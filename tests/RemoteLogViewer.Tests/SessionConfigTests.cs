@@ -62,4 +62,17 @@ public class SessionConfigTests
         c.CurrentUndated = false;
         Assert.Equal(@"\server\E$\logs\app.2026-09-30.log", c.ResolvePath(today, today));
     }
+
+    [Fact]
+    public void Invalid_patterns_are_reported_by_field()
+    {
+        var c = new SessionConfig { Name = "x", SharePath = @"\\server\E$", FilePath = "a.log", WarnPattern = "[", AlertPattern = "(" };
+        var errors = c.Validate();
+        Assert.Equal(2, errors.Count);
+        Assert.StartsWith("Regex WARN non valida: ", errors[0]);
+        Assert.StartsWith("Regex Avviso non valida: ", errors[1]);
+        c.WarnPattern = @"\[W\]";
+        c.AlertPattern = "";
+        Assert.Empty(c.Validate());
+    }
 }

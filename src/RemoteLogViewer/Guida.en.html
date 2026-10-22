@@ -63,8 +63,10 @@
     <li><a href="#schede">Tabs and Side by side</a></li>
     <li><a href="#workspace">Reopening at startup</a></li>
     <li><a href="#avvisi">Error alerts</a></li>
+    <li><a href="#livelli">Custom levels and alerts</a></li>
     <li><a href="#vista">Session toolbar</a></li>
     <li><a href="#filtri">Filters, context and search</a></li>
+    <li><a href="#vai-ora">Go to time</a></li>
     <li><a href="#ricerca-avanzata">Advanced search across sessions</a></li>
     <li><a href="#analisi-ia">AI analysis</a></li>
     <li><a href="#precedenti">Older lines</a></li>
@@ -96,6 +98,7 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"</code></pre>
   <tr><td>File</td><td>The path relative to the share (<code>logs\app.log</code>) or the full UNC path, which must be inside the share. It can contain a <a href="#data">variable date</a>.</td></tr>
   <tr><td>Initial lines</td><td>How many lines to read from the end of the file when opening (0 to 100,000). It is also the number of lines loaded each time with <a href="#precedenti">▲ Older</a>.</td></tr>
   <tr><td>Encoding</td><td><em>auto</em> (UTF-8), UTF-16 or Windows-1252. If the file starts with a BOM, the encoding given by the BOM always wins.</td></tr>
+  <tr><td>Levels and alerts</td><td>Optional: regexes to detect levels in non-standard formats and to alert on text of your choice. See <a href="#livelli">Custom levels and alerts</a>.</td></tr>
 </table>
 <p><strong>Test connection</strong> tries to reach the share and the file without saving anything.</p>
 <p>The buttons under the list are: <em>Start</em>, <em>New</em>, <em>Edit</em> (<kbd>F2</kbd>), <em>Duplicate</em>, <em>Delete</em> (<kbd>Del</kbd>) and <em>Collection</em>. To start a session you can also double-click it or press <kbd>Enter</kbd>.</p>
@@ -173,7 +176,16 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>If the app is not in the foreground, its button in the Windows taskbar flashes until you go back to the app.</li>
   <li>An error followed by its stack trace counts as <strong>one</strong> error.</li>
   <li>Lines read when the session opens and those loaded with ▲ Older do not raise alerts. In Side by side mode no badge appears, because all sessions are already visible.</li>
+  <li>You can get the same alert for lines that are not errors, with the session's <em>Alert</em> regex: see <a href="#livelli">Custom levels and alerts</a>.</li>
 </ul>
+
+<h2 id="livelli">Custom levels and alerts</h2>
+<p>In the session window, the <strong>Levels and alerts</strong> section (collapsed while empty) has five optional fields. They are .NET regular expressions and ignore case.</p>
+<ul>
+  <li><strong>ERROR, WARN, INFO, DEBUG</strong>: for logs that mark the level in a way the app does not recognize, for example <code>[E]</code>, <code>|ERR|</code> or <code>level=50</code>. Example: ERROR <code>\[E\]|\|ERR\|</code>. Each line is checked against these fields in order of severity (ERROR, then WARN, INFO, DEBUG): the first match wins. If none matches, the standard detection applies, so you can fill in only the levels you need. Filters, counters, badges and advanced search use the level found this way.</li>
+  <li><strong>Alert</strong>: new matching lines, of any level, raise the same <a href="#avvisi">alert</a> as errors (tab badge and taskbar flash). Example: <code>OutOfMemory|deadlock|timeout</code>. A line that is an error and also matches the alert counts once.</li>
+</ul>
+<p>An invalid regex prevents saving, and the message names the field. Changes apply the next time the session is opened: tabs already open keep the previous settings. The fields are exported, imported and duplicated with the session. <a href="#file-locali">Local files</a> always use the standard detection.</p>
 
 <h2 id="vista">Session toolbar</h2>
 <table>
@@ -186,6 +198,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td>▲ Older</td><td>Loads the <a href="#precedenti">lines before</a> the ones already read.</td></tr>
   <tr><td>⏫ All</td><td>Loads <a href="#precedenti">the whole file</a> from the start (max 100,000 lines).</td></tr>
   <tr><td>Save…</td><td><a href="#salva">Saves the visible lines</a> to a file (<kbd>Ctrl</kbd>+<kbd>S</kbd>).</td></tr>
+  <tr><td>Go to time…</td><td>Selects the first visible line from a given time (<kbd>Ctrl</kbd>+<kbd>G</kbd>). See <a href="#vai-ora">Go to time</a>.</td></tr>
   <tr><td>Filter, Regex, Context</td><td>See <a href="#filtri">Filters, context and search</a>.</td></tr>
   <tr><td><span class="err">ERROR n</span> <span class="warn">WARN n</span> INFO n <span class="dbg">DEBUG n</span></td><td>The checkboxes show or hide lines of that level. The number is how many entries of that level are in the buffer: a stack trace counts as 1 and the number does not depend on the filters.</td></tr>
   <tr><td>Search, ▲ ▼</td><td>Highlights the lines containing the text and jumps from one result to the next.</td></tr>
@@ -201,6 +214,10 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <p>In the <strong>Context</strong> box you set how many lines to show before and after each line matching the filter (0 to 50), like <code>grep -C</code>. Context lines appear dimmed. Between groups, if they are not contiguous, a <span class="mark">--</span> separator appears. With Follow on, the lines following a match appear as they arrive. Without a filter, context has no effect.</p>
 <h3>Search</h3>
 <p><kbd>Ctrl</kbd>+<kbd>F</kbd> moves the cursor to the search box. Matching lines are highlighted in yellow; <kbd>F3</kbd> and <kbd>Shift</kbd>+<kbd>F3</kbd> jump to the next or previous result. Unlike the filter, search does not hide any line.</p>
+
+<h2 id="vai-ora">Go to time</h2>
+<p><strong>Go to time…</strong> (<kbd>Ctrl</kbd>+<kbd>G</kbd>) asks for a time, for example <code>14:32</code> or <code>14:32:10</code>, optionally preceded by a date (<code>2026-10-22 14:32</code> or <code>22/10/2026 14:32</code>). A time without a date refers to the session's date (if the path has a <a href="#data">date</a>) or to today.</p>
+<p>The view selects the first <em>visible</em> line at or after that time, and Follow turns off. The time formats are the same as in the <a href="#ricerca-avanzata">advanced search</a>; lines without a time (for example a stack trace) take the one of the previous line. If no line reaches that time, or the lines have no recognizable time, a message appears. If the time is before the first line read and the file has older lines, the app suggests <a href="#precedenti">▲ Older</a>.</p>
 
 <h2 id="ricerca-avanzata">Advanced search across sessions</h2>
 <p>The <strong>Search…</strong> button or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> opens a window that searches the lines already read in <em>all</em> open sessions, even if their tab is not visible and regardless of each tab's own filters. The window stays open while you use the tabs (also in Side by side).</p>
@@ -267,6 +284,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Session</td><td>Next / previous result</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Log lines</td><td>Copies the selected lines</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Session</td><td>Saves the visible lines</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>Session</td><td><a href="#vai-ora">Go to time</a></td></tr>
   <tr><td>Middle mouse button</td><td>Tab title</td><td>Closes the tab</td></tr>
 </table>
 

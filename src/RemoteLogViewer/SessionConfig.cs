@@ -16,6 +16,12 @@ public class SessionConfig
     public Guid? CredentialId { get; set; } // null = UserName/ProtectedPassword above
     public bool CurrentUndated { get; set; } // today's file has no date: placeholders resolve to "" for today
     public bool IsLocal { get; set; }        // file on the local file system: FilePath is absolute, no SMB; never stored in the session list
+    // Regexes (case-insensitive, "" = unused): custom level detection before the built-in one, and new lines that raise an alert.
+    public string ErrorPattern { get; set; } = "";
+    public string WarnPattern { get; set; } = "";
+    public string InfoPattern { get; set; } = "";
+    public string DebugPattern { get; set; } = "";
+    public string AlertPattern { get; set; } = "";
 
     /// Config for a local file (opened from the file system, not saved).
     public static SessionConfig Local(string path)
@@ -46,6 +52,8 @@ public class SessionConfig
             errors.Add(L.T("Il percorso UNC del file deve essere dentro la share."));
         errors.AddRange(DatePath.Validate(FilePath));
         if (TailLines is < 0 or > 100_000) errors.Add(L.T("Righe iniziali tra 0 e 100000."));
+        foreach (var (field, pattern) in new[] { ("ERROR", ErrorPattern), ("WARN", WarnPattern), ("INFO", InfoPattern), ("DEBUG", DebugPattern), (L.T("Avviso"), AlertPattern) })
+            if (LineRules.Check(pattern) is { } error) errors.Add(L.F("Regex {0} non valida: {1}", field, error));
         return errors;
     }
 

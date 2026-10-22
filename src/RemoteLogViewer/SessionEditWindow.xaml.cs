@@ -26,6 +26,12 @@ public partial class SessionEditWindow : Window
         TailBox.Text = Config.TailLines.ToString();
         EncodingBox.ItemsSource = new[] { "auto", "utf-8", "utf-16", "windows-1252" };
         EncodingBox.SelectedItem = Config.Encoding;
+        ErrorPatternBox.Text = Config.ErrorPattern;
+        WarnPatternBox.Text = Config.WarnPattern;
+        InfoPatternBox.Text = Config.InfoPattern;
+        DebugPatternBox.Text = Config.DebugPattern;
+        AlertPatternBox.Text = Config.AlertPattern;
+        RulesExpander.IsExpanded = new[] { Config.ErrorPattern, Config.WarnPattern, Config.InfoPattern, Config.DebugPattern, Config.AlertPattern }.Any(p => p.Length > 0);
         if (Config.ProtectedPassword != null && SessionStore.Unprotect(Config.ProtectedPassword) == null)
             ShowResult(L.T("Password salvata non leggibile su questo PC/utente: reinseriscila."), false);
         Loaded += (_, _) => NameBox.Focus();
@@ -63,6 +69,11 @@ public partial class SessionEditWindow : Window
         Config.FilePath = FileBox.Text.Trim();
         Config.CurrentUndated = CurrentUndatedBox.IsChecked == true && DatePath.Has(Config.FilePath);
         Config.Encoding = (string)EncodingBox.SelectedItem;
+        Config.ErrorPattern = ErrorPatternBox.Text.Trim();
+        Config.WarnPattern = WarnPatternBox.Text.Trim();
+        Config.InfoPattern = InfoPatternBox.Text.Trim();
+        Config.DebugPattern = DebugPatternBox.Text.Trim();
+        Config.AlertPattern = AlertPatternBox.Text.Trim();
         Config.CredentialId = (CredentialBox.SelectedItem as Credential)?.Id;
         if (Config.CredentialId != null) (Config.UserName, Config.ProtectedPassword) = ("", null); // the credential wins
         else if (PasswordBox.Password.Length > 0) Config.ProtectedPassword = SessionStore.Protect(PasswordBox.Password);

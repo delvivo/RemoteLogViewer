@@ -307,6 +307,26 @@ public static class L
         ["Nessuna risposta"] = "No answer",
         ["Completato in {0}"] = "Completed in {0}",
         ["Esporta report"] = "Export report",
+        // custom levels and alerts
+        ["Avviso"] = "Alert",
+        ["_Avviso"] = "_Alert",
+        ["Regex {0} non valida: {1}"] = "Invalid {0} regex: {1}",
+        ["Livelli e avvisi"] = "Levels and alerts",
+        ["Regex, maiuscole/minuscole indifferenti. Vuoto = riconoscimento standard. Hanno effetto alla prossima apertura della sessione."]
+            = "Regexes, case-insensitive. Empty = standard detection. They take effect the next time the session is opened.",
+        [@"Es. \[E\]|\|ERR\|"] = @"E.g. \[E\]|\|ERR\|",
+        ["Le nuove righe che corrispondono avvisano come gli errori (badge sulla scheda, lampeggio della barra delle applicazioni). Es. OutOfMemory|deadlock|timeout"]
+            = "New matching lines alert like errors (tab badge, taskbar flash). E.g. OutOfMemory|deadlock|timeout",
+        // go to time
+        ["Vai all'ora…"] = "Go to time…",
+        ["Vai all'ora"] = "Go to time",
+        ["Seleziona la prima riga visibile a partire da un'ora (Ctrl+G)"] = "Select the first visible line from a given time (Ctrl+G)",
+        ["_Ora (HH:mm[:ss], anche con data yyyy-MM-dd o dd/MM/yyyy):"] = "_Time (HH:mm[:ss], optionally with a yyyy-MM-dd or dd/MM/yyyy date):",
+        ["Indica un'ora."] = "Enter a time.",
+        ["Le righe visibili non hanno un orario riconoscibile."] = "The visible lines have no recognizable time.",
+        ["Nessuna riga visibile alle {0} o dopo."] = "No visible line at {0} or later.",
+        ["L'ora è precedente alla prima riga letta: usa ▲ Precedenti per caricare le righe più vecchie."]
+            = "The time is earlier than the first line read: use ▲ Older to load older lines.",
     };
 }
 

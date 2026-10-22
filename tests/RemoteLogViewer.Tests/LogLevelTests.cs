@@ -42,4 +42,45 @@ public class LogLevelTests
         Assert.True(l.IsHistory);
         Assert.Equal(LogLevel.None, l.Level);
     }
+
+    private static List<LogLine> MakeAll(SessionConfig c, bool history, params string[] lines)
+    {
+        var rules = new LineRules(c);
+        var last = LogLevel.None;
+        return lines.Select(l => LogLevels.Make(l, ref last, history, rules)).ToList();
+    }
+
+    [Fact]
+    public void Custom_patterns_classify_unknown_formats()
+    {
+        var c = new SessionConfig { ErrorPattern = @"\[E\]", InfoPattern = @"\[I\]" };
+        var lines = MakeAll(c, false, "[E] boom", "   at A.B()", "[i] ok", "WARN slow", "plain");
+        Assert.Equal([LogLevel.Error, LogLevel.Error, LogLevel.Info, LogLevel.Warn, LogLevel.Warn], lines.Select(l => l.Level)); // case-insensitive, built-in fallback, inheritance
+        Assert.Equal([true, false, true, true, false], lines.Select(l => l.IsEntry));
+    }
+
+    [Fact]
+    public void Most_severe_custom_pattern_wins() =>
+        Assert.Equal(LogLevel.Error, new LineRules(new SessionConfig { WarnPattern = "x", ErrorPattern = "x" }).Detect("x"));
+
+    [Fact]
+    public void Custom_pattern_wins_over_built_in() =>
+        Assert.Equal(LogLevel.Debug, new LineRules(new SessionConfig { DebugPattern = "level=10" }).Detect("ERROR level=10"));
+
+    [Fact]
+    public void Invalid_pattern_is_ignored()
+    {
+        var rules = new LineRules(new SessionConfig { ErrorPattern = "[", AlertPattern = "(" });
+        Assert.Equal(LogLevel.Info, rules.Detect("INFO [ x"));
+        Assert.False(rules.IsAlert("( x"));
+    }
+
+    [Fact]
+    public void Alert_only_for_new_matching_lines()
+    {
+        var c = new SessionConfig { AlertPattern = "deadlock|timeout" };
+        Assert.Equal([false, true, true], MakeAll(c, false, "INFO ok", "INFO Deadlock found", "   timeout").Select(l => l.IsAlert));
+        Assert.All(MakeAll(c, true, "INFO deadlock"), l => Assert.False(l.IsAlert));
+        Assert.All(MakeAll(new SessionConfig(), false, "INFO deadlock"), l => Assert.False(l.IsAlert));
+    }
 }

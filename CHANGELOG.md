@@ -7,6 +7,9 @@ All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](htt
 ### Added
 
 - **Load whole file**: new *⏫ All* button next to *▲ Previous* loads every remaining line back to the start of the file in one go. It stays within the 100,000-line buffer: for longer files the most recent 100,000 lines stay loaded.
+- **Custom levels**: per-session regexes for ERROR, WARN, INFO and DEBUG, for logs with non-standard level markers (`[E]`, `|ERR|`, `level=50`). The standard detection still applies when none matches.
+- **Custom alerts**: a per-session regex; new matching lines raise the same tab badge and taskbar flash as errors.
+- **Go to time** (`Ctrl+G`): selects the first visible line at or after a given time.
 
 ## [1.2.0] - 2026-10-21
 

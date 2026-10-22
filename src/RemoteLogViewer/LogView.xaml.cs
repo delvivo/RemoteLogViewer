@@ -15,14 +15,14 @@ public enum RevealResult { NotFound, Shown, ShownFiltersCleared }
 
 public partial class LogView : UserControl
 {
-    public static readonly RoutedCommand FindNext = new(), FindPrev = new(), FocusSearch = new();
+    public static readonly RoutedCommand FindNext = new(), FindPrev = new(), FocusSearch = new(), GoToTime = new();
     private const int MaxLines = 100_000, TrimBlock = 10_000;
 
     public ActiveSession Session { get; }
     public event Action? StatusChanged;
-    public event Action<int>? ErrorsArrived; // new ERROR entries (not from the initial read)
+    public event Action<int>? ErrorsArrived; // new ERROR entries and alert lines (not from the initial read)
     public Brush StatusBrush => StatusDot.Fill;
-    public int UnreadErrors { get; private set; } // ERROR entries arrived while this view was not visible
+    public int UnreadErrors { get; private set; } // ERROR entries and alert lines arrived while this view was not visible
 
     private readonly List<LogLine> _all = [];
     private ObservableCollection<LogLine> _visible = [];
@@ -42,6 +42,7 @@ public partial class LogView : UserControl
         CommandBindings.Add(new CommandBinding(FindNext, (_, _) => Find(1)));
         CommandBindings.Add(new CommandBinding(FindPrev, (_, _) => Find(-1)));
         CommandBindings.Add(new CommandBinding(FocusSearch, (_, _) => { SearchBox.Focus(); SearchBox.SelectAll(); }));
+        CommandBindings.Add(new CommandBinding(GoToTime, (_, _) => AskTime(), (_, e) => e.CanExecute = _visible.Count > 0));
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Save, (_, _) => SaveVisible(), (_, e) => e.CanExecute = _visible.Count > 0));
         IsVisibleChanged += (_, e) =>
         {
@@ -122,7 +123,7 @@ public partial class LogView : UserControl
             l.IsMatch = SearchHit(l);
             _all.Add(l);
             Count(l, 1);
-            if (l is { Level: LogLevel.Error, IsEntry: true, IsHistory: false }) errors++;
+            if (l is { IsHistory: false } && (l is { Level: LogLevel.Error, IsEntry: true } || l.IsAlert)) errors++; // custom alerts count like errors, once
             added.AddRange(_ctx.Add(_all, _all.Count - 1));
         }
         if (_all.Count > MaxLines)
@@ -229,6 +230,26 @@ public partial class LogView : UserControl
         }
         if (n < wanted) Info(L.F("Verranno caricate solo {0:N0} righe: il buffer è limitato a {1:N0}.", n, MaxLines));
         Session.RequestOlder(n);
+    }
+
+    // Time only = the session's date (dated path) or today, as in the advanced search.
+    private void AskTime()
+    {
+        var day = Session.Date ?? DateTime.Today;
+        DateTime target = default;
+        var text = TextDialog.Ask(Window.GetWindow(this), L.T("Vai all'ora"), L.T("_Ora (HH:mm[:ss], anche con data yyyy-MM-dd o dd/MM/yyyy):"), "",
+            t => LogTimestamp.TryParseTarget(t, day, out target) ? null : L.T("Ora non valida (usa HH:mm o HH:mm:ss)"),
+            emptyError: L.T("Indica un'ora."));
+        if (text == null) return;
+        var (index, status) = LogTimestamp.FindAtOrAfter(_visible, target, day);
+        if (status == GoToStatus.NoTimestamps) { Info(L.T("Le righe visibili non hanno un orario riconoscibile.")); return; }
+        if (status == GoToStatus.NotFound) { Info(L.F("Nessuna riga visibile alle {0} o dopo.", text)); return; }
+        FollowButton.IsChecked = false;
+        Lines.SelectedIndex = index;
+        Lines.ScrollIntoView(_visible[index]);
+        Lines.Focus();
+        if (status == GoToStatus.BeforeFirst && Session.CanLoadOlder)
+            Info(L.T("L'ora è precedente alla prima riga letta: usa ▲ Precedenti per caricare le righe più vecchie."));
     }
 
     private void Info(string text, MessageBoxImage image = MessageBoxImage.Information) =>

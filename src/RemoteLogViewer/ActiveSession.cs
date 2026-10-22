@@ -11,6 +11,7 @@ public enum SessionState { Connecting, Running, Waiting, Reconnecting, Error, St
 public class ActiveSession(SessionConfig config, DateTime? date = null, Func<DateTime>? today = null)
 {
     private readonly Func<DateTime> _today = today ?? (() => DateTime.Today);
+    private readonly LineRules _rules = new(config); // built once: compiled regexes
 
     public SessionConfig Config { get; } = config;
     public DateTime? Date { get; private set; } = date?.Date;
@@ -90,7 +91,7 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
                     if (Interlocked.Exchange(ref _olderRequest, 0) is var n and > 0)
                     {
                         var last = LogLevel.None;
-                        Older.Enqueue(tailer.ReadBefore(n).Select(l => LogLevels.Make(l, ref last, history: true)).ToList());
+                        Older.Enqueue(tailer.ReadBefore(n).Select(l => LogLevels.Make(l, ref last, history: true, _rules)).ToList());
                     }
                     var lines = tailer.Poll(out var rotated);
                     if (State != SessionState.Running) Marker(L.T("— riconnesso —"));
@@ -144,7 +145,7 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
 
     private void Emit(List<string> lines, bool history)
     {
-        foreach (var l in lines) Pending.Enqueue(LogLevels.Make(l, ref _last, history));
+        foreach (var l in lines) Pending.Enqueue(LogLevels.Make(l, ref _last, history, _rules));
     }
 
     private void Marker(string text) => Pending.Enqueue(new LogLine(text, LogLevel.None, true));
