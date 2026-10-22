@@ -1,5 +1,7 @@
 using System.IO;
+using System.IO.Compression;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace RemoteLogViewer;
 
@@ -23,6 +25,49 @@ public class LogTailer(string path, string encoding = "auto")
 
     /// Lines before the oldest one read so far are still in the file (ReadBefore can return more).
     public bool HasOlder => _head > _start;
+
+    /// Rotated, compressed log: no tail, its parts are decompressed once, in order. Keeps the last `max` lines; `total` = lines in the archive.
+    public static List<string> ReadArchive(IEnumerable<string> paths, string encoding, int max, out int total)
+    {
+        var lines = new Queue<string>();
+        total = 0;
+        foreach (var path in paths)
+        {
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(new GZipStream(fs, CompressionMode.Decompress), Configured(encoding), detectEncodingFromByteOrderMarks: true);
+            while (reader.ReadLine() is { } line)
+            {
+                total++;
+                if (lines.Count == max) lines.Dequeue();
+                lines.Enqueue(line);
+            }
+        }
+        return [.. lines];
+    }
+
+    public static bool IsArchive(string path) => path.EndsWith(".gz", StringComparison.OrdinalIgnoreCase);
+
+    /// Rotation progressive in the file name: `hr-portal.log.2026-10-03.{n}.gz` = .0.gz, .1.gz, … (oldest first).
+    public const string Part = "{n}";
+
+    /// Existing files of a `{n}` path ordered by number; any other path as is.
+    public static List<string> Parts(string path)
+    {
+        if (!path.Contains(Part)) return [path];
+        var name = System.IO.Path.GetFileName(path);
+        var number = new Regex("^" + Regex.Escape(name).Replace(Regex.Escape(Part), @"(\d+)") + "$", RegexOptions.IgnoreCase);
+        return Directory.EnumerateFiles(System.IO.Path.GetDirectoryName(path)!, name.Replace(Part, "*"))
+            .Select(f => (f, m: number.Match(System.IO.Path.GetFileName(f))))
+            .Where(x => x.m.Success)
+            .OrderBy(x => long.Parse(x.m.Groups[1].Value))
+            .Select(x => x.f).ToList();
+    }
+
+    public static bool Exists(string path)
+    {
+        try { return Parts(path).Any(File.Exists); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException) { return false; }
+    }
 
     public List<string> ReadTail(int n)
     {
@@ -123,14 +168,16 @@ public class LogTailer(string path, string encoding = "auto")
         if (read >= 3 && b[0] == 0xEF && b[1] == 0xBB && b[2] == 0xBF) { _enc = new UTF8Encoding(false); return 3; }
         if (read >= 2 && b[0] == 0xFF && b[1] == 0xFE) { _enc = new UnicodeEncoding(false, false); return 2; }
         if (read >= 2 && b[0] == 0xFE && b[1] == 0xFF) { _enc = new UnicodeEncoding(true, false); return 2; }
-        _enc = encoding switch
-        {
-            "utf-16" => new UnicodeEncoding(false, false),
-            "windows-1252" => Encoding.GetEncoding(1252),
-            _ => new UTF8Encoding(false),
-        };
+        _enc = Configured(encoding);
         return 0;
     }
+
+    private static Encoding Configured(string encoding) => encoding switch
+    {
+        "utf-16" => new UnicodeEncoding(false, false),
+        "windows-1252" => Encoding.GetEncoding(1252),
+        _ => new UTF8Encoding(false),
+    };
 
     private static List<string> Split(string text, out string tail)
     {

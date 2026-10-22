@@ -62,4 +62,40 @@ public class SessionConfigTests
         c.CurrentUndated = false;
         Assert.Equal(@"\server\E$\logs\app.2026-09-30.log", c.ResolvePath(today, today));
     }
+
+    [Fact]
+    public void CurrentUndated_today_drops_gz_of_rotated_archives()
+    {
+        var c = new SessionConfig { SharePath = @"\\server\E$", FilePath = @"logs\app{date:'.'yyyy-MM-dd}.log.gz", CurrentUndated = true };
+        var today = new DateTime(2026, 9, 30);
+        Assert.Equal(@"\\server\E$\logs\app.log", c.ResolvePath(today, today));
+        Assert.Equal(@"\\server\E$\logs\app.2026-09-29.log.gz", c.ResolvePath(today.AddDays(-1), today));
+
+        c.FilePath = @"logs\hr-portal.log{date:'.'yyyy-MM-dd}.{n}.gz";
+        Assert.Equal(@"\\server\E$\logs\hr-portal.log", c.ResolvePath(today, today));
+        Assert.Equal(@"\\server\E$\logs\hr-portal.log.2026-09-29.{n}.gz", c.ResolvePath(today.AddDays(-1), today));
+    }
+
+    [Theory]
+    [InlineData(@"logs\app.{n}.gz", true)]
+    [InlineData(@"logs\app.{n}.log", false)]
+    [InlineData(@"logs{n}\app.gz", false)]
+    public void Progressive_only_in_gz_file_name(string file, bool valid)
+    {
+        var c = new SessionConfig { Name = "x", SharePath = @"\\server\E$", FilePath = file };
+        Assert.Equal(valid, c.Validate().Count == 0);
+    }
+
+    [Fact]
+    public void Invalid_patterns_are_reported_by_field()
+    {
+        var c = new SessionConfig { Name = "x", SharePath = @"\\server\E$", FilePath = "a.log", WarnPattern = "[", AlertPattern = "(" };
+        var errors = c.Validate();
+        Assert.Equal(2, errors.Count);
+        Assert.StartsWith("Regex WARN non valida: ", errors[0]);
+        Assert.StartsWith("Regex Avviso non valida: ", errors[1]);
+        c.WarnPattern = @"\[W\]";
+        c.AlertPattern = "";
+        Assert.Empty(c.Validate());
+    }
 }

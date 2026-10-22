@@ -120,6 +120,8 @@ public static class L
         ["Pulisci"] = "Clear",
         ["▲ Precedenti"] = "▲ Older",
         ["Carica righe precedenti a quelle lette"] = "Load lines before the ones already read",
+        ["⏫ Tutto"] = "⏫ All",
+        ["Carica il file dall'inizio (fino al limite del buffer, 100.000 righe)"] = "Load the file from the start (up to the buffer limit, 100,000 lines)",
         ["Salva…"] = "Save…",
         ["Salva le righe visibili in un file (Ctrl+S)"] = "Save the visible lines to a file (Ctrl+S)",
         ["Filtro:"] = "Filter:",
@@ -264,7 +266,10 @@ public static class L
         ["Apri file…"] = "Open file…",
         ["Apri un file di log (Ctrl+O)"] = "Open a log file (Ctrl+O)",
         ["Apri file di log"] = "Open log file",
-        ["Log e testo (*.log;*.txt)|*.log;*.txt|Tutti i file (*.*)|*.*"] = "Log and text (*.log;*.txt)|*.log;*.txt|All files (*.*)|*.*",
+        ["Log, testo e archivi (*.log;*.txt;*.gz)|*.log;*.txt;*.gz|Tutti i file (*.*)|*.*"] = "Logs, text and archives (*.log;*.txt;*.gz)|*.log;*.txt;*.gz|All files (*.*)|*.*",
+        ["— archivio: ultime {0:N0} righe di {1:N0} —"] = "— archive: last {0:N0} lines of {1:N0} —",
+        ["Archivio .gz in sola lettura ({0:N0} righe)"] = "Read-only .gz archive ({0:N0} lines)",
+        ["Il progressivo {n} è ammesso solo nel nome di un file .gz."] = "The {n} progressive is only allowed in the name of a .gz file.",
         ["Impossibile aprire «{0}»: {1}"] = "Cannot open \"{0}\": {1}",
         ["Nessun file valido"] = "No valid file",
 
@@ -305,6 +310,33 @@ public static class L
         ["Nessuna risposta"] = "No answer",
         ["Completato in {0}"] = "Completed in {0}",
         ["Esporta report"] = "Export report",
+        // custom levels and alerts
+        ["Avviso"] = "Alert",
+        ["_Avviso"] = "_Alert",
+        ["Regex {0} non valida: {1}"] = "Invalid {0} regex: {1}",
+        ["Livelli e avvisi"] = "Levels and alerts",
+        ["Regex, maiuscole/minuscole indifferenti. Vuoto = riconoscimento standard. Hanno effetto alla prossima apertura della sessione."]
+            = "Regexes, case-insensitive. Empty = standard detection. They take effect the next time the session is opened.",
+        [@"Es. \[E\]|\|ERR\|"] = @"E.g. \[E\]|\|ERR\|",
+        ["Le nuove righe che corrispondono avvisano come gli errori (badge sulla scheda, lampeggio della barra delle applicazioni). Es. OutOfMemory|deadlock|timeout"]
+            = "New matching lines alert like errors (tab badge, taskbar flash). E.g. OutOfMemory|deadlock|timeout",
+        // error histogram, explain this line
+        ["{0:yyyy-MM-dd HH:mm} — {1} errori"] = "{0:yyyy-MM-dd HH:mm} — {1} errors",
+        ["Istogramma"] = "Histogram",
+        ["Mostra o nasconde l'istogramma degli errori per minuto"] = "Show or hide the errors-per-minute histogram",
+        ["Spiega questa riga"] = "Explain this line",
+        ["Spiega la riga del log che inizia con \">>> \" usando le righe attorno come contesto: cosa significa, la causa più probabile e cosa controllare per primo. Sii conciso. Rispondi in italiano."]
+            = "Explain the log line that starts with \">>> \", using the surrounding lines as context: what it means, the most likely cause and what to check first. Be concise. Answer in English.",
+        // go to time
+        ["Vai all'ora…"] = "Go to time…",
+        ["Vai all'ora"] = "Go to time",
+        ["Seleziona la prima riga visibile a partire da un'ora (Ctrl+G)"] = "Select the first visible line from a given time (Ctrl+G)",
+        ["_Ora (HH:mm[:ss], anche con data yyyy-MM-dd o dd/MM/yyyy):"] = "_Time (HH:mm[:ss], optionally with a yyyy-MM-dd or dd/MM/yyyy date):",
+        ["Indica un'ora."] = "Enter a time.",
+        ["Le righe visibili non hanno un orario riconoscibile."] = "The visible lines have no recognizable time.",
+        ["Nessuna riga visibile alle {0} o dopo."] = "No visible line at {0} or later.",
+        ["L'ora è precedente alla prima riga letta: usa ▲ Precedenti per caricare le righe più vecchie."]
+            = "The time is earlier than the first line read: use ▲ Older to load older lines.",
     };
 }
 

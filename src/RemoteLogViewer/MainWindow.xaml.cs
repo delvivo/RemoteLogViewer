@@ -402,6 +402,7 @@ public partial class MainWindow : Window
     {
         var session = new ActiveSession(config.WithCredential(_tree.Credentials), date); // clone: later edits don't touch a running session
         var view = new LogView(session);
+        view.ExplainRequested += Explain; // dies with the view: no unsubscribe needed
         var dot = new Ellipse { Width = 8, Height = 8, Margin = new Thickness(0, 0, 5, 0), Fill = view.StatusBrush };
         var close = new Button { Content = "✕", Padding = new Thickness(3, 0, 3, 0), Margin = new Thickness(6, 0, 0, 0), BorderThickness = new Thickness(0), Background = Brushes.Transparent };
         var title = new TextBlock { Text = session.DisplayName };
@@ -486,7 +487,7 @@ public partial class MainWindow : Window
         {
             Multiselect = true,
             Title = L.T("Apri file di log"),
-            Filter = L.T("Log e testo (*.log;*.txt)|*.log;*.txt|Tutti i file (*.*)|*.*"),
+            Filter = L.T("Log, testo e archivi (*.log;*.txt;*.gz)|*.log;*.txt;*.gz|Tutti i file (*.*)|*.*"),
         };
         if (dlg.ShowDialog(this) == true) OpenFiles(dlg.FileNames);
     }
@@ -561,18 +562,23 @@ public partial class MainWindow : Window
     public static readonly RoutedCommand Ai = new();
     private AiWindow? _ai;
 
-    private void Ai_Executed(object sender, ExecutedRoutedEventArgs e)
+    private void Ai_Executed(object sender, ExecutedRoutedEventArgs e) => ShowAi();
+
+    private AiWindow ShowAi()
     {
         if (_ai != null)
         {
             if (_ai.WindowState == WindowState.Minimized) _ai.WindowState = WindowState.Normal;
             _ai.Activate();
-            return;
+            return _ai;
         }
         _ai = new AiWindow(() => Tabs.Items.Cast<TabItem>().Select(t => (LogView)t.Tag).ToList(), (Tabs.SelectedItem as TabItem)?.Tag as LogView) { Owner = this };
         _ai.Closed += (_, _) => _ai = null;
         _ai.Show();
+        return _ai;
     }
+
+    private void Explain(LogView view, string[] excerpt) => ShowAi().Prefill(view, excerpt, AiPrompt.ExplainText());
 
     private RevealResult RevealLine(LogView view, LogLine line)
     {

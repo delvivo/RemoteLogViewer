@@ -15,14 +15,15 @@ public enum RevealResult { NotFound, Shown, ShownFiltersCleared }
 
 public partial class LogView : UserControl
 {
-    public static readonly RoutedCommand FindNext = new(), FindPrev = new(), FocusSearch = new();
+    public static readonly RoutedCommand FindNext = new(), FindPrev = new(), FocusSearch = new(), GoToTime = new();
     private const int MaxLines = 100_000, TrimBlock = 10_000;
 
     public ActiveSession Session { get; }
     public event Action? StatusChanged;
-    public event Action<int>? ErrorsArrived; // new ERROR entries (not from the initial read)
+    public event Action<LogView, string[]>? ExplainRequested; // excerpt (target line marked) for the AI window
+    public event Action<int>? ErrorsArrived; // new ERROR entries and alert lines (not from the initial read)
     public Brush StatusBrush => StatusDot.Fill;
-    public int UnreadErrors { get; private set; } // ERROR entries arrived while this view was not visible
+    public int UnreadErrors { get; private set; } // ERROR entries and alert lines arrived while this view was not visible
 
     private readonly List<LogLine> _all = [];
     private ObservableCollection<LogLine> _visible = [];
@@ -33,6 +34,9 @@ public partial class LogView : UserControl
     private ContextFilter _ctx = new(0, _ => true, null);
     private string _search = "";
     private ScrollViewer? _scroll;
+    private readonly ErrorHistogram _hist = new();
+    private LogLine? _menuLine; // line under the mouse when the context menu opened
+    private const int ExplainContext = 20;
 
     public LogView(ActiveSession session)
     {
@@ -42,6 +46,7 @@ public partial class LogView : UserControl
         CommandBindings.Add(new CommandBinding(FindNext, (_, _) => Find(1)));
         CommandBindings.Add(new CommandBinding(FindPrev, (_, _) => Find(-1)));
         CommandBindings.Add(new CommandBinding(FocusSearch, (_, _) => { SearchBox.Focus(); SearchBox.SelectAll(); }));
+        CommandBindings.Add(new CommandBinding(GoToTime, (_, _) => AskTime(), (_, e) => e.CanExecute = _visible.Count > 0));
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Save, (_, _) => SaveVisible(), (_, e) => e.CanExecute = _visible.Count > 0));
         IsVisibleChanged += (_, e) =>
         {
@@ -122,7 +127,8 @@ public partial class LogView : UserControl
             l.IsMatch = SearchHit(l);
             _all.Add(l);
             Count(l, 1);
-            if (l is { Level: LogLevel.Error, IsEntry: true, IsHistory: false }) errors++;
+            _hist.Add(l, HistDay);
+            if (l is { IsHistory: false } && (l is { Level: LogLevel.Error, IsEntry: true } || l.IsAlert)) errors++; // custom alerts count like errors, once
             added.AddRange(_ctx.Add(_all, _all.Count - 1));
         }
         if (_all.Count > MaxLines)
@@ -132,14 +138,50 @@ public partial class LogView : UserControl
             Array.Clear(_counts);
             foreach (var l in _all) Count(l, 1);
             Rebuild();
+            ResetHistogram();
         }
-        else if (older) Rebuild(keepTopLine: true); // indices shifted: replay the whole buffer
+        else if (older) { Rebuild(keepTopLine: true); ResetHistogram(); } // indices shifted: replay the whole buffer
         else foreach (var l in added) _visible.Add(l);
         UpdateCount();
+        RefreshStrip();
         if (Follow) ScrollToEnd();
         if (errors == 0) return;
         if (!IsVisible) { UnreadErrors += errors; StatusChanged?.Invoke(); }
         ErrorsArrived?.Invoke(errors);
+    }
+
+    private DateTime HistDay => Session.Date ?? DateTime.Today;
+
+    private void ResetHistogram()
+    {
+        _hist.Reset();
+        foreach (var l in _all) _hist.Add(l, HistDay);
+        RefreshStrip();
+    }
+
+    // Stays glued to the newest minute unless the user scrolled the strip back.
+    private void RefreshStrip()
+    {
+        var atEnd = StripHost.HorizontalOffset >= StripHost.ScrollableWidth - 1;
+        var (first, counts) = _hist.Series();
+        Strip.Update(first, counts);
+        if (atEnd) StripHost.Dispatcher.BeginInvoke(DispatcherPriority.Loaded, () => StripHost.ScrollToRightEnd());
+    }
+
+    private void Strip_MinuteClicked(DateTime minute) => GoTo(minute, minute.ToString("HH:mm"));
+
+    private void Lines_ContextMenuOpening(object sender, ContextMenuEventArgs e)
+    {
+        DependencyObject? d = e.OriginalSource as DependencyObject;
+        while (d != null && d is not ListBoxItem) d = d is Visual ? VisualTreeHelper.GetParent(d) : LogicalTreeHelper.GetParent(d);
+        _menuLine = (d as ListBoxItem)?.DataContext as LogLine;
+        if (_menuLine is not { IsMarker: false }) e.Handled = true; // no line (or a separator): no menu
+    }
+
+    private void Explain_Click(object sender, RoutedEventArgs e)
+    {
+        var index = _menuLine == null ? -1 : _visible.IndexOf(_menuLine);
+        if (index >= 0) ExplainRequested?.Invoke(this, AiInput.Excerpt(VisibleTexts(), index, ExplainContext));
     }
 
     private void Count(LogLine l, int delta)
@@ -191,7 +233,8 @@ public partial class LogView : UserControl
             _ => Brushes.Orange,
         };
         StartStopButton.Content = Session.State is SessionState.Stopped or SessionState.Error ? L.T("Avvia") : L.T("Stop");
-        OlderButton.IsEnabled = Session.CanLoadOlder && Session.State == SessionState.Running;
+        StartStopButton.IsEnabled = !Session.ArchiveLoaded;
+        OlderButton.IsEnabled = AllOlderButton.IsEnabled = Session.CanLoadOlder && Session.State == SessionState.Running;
         StatusChanged?.Invoke();
     }
 
@@ -211,12 +254,18 @@ public partial class LogView : UserControl
         _all.Clear();
         Array.Clear(_counts);
         Rebuild();
+        ResetHistogram();
     }
 
-    private void Older_Click(object sender, RoutedEventArgs e)
+    private void Older_Click(object sender, RoutedEventArgs e) =>
+        LoadOlder(Session.Config.TailLines > 0 ? Session.Config.TailLines : 1000);
+
+    // ponytail: "all" = whatever fits in the buffer; ReadBefore stops at the file start on its own.
+    private void AllOlder_Click(object sender, RoutedEventArgs e) => LoadOlder(null);
+
+    private void LoadOlder(int? wanted)
     {
-        var wanted = Session.Config.TailLines > 0 ? Session.Config.TailLines : 1000;
-        var n = Math.Min(wanted, MaxLines - _all.Count);
+        var n = Math.Min(wanted ?? MaxLines, MaxLines - _all.Count);
         if (n <= 0)
         {
             Info(L.F("Buffer pieno ({0:N0} righe): usa Pulisci per fare spazio.", MaxLines));
@@ -224,6 +273,32 @@ public partial class LogView : UserControl
         }
         if (n < wanted) Info(L.F("Verranno caricate solo {0:N0} righe: il buffer è limitato a {1:N0}.", n, MaxLines));
         Session.RequestOlder(n);
+    }
+
+    // Time only = the session's date (dated path) or today, as in the advanced search.
+    private void AskTime()
+    {
+        var day = Session.Date ?? DateTime.Today;
+        DateTime target = default;
+        var text = TextDialog.Ask(Window.GetWindow(this), L.T("Vai all'ora"), L.T("_Ora (HH:mm[:ss], anche con data yyyy-MM-dd o dd/MM/yyyy):"), "",
+            t => LogTimestamp.TryParseTarget(t, day, out target) ? null : L.T("Ora non valida (usa HH:mm o HH:mm:ss)"),
+            emptyError: L.T("Indica un'ora."));
+        if (text == null) return;
+        GoTo(target, text);
+    }
+
+    private void GoTo(DateTime target, string label)
+    {
+        var day = Session.Date ?? DateTime.Today;
+        var (index, status) = LogTimestamp.FindAtOrAfter(_visible, target, day);
+        if (status == GoToStatus.NoTimestamps) { Info(L.T("Le righe visibili non hanno un orario riconoscibile.")); return; }
+        if (status == GoToStatus.NotFound) { Info(L.F("Nessuna riga visibile alle {0} o dopo.", label)); return; }
+        FollowButton.IsChecked = false;
+        Lines.SelectedIndex = index;
+        Lines.ScrollIntoView(_visible[index]);
+        Lines.Focus();
+        if (status == GoToStatus.BeforeFirst && Session.CanLoadOlder)
+            Info(L.T("L'ora è precedente alla prima riga letta: usa ▲ Precedenti per caricare le righe più vecchie."));
     }
 
     private void Info(string text, MessageBoxImage image = MessageBoxImage.Information) =>
