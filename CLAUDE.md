@@ -102,6 +102,7 @@ The data flow crosses threads, so it only makes sense when you read several file
    - **Already on a `feature/*` branch**: stay on it and don't create a new branch. The spec-kit feature name must be rooted in the current feature: `<current-feature>-<short-name>`. For example, on `feature/001-remote-log-viewer` it becomes `specs/001-remote-log-viewer-<short-name>/`, passed as `SPECIFY_FEATURE_DIRECTORY`.
 3. **After every change**, update `README.md` and this `CLAUDE.md` if the change affects what they describe: features, commands, architecture, gotchas.
 4. **After every user-visible change** (features, buttons, commands, keyboard shortcuts, messages, behaviour), update **both** user guides `src/RemoteLogViewer/Guida.it.html` and `Guida.en.html` too (self-contained HTML: no external resources; keep the shortcuts table complete; same section ids, a test checks it). Same for `README.md` (English) and `README.it.md` (Italian), and add the English text to `L.cs` for every new UI string.
+5. **After every new feature, fix or other notable change** (with or without spec-kit), update `CHANGELOG.md`: add an entry under `## [Unreleased]` in the right section (`Added`, `Changed`, `Fixed`, `Removed`), in English, following the Keep a Changelog format already used there.
 
 ## Spec-kit workflow
 
