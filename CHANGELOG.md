@@ -2,7 +2,7 @@
 
 All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.3.0] - 2026-10-22
 
 ### Added
 
@@ -13,6 +13,10 @@ All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](htt
 - **Custom alerts**: a per-session regex; new matching lines raise the same tab badge and taskbar flash as errors.
 - **Go to time** (`Ctrl+G`): selects the first visible line at or after a given time.
 - **.gz archives**: rotated logs compressed by the server (`*.gz`, local or remote) open read-only, decompressed once with no tail (last 100,000 lines, no alerts). With *Today's file has no date*, a `….log.gz` path opens the uncompressed `….log` for today. `{n}` in a `.gz` file name matches numbered parts of the same day (`hr-portal.log.2026-10-03.0.gz`, `.1.gz`, …), read in number order.
+
+### Changed
+
+- Documentation screenshots and live-tail GIF retaken to show the new toolbar buttons and the error histogram strip.
 
 ## [1.2.0] - 2026-10-21
 
@@ -60,6 +64,7 @@ All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](htt
 - Shared credentials, with passwords protected by DPAPI.
 - Word wrap toggle, and the application icon.
 
+[1.3.0]: https://github.com/delvivo/RemoteLogViewer/compare/v1.3.0...v1.2.0
 [1.2.0]: https://github.com/delvivo/RemoteLogViewer/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/delvivo/RemoteLogViewer/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/delvivo/RemoteLogViewer/releases/tag/v1.0.0
