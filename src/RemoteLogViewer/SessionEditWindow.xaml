@@ -20,6 +20,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <Grid.Resources>
             <Style TargetType="Label"><Setter Property="Margin" Value="0,2,8,2" /></Style>
@@ -53,9 +54,39 @@
         <Label Grid.Row="7" Content="{local:T '_Encoding'}" Target="{Binding ElementName=EncodingBox}" />
         <ComboBox Grid.Row="7" Grid.Column="1" x:Name="EncodingBox" Width="140" HorizontalAlignment="Left" />
 
-        <TextBlock Grid.Row="8" Grid.ColumnSpan="2" x:Name="Result" TextWrapping="Wrap" Margin="0,8" />
+        <Expander Grid.Row="8" Grid.ColumnSpan="2" x:Name="RulesExpander" Header="{local:T 'Livelli e avvisi'}" Margin="0,6,0,0">
+            <Grid Margin="0,4,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.ColumnSpan="2" Foreground="Gray" FontSize="11" TextWrapping="Wrap" Margin="0,0,0,4"
+                           Text="{local:T 'Regex, maiuscole/minuscole indifferenti. Vuoto = riconoscimento standard. Hanno effetto alla prossima apertura della sessione.'}" />
+                <Label Grid.Row="1" Content="ERROR" Target="{Binding ElementName=ErrorPatternBox}" />
+                <TextBox Grid.Row="1" Grid.Column="1" x:Name="ErrorPatternBox" ToolTip="{local:T 'Es. \\[E\\]|\\|ERR\\|'}" />
+                <Label Grid.Row="2" Content="WARN" Target="{Binding ElementName=WarnPatternBox}" />
+                <TextBox Grid.Row="2" Grid.Column="1" x:Name="WarnPatternBox" />
+                <Label Grid.Row="3" Content="INFO" Target="{Binding ElementName=InfoPatternBox}" />
+                <TextBox Grid.Row="3" Grid.Column="1" x:Name="InfoPatternBox" />
+                <Label Grid.Row="4" Content="DEBUG" Target="{Binding ElementName=DebugPatternBox}" />
+                <TextBox Grid.Row="4" Grid.Column="1" x:Name="DebugPatternBox" />
+                <Label Grid.Row="5" Content="{local:T '_Avviso'}" Target="{Binding ElementName=AlertPatternBox}" />
+                <TextBox Grid.Row="5" Grid.Column="1" x:Name="AlertPatternBox"
+                         ToolTip="{local:T 'Le nuove righe che corrispondono avvisano come gli errori (badge sulla scheda, lampeggio della barra delle applicazioni). Es. OutOfMemory|deadlock|timeout'}" />
+            </Grid>
+        </Expander>
 
-        <StackPanel Grid.Row="9" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
+        <TextBlock Grid.Row="9" Grid.ColumnSpan="2" x:Name="Result" TextWrapping="Wrap" Margin="0,8" />
+
+        <StackPanel Grid.Row="10" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button x:Name="TestButton" Content="{local:T '_Test connessione'}" Padding="10,3" Margin="4,0" Click="Test_Click" />
             <Button Content="{local:T 'Salva'}" Padding="16,3" Margin="4,0" IsDefault="True" Click="Save_Click" />
             <Button Content="{local:T 'Annulla'}" Padding="10,3" Margin="4,0" IsCancel="True" />

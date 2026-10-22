@@ -16,6 +16,12 @@ public class SessionConfig
     public Guid? CredentialId { get; set; } // null = UserName/ProtectedPassword above
     public bool CurrentUndated { get; set; } // today's file has no date: placeholders resolve to "" for today
     public bool IsLocal { get; set; }        // file on the local file system: FilePath is absolute, no SMB; never stored in the session list
+    // Regexes (case-insensitive, "" = unused): custom level detection before the built-in one, and new lines that raise an alert.
+    public string ErrorPattern { get; set; } = "";
+    public string WarnPattern { get; set; } = "";
+    public string InfoPattern { get; set; } = "";
+    public string DebugPattern { get; set; } = "";
+    public string AlertPattern { get; set; } = "";
 
     /// Config for a local file (opened from the file system, not saved).
     public static SessionConfig Local(string path)
@@ -30,7 +36,14 @@ public class SessionConfig
 
     /// Path to actually open, with `{date:…}` placeholders resolved.
     public string ResolvePath(DateTime date, DateTime? today = null) =>
-        IsLocal ? FilePath : Combine(CurrentUndated && date.Date == (today ?? DateTime.Today).Date ? DatePath.Strip(FilePath) : DatePath.Resolve(FilePath, date));
+        IsLocal ? FilePath : Combine(CurrentUndated && date.Date == (today ?? DateTime.Today).Date ? Today(FilePath) : DatePath.Resolve(FilePath, date));
+
+    // Today's undated file is also not rotated nor compressed yet: hr-portal.log{date:'.'yyyy-MM-dd}.{n}.gz → hr-portal.log.
+    private static string Today(string file)
+    {
+        var path = DatePath.Strip(file).Replace("." + LogTailer.Part, "").Replace(LogTailer.Part, "");
+        return LogTailer.IsArchive(path) ? path[..^3] : path;
+    }
 
     private string Combine(string file) => file.StartsWith(@"\\") ? file : Path.Combine(SharePath.TrimEnd('\\') + "\\", file.TrimStart('\\'));
 
@@ -45,7 +58,11 @@ public class SessionConfig
         else if (FilePath.StartsWith(@"\\") && !ResolvePath(DateTime.Today).StartsWith(SharePath.TrimEnd('\\') + "\\", StringComparison.OrdinalIgnoreCase))
             errors.Add(L.T("Il percorso UNC del file deve essere dentro la share."));
         errors.AddRange(DatePath.Validate(FilePath));
+        if (FilePath.Contains(LogTailer.Part) && (!LogTailer.IsArchive(FilePath) || (Path.GetDirectoryName(FilePath) ?? "").Contains(LogTailer.Part)))
+            errors.Add(L.T("Il progressivo {n} è ammesso solo nel nome di un file .gz."));
         if (TailLines is < 0 or > 100_000) errors.Add(L.T("Righe iniziali tra 0 e 100000."));
+        foreach (var (field, pattern) in new[] { ("ERROR", ErrorPattern), ("WARN", WarnPattern), ("INFO", InfoPattern), ("DEBUG", DebugPattern), (L.T("Avviso"), AlertPattern) })
+            if (LineRules.Check(pattern) is { } error) errors.Add(L.F("Regex {0} non valida: {1}", field, error));
         return errors;
     }
 

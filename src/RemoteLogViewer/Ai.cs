@@ -32,7 +32,11 @@ public record AiPrompt(string Name, string Text)
     [
         new(L.T("Report errori"), L.T("Analizza i log qui sotto e scrivi un report degli errori in Markdown. Inizia con un breve riepilogo. Poi raggruppa errori ed eccezioni per causa e, per ogni gruppo, indica: numero di occorrenze, prima e ultima occorrenza (timestamp), schede coinvolte, messaggio tipico, possibili cause e azioni suggerite. Ordina i gruppi per gravità e frequenza. Rispondi in italiano.")),
         new(L.T("Riepilogo"), L.T("Riassumi i log qui sotto in Markdown: stato generale, eventi rilevanti in ordine cronologico, anomalie (errori, avvisi ripetuti, pause, riavvii) e cosa conviene controllare. Rispondi in italiano.")),
+        new(L.T("Spiega questa riga"), ExplainText()),
     ];
+
+    /// The line to explain is the one starting with `>>> ` in the excerpt (see AiInput.Excerpt).
+    public static string ExplainText() => L.T("Spiega la riga del log che inizia con \">>> \" usando le righe attorno come contesto: cosa significa, la causa più probabile e cosa controllare per primo. Sii conciso. Rispondi in italiano.");
 }
 
 /// One tab's lines, captured on the UI thread when the analysis starts.
@@ -41,6 +45,14 @@ public record AiSource(string Name, string Path, IReadOnlyList<string> Lines);
 public record AiInput(string Text, int Dropped)
 {
     public const int MaxChars = 1_000_000;
+
+    /// `radius` lines around `lines[index]` (fewer at the edges); the target line is prefixed with `>>> `.
+    public static string[] Excerpt(IReadOnlyList<string> lines, int index, int radius)
+    {
+        var from = Math.Max(0, index - radius);
+        var to = Math.Min(lines.Count - 1, index + radius);
+        return Enumerable.Range(from, to - from + 1).Select(i => i == index ? ">>> " + lines[i] : lines[i]).ToArray();
+    }
 
     /// Prompt + one `=== name (path) ===` section per source. Lines are budgeted on `maxChars` (+1 per newline):
     /// fair share per source, what a small source leaves goes to the others; each source keeps its most recent lines.

@@ -11,6 +11,7 @@ public enum SessionState { Connecting, Running, Waiting, Reconnecting, Error, St
 public class ActiveSession(SessionConfig config, DateTime? date = null, Func<DateTime>? today = null)
 {
     private readonly Func<DateTime> _today = today ?? (() => DateTime.Today);
+    private readonly LineRules _rules = new(config); // built once: compiled regexes
 
     public SessionConfig Config { get; } = config;
     public DateTime? Date { get; private set; } = date?.Date;
@@ -20,6 +21,9 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
     public ConcurrentQueue<LogLine> Pending { get; } = new();
     public ConcurrentQueue<List<LogLine>> Older { get; } = new(); // blocks of earlier lines, to put at the top
     public bool CanLoadOlder => _canLoadOlder;
+    public bool IsArchive => LogTailer.IsArchive(Path); // .gz: read once, read-only, no tail
+    public bool ArchiveLoaded { get; private set; }     // a restart would only add the same lines again
+    public const int ArchiveMaxLines = 100_000;         // same as the view buffer
     public SessionState State { get; private set; } = SessionState.Stopped;
     public string StatusText => _statusArgs.Length == 0 ? L.T(_statusKey) : L.F(_statusKey, _statusArgs); // localized when read, so a language switch shows at once
     private string _statusKey = "Ferma";
@@ -68,6 +72,17 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
                     if (!Config.IsLocal) SmbConnection.Connect(share, Config.UserName, SessionStore.Unprotect(Config.ProtectedPassword));
                     connected = true;
                 }
+                if (IsArchive)
+                {
+                    var parts = LogTailer.Parts(Path);
+                    if (parts.Count == 0) throw new FileNotFoundException(null, Path); // no {n} part yet: wait
+                    var archive = LogTailer.ReadArchive(parts, Config.Encoding, ArchiveMaxLines, out var total);
+                    if (total > archive.Count) Marker(L.F("— archivio: ultime {0:N0} righe di {1:N0} —", archive.Count, total));
+                    Emit(archive, history: true);
+                    ArchiveLoaded = true;
+                    Set(SessionState.Stopped, "Archivio .gz in sola lettura ({0:N0} righe)", total);
+                    break;
+                }
                 if (FollowToday && _today().Date != Date)
                 {
                     // New day: switch to its file and read it from the start (capped like the view buffer).
@@ -90,7 +105,7 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
                     if (Interlocked.Exchange(ref _olderRequest, 0) is var n and > 0)
                     {
                         var last = LogLevel.None;
-                        Older.Enqueue(tailer.ReadBefore(n).Select(l => LogLevels.Make(l, ref last, history: true)).ToList());
+                        Older.Enqueue(tailer.ReadBefore(n).Select(l => LogLevels.Make(l, ref last, history: true, _rules)).ToList());
                     }
                     var lines = tailer.Poll(out var rotated);
                     if (State != SessionState.Running) Marker(L.T("— riconnesso —"));
@@ -132,7 +147,7 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
 
         if (connected && !Config.IsLocal) SmbConnection.Release(share);
         _canLoadOlder = false;
-        if (State != SessionState.Error) Set(SessionState.Stopped, "Ferma");
+        if (State is not (SessionState.Error or SessionState.Stopped)) Set(SessionState.Stopped, "Ferma");
     }
 
     private void SetCanLoadOlder(bool value)
@@ -144,7 +159,7 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
 
     private void Emit(List<string> lines, bool history)
     {
-        foreach (var l in lines) Pending.Enqueue(LogLevels.Make(l, ref _last, history));
+        foreach (var l in lines) Pending.Enqueue(LogLevels.Make(l, ref _last, history, _rules));
     }
 
     private void Marker(string text) => Pending.Enqueue(new LogLine(text, LogLevel.None, true));

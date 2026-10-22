@@ -138,4 +138,34 @@ public class AiTests
         Assert.Contains("<table>", html);
         Assert.DoesNotContain("http", html);
     }
+
+    private static readonly string[] Ten = Enumerable.Range(0, 10).Select(i => $"l{i}").ToArray();
+
+    [Fact]
+    public void Excerpt_takes_radius_lines_each_side_and_marks_the_target()
+    {
+        Assert.Equal(["l3", "l4", ">>> l5", "l6", "l7"], AiInput.Excerpt(Ten, 5, 2));
+    }
+
+    [Theory]
+    [InlineData(0, new[] { ">>> l0", "l1", "l2" })]
+    [InlineData(9, new[] { "l7", "l8", ">>> l9" })]
+    public void Excerpt_is_shorter_at_the_edges(int index, string[] expected) =>
+        Assert.Equal(expected, AiInput.Excerpt(Ten, index, 2));
+
+    [Fact]
+    public void Excerpt_radius_zero_and_single_line()
+    {
+        Assert.Equal([">>> l5"], AiInput.Excerpt(Ten, 5, 0));
+        Assert.Equal([">>> x"], AiInput.Excerpt(["x"], 0, 20));
+    }
+
+    [Fact]
+    public void Explain_preset_exists_mentions_the_marker_and_is_translated()
+    {
+        Assert.Contains(AiPrompt.All(), p => p.Name == "Spiega questa riga" && p.Text == AiPrompt.ExplainText());
+        Assert.Contains(">>> ", AiPrompt.ExplainText());
+        Assert.Equal("Explain this line", L.Translate("Spiega questa riga", "en"));
+        Assert.Contains("Answer in English", L.Translate(AiPrompt.ExplainText(), "en"));
+    }
 }

@@ -71,6 +71,28 @@ public class ActiveSessionTests : IDisposable
         Assert.Equal(SessionState.Stopped, s.State);
     }
 
+    [Fact]
+    public async Task Local_gz_archive_is_read_once_without_tail()
+    {
+        var gz = _local + ".gz";
+        try
+        {
+            using (var z = new System.IO.Compression.GZipStream(File.Create(gz), System.IO.Compression.CompressionLevel.Fastest))
+                z.Write(System.Text.Encoding.UTF8.GetBytes("INFO 1\nERROR 2\n   at stack\n"));
+            var s = new ActiveSession(SessionConfig.Local(gz));
+            Assert.True(s.IsArchive);
+            s.Start();
+            var lines = await Collect(s, 3);
+            Assert.Equal(["INFO 1", "ERROR 2", "   at stack"], lines.Select(l => l.Text));
+            Assert.All(lines, l => Assert.True(l.IsHistory));
+            Assert.Equal(LogLevel.Error, lines[2].Level);
+            await WaitFor(s, SessionState.Stopped);
+            Assert.True(s.ArchiveLoaded);
+            Assert.Contains("3", s.StatusText);
+        }
+        finally { File.Delete(gz); }
+    }
+
     private static async Task WaitFor(ActiveSession s, SessionState state, int timeoutMs = 5000)
     {
         var until = DateTime.UtcNow.AddMilliseconds(timeoutMs);

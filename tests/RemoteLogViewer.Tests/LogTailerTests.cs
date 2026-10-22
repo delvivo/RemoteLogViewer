@@ -12,6 +12,44 @@ public class LogTailerTests : IDisposable
     private static string Lines(int from, int to) => string.Concat(Enumerable.Range(from, to - from + 1).Select(i => $"riga {i}\r\n"));
 
     [Fact]
+    public void ReadArchive_decompresses_and_keeps_last_lines()
+    {
+        var gz = _path + ".gz";
+        try
+        {
+            using (var z = new System.IO.Compression.GZipStream(File.Create(gz), System.IO.Compression.CompressionLevel.Fastest))
+                z.Write(Encoding.UTF8.GetBytes("﻿" + Lines(1, 10) + "città"));
+            Assert.Equal(["riga 8", "riga 9", "riga 10", "città"], LogTailer.ReadArchive([gz], "windows-1252", 4, out var total)); // BOM wins
+            Assert.Equal(11, total);
+            Assert.True(LogTailer.IsArchive(@"\\srv\logs\APP.LOG.GZ"));
+        }
+        finally { File.Delete(gz); }
+    }
+
+    [Fact]
+    public void Parts_reads_progressives_in_numeric_order()
+    {
+        var dir = Directory.CreateTempSubdirectory("rlv-").FullName;
+        try
+        {
+            foreach (var (n, text) in new[] { (10, "dieci\n"), (0, "zero\n"), (2, "due\n"), (1, "uno\n") })
+                using (var z = new System.IO.Compression.GZipStream(File.Create(Path.Combine(dir, $"hr-portal.log.2026-10-03.{n}.gz")), System.IO.Compression.CompressionLevel.Fastest))
+                    z.Write(Encoding.UTF8.GetBytes(text));
+            File.WriteAllText(Path.Combine(dir, "hr-portal.log.2026-10-03.x.gz"), "");
+            File.WriteAllText(Path.Combine(dir, "hr-portal.log.2026-10-04.0.gz"), "");
+
+            var pattern = Path.Combine(dir, "hr-portal.log.2026-10-03.{n}.gz");
+            var parts = LogTailer.Parts(pattern);
+            Assert.Equal(["zero", "uno", "due", "dieci"], LogTailer.ReadArchive(parts, "auto", 100, out var total));
+            Assert.Equal(4, total);
+            Assert.True(LogTailer.Exists(pattern));
+            Assert.False(LogTailer.Exists(Path.Combine(dir, "hr-portal.log.2026-10-05.{n}.gz")));
+            Assert.False(LogTailer.Exists(Path.Combine(dir, "manca", "a.{n}.gz")));
+        }
+        finally { Directory.Delete(dir, true); }
+    }
+
+    [Fact]
     public void ReadTail_returns_last_n_lines()
     {
         Append(Lines(1, 2000));

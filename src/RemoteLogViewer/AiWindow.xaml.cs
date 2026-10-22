@@ -15,6 +15,7 @@ public partial class AiWindow : Window
 {
     private readonly Func<IReadOnlyList<LogView>> _views;
     private readonly HashSet<LogView> _selected = [];
+    private readonly Dictionary<LogView, string[]> _excerpts = []; // lines to send instead of the visible ones (Explain this line), for the next run
     private List<LogView> _shown = [];
     private readonly AiSettings _settings = AiSettings.Load(AiSettings.DefaultPath);
     private readonly ConcurrentQueue<string> _pending = new();
@@ -71,12 +72,25 @@ public partial class AiWindow : Window
         foreach (var v in views)
         {
             var box = new CheckBox { Content = v.Session.DisplayName, Tag = v, IsChecked = _selected.Contains(v), Margin = new Thickness(0, 2, 0, 2) };
-            box.Checked += (_, _) => { _selected.Add(v); UpdateButtons(); };
-            box.Unchecked += (_, _) => { _selected.Remove(v); UpdateButtons(); };
+            box.Checked += (_, _) => { _selected.Add(v); _excerpts.Clear(); UpdateButtons(); };
+            box.Unchecked += (_, _) => { _selected.Remove(v); _excerpts.Clear(); UpdateButtons(); };
             TabList.Children.Add(box);
         }
         if (views.Count == 0) TabList.Children.Add(new TextBlock { Text = L.T("Nessuna sessione aperta"), Foreground = System.Windows.Media.Brushes.Gray });
         UpdateButtons();
+    }
+
+    /// "Explain this line": only `view`, sending `excerpt` instead of its visible lines, with the explain prompt.
+    public void Prefill(LogView view, string[] excerpt, string prompt)
+    {
+        _selected.Clear();
+        _selected.Add(view);
+        _shown = []; // force the checkboxes to be rebuilt from _selected
+        RefreshTabs();
+        _excerpts.Clear(); // after RefreshTabs: unchecking the old tabs clears it
+        _excerpts[view] = excerpt;
+        PromptBox.Text = prompt;
+        FillPresets();
     }
 
     // ---- tool, command, prompt ----
@@ -184,7 +198,8 @@ public partial class AiWindow : Window
         SaveSettings();
 
         var command = _settings.CommandFor(tool.Id);
-        var input = AiInput.Build(prompt, views.Select(v => new AiSource(v.Session.DisplayName, v.Session.Path, v.VisibleTexts())).ToList());
+        var input = AiInput.Build(prompt, views.Select(v => new AiSource(v.Session.DisplayName, v.Session.Path, _excerpts.GetValueOrDefault(v) ?? v.VisibleTexts())).ToList());
+        _excerpts.Clear();
         var cts = _cts = new CancellationTokenSource();
         _report = null;
         _pending.Clear();

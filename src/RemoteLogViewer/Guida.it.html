@@ -63,8 +63,11 @@
     <li><a href="#schede">Schede e Affianca</a></li>
     <li><a href="#workspace">Riapertura all'avvio</a></li>
     <li><a href="#avvisi">Avvisi di errore</a></li>
+    <li><a href="#livelli">Livelli e avvisi personalizzati</a></li>
     <li><a href="#vista">Barra della sessione</a></li>
     <li><a href="#filtri">Filtri, contesto e ricerca</a></li>
+    <li><a href="#vai-ora">Vai all'ora</a></li>
+    <li><a href="#istogramma">Istogramma degli errori</a></li>
     <li><a href="#ricerca-avanzata">Ricerca avanzata tra le sessioni</a></li>
     <li><a href="#analisi-ia">Analisi IA</a></li>
     <li><a href="#precedenti">Righe precedenti</a></li>
@@ -96,6 +99,7 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"</code></pre>
   <tr><td>File</td><td>Il percorso relativo alla share (<code>logs\app.log</code>) oppure il percorso UNC completo, che deve trovarsi dentro la share. Può contenere una <a href="#data">data variabile</a>.</td></tr>
   <tr><td>Righe iniziali</td><td>Quante righe leggere dalla fine del file all'apertura (da 0 a 100.000). È anche il numero di righe caricate ogni volta con <a href="#precedenti">▲ Precedenti</a>.</td></tr>
   <tr><td>Encoding</td><td><em>auto</em> (UTF-8), UTF-16 o Windows-1252. Se il file inizia con un BOM, vale sempre la codifica indicata dal BOM.</td></tr>
+  <tr><td>Livelli e avvisi</td><td>Facoltativi: regex per riconoscere i livelli in formati non standard e per gli avvisi su testo a scelta. Vedi <a href="#livelli">Livelli e avvisi personalizzati</a>.</td></tr>
 </table>
 <p><strong>Test connessione</strong> prova ad accedere alla share e al file senza salvare nulla.</p>
 <p>I pulsanti sotto l'elenco sono: <em>Avvia</em>, <em>Nuova</em>, <em>Modifica</em> (<kbd>F2</kbd>), <em>Duplica</em>, <em>Elimina</em> (<kbd>Canc</kbd>) e <em>Collezione</em>. Per avviare una sessione puoi anche fare doppio click o premere <kbd>Invio</kbd>.</p>
@@ -139,10 +143,14 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>Se la data c'è solo nei log vecchi e il file corrente no (es. oggi <code>app.log</code>, ieri <code>app.2026-09-29.log</code>), metti il separatore dentro il formato tra apici e spunta <em>Il file di oggi non ha la data</em>:
     <pre><code>logs\app{date:'.'yyyy-MM-dd}.log</code></pre>
     Per oggi si apre <code>logs\app.log</code>, per le altre date il file con la data. A mezzanotte la sessione resta su <code>app.log</code>: quando il server lo rinomina, l'app lo rileva e riparte dall'inizio del nuovo file.</li>
+  <li>Se il server comprime i log ruotati (es. ieri <code>app.2026-09-29.log.gz</code>), scrivi <code>logs\app{date:'.'yyyy-MM-dd}.log.gz</code> con <em>Il file di oggi non ha la data</em>: per oggi si apre <code>app.log</code> (senza <code>.gz</code>), per le altre date l'<a href="#archivi-gz">archivio</a>.</li>
+  <li>Se nello stesso giorno ci sono pi&ugrave; archivi numerati (es. oggi <code>hr-portal.log</code>, ieri <code>hr-portal.log.2026-10-03.0.gz</code>, <code>….1.gz</code>, …), metti <code>{n}</code> al posto del numero:
+    <pre><code>logs\hr-portal.log{date:'.'yyyy-MM-dd}.{n}.gz</code></pre>
+    Per le date passate si leggono tutte le parti del giorno, in ordine di numero (0, 1, 2, … 10), una dopo l'altra; per oggi, con <em>Il file di oggi non ha la data</em>, <code>{n}</code> (con il punto che lo precede) e <code>.gz</code> spariscono e si apre <code>hr-portal.log</code>. <code>{n}</code> &egrave; ammesso solo nel nome di un file <code>.gz</code>.</li>
 </ul>
 
 <h2 id="file-locali">File locali</h2>
-<p>Per leggere un file che hai sul PC (o su un'unit&agrave; gi&agrave; accessibile a Windows) senza creare una sessione: <strong>Apri file…</strong> o <kbd>Ctrl</kbd>+<kbd>O</kbd> apre il dialogo di selezione (anche pi&ugrave; file insieme; filtri <em>Log e testo</em> e <em>Tutti i file</em>), oppure trascina uno o pi&ugrave; file da Esplora risorse sulla finestra.</p>
+<p>Per leggere un file che hai sul PC (o su un'unit&agrave; gi&agrave; accessibile a Windows) senza creare una sessione: <strong>Apri file…</strong> o <kbd>Ctrl</kbd>+<kbd>O</kbd> apre il dialogo di selezione (anche pi&ugrave; file insieme; filtri <em>Log, testo e archivi</em> e <em>Tutti i file</em>), oppure trascina uno o pi&ugrave; file da Esplora risorse sulla finestra.</p>
 <ul>
   <li>Ogni file si apre in una scheda con il nome del file (il percorso completo &egrave; nel suggerimento; se due file hanno lo stesso nome il titolo diventa <code>cartella\nome</code>). Un file gi&agrave; aperto non viene duplicato: si seleziona la sua scheda.</li>
   <li>Nessuna credenziale, nessuna data e nessuna connessione di rete gestita dall'app: il file &egrave; letto con i permessi dell'utente Windows. Per le condivisioni che richiedono utente e password usa una <a href="#sessioni">sessione</a>.</li>
@@ -151,6 +159,9 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>Non finisce nell'elenco delle sessioni salvate n&eacute; negli export. Alla chiusura viene ricordato e riaperto all'avvio se esiste ancora (altrimenti viene saltato in silenzio).</li>
   <li>Cartelle ed elementi che non sono file, se trascinati, vengono ignorati; un file che non si pu&ograve; aprire (inesistente, senza permessi) produce un messaggio e nessuna scheda.</li>
 </ul>
+
+<h3 id="archivi-gz">Archivi .gz</h3>
+<p>Un file che finisce con <code>.gz</code> (log ruotato e compresso dal server), aperto da file locale o da una sessione, si legge <strong>in sola lettura</strong>: viene decompresso una volta sola, senza tail n&eacute; Follow. Lo stato diventa <em>Archivio .gz in sola lettura (N righe)</em> e il pulsante Avvia/Stop &egrave; disattivato. Restano solo le ultime 100.000 righe (una riga <span class="mark">— archivio: ultime … righe di … —</span> lo segnala). Le righe sono trattate come storico: niente avvisi di errore. Filtri, ricerca, Vai all'ora, Salva e Analisi IA funzionano come sempre.</p>
 
 <h2 id="schede">Schede e Affianca</h2>
 <p>Ogni sessione avviata si apre in una scheda. Il titolo della scheda mostra un pallino di stato, il nome della sessione (più la data, se il percorso ne contiene una), l'eventuale <a href="#avvisi">badge degli errori</a> e il pulsante ✕. Per chiudere una scheda puoi anche fare click con il tasto centrale sul titolo.</p>
@@ -173,7 +184,16 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>Se l'app non è in primo piano, il suo pulsante nella barra delle applicazioni di Windows lampeggia finché non torni sull'app.</li>
   <li>Un errore seguito dal suo stack trace conta come <strong>un solo</strong> errore.</li>
   <li>Le righe lette all'apertura della sessione e quelle caricate con ▲ Precedenti non generano avvisi. In modalità Affianca non compare nessun badge, perché tutte le sessioni sono già visibili.</li>
+  <li>Puoi avere lo stesso avviso anche per righe che non sono errori, con la regex <em>Avviso</em> della sessione: vedi <a href="#livelli">Livelli e avvisi personalizzati</a>.</li>
 </ul>
+
+<h2 id="livelli">Livelli e avvisi personalizzati</h2>
+<p>Nella finestra della sessione, la sezione <strong>Livelli e avvisi</strong> (chiusa finché è vuota) ha cinque campi facoltativi. Sono espressioni regolari .NET e non distinguono maiuscole e minuscole.</p>
+<ul>
+  <li><strong>ERROR, WARN, INFO, DEBUG</strong>: per i log che indicano il livello in un modo che l'app non riconosce, per esempio <code>[E]</code>, <code>|ERR|</code> o <code>level=50</code>. Esempio: ERROR <code>\[E\]|\|ERR\|</code>. Ogni riga viene confrontata con questi campi in ordine di gravità (ERROR, poi WARN, INFO, DEBUG): vince il primo che corrisponde. Se nessuno corrisponde, vale il riconoscimento standard, quindi puoi compilare solo i livelli che ti servono. Filtri, contatori, badge e ricerca avanzata usano il livello trovato così.</li>
+  <li><strong>Avviso</strong>: le nuove righe che corrispondono, di qualsiasi livello, generano lo stesso <a href="#avvisi">avviso</a> degli errori (badge sulla scheda e lampeggio della barra delle applicazioni). Esempio: <code>OutOfMemory|deadlock|timeout</code>. Una riga che è un errore e corrisponde anche all'avviso conta una sola volta.</li>
+</ul>
+<p>Una regex non valida impedisce il salvataggio e il messaggio indica il campo. Le modifiche valgono dalla prossima apertura della sessione: le schede già aperte continuano con le impostazioni precedenti. I campi vengono esportati, importati e duplicati con la sessione. I <a href="#file-locali">file locali</a> usano sempre il riconoscimento standard.</p>
 
 <h2 id="vista">Barra della sessione</h2>
 <table>
@@ -184,7 +204,9 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td>A capo</td><td>Manda a capo le righe lunghe invece di mostrare la barra di scorrimento orizzontale.</td></tr>
   <tr><td>Pulisci</td><td>Svuota la vista e azzera i contatori. La lettura del file continua.</td></tr>
   <tr><td>▲ Precedenti</td><td>Carica le <a href="#precedenti">righe precedenti</a> a quelle già lette.</td></tr>
+  <tr><td>⏫ Tutto</td><td>Carica <a href="#precedenti">tutto il file</a> dall'inizio (max 100.000 righe).</td></tr>
   <tr><td>Salva…</td><td><a href="#salva">Salva le righe visibili</a> in un file (<kbd>Ctrl</kbd>+<kbd>S</kbd>).</td></tr>
+  <tr><td>Vai all'ora…</td><td>Seleziona la prima riga visibile a partire da un'ora (<kbd>Ctrl</kbd>+<kbd>G</kbd>). Vedi <a href="#vai-ora">Vai all'ora</a>.</td></tr>
   <tr><td>Filtro, Regex, Contesto</td><td>Vedi <a href="#filtri">Filtri, contesto e ricerca</a>.</td></tr>
   <tr><td><span class="err">ERROR n</span> <span class="warn">WARN n</span> INFO n <span class="dbg">DEBUG n</span></td><td>Le caselle mostrano o nascondono le righe di quel livello. Il numero indica quante voci di quel livello ci sono nel buffer: uno stack trace conta 1 e il numero non dipende dai filtri.</td></tr>
   <tr><td>Cerca, ▲ ▼</td><td>Evidenzia le righe che contengono il testo e scorre da un risultato all'altro.</td></tr>
@@ -200,6 +222,14 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <p>Nella casella <strong>Contesto</strong> indichi quante righe mostrare prima e dopo ogni riga che corrisponde al filtro (da 0 a 50), come <code>grep -C</code>. Le righe di contesto appaiono attenuate. Tra un gruppo e l'altro, se non sono contigui, compare un separatore <span class="mark">--</span>. Con Follow attivo, le righe successive a un risultato compaiono man mano che arrivano. Senza filtro, il contesto non ha effetto.</p>
 <h3>Ricerca</h3>
 <p><kbd>Ctrl</kbd>+<kbd>F</kbd> porta il cursore nella casella di ricerca. Le righe trovate vengono evidenziate in giallo; con <kbd>F3</kbd> e <kbd>Shift</kbd>+<kbd>F3</kbd> passi al risultato successivo o precedente. A differenza del filtro, la ricerca non nasconde nessuna riga.</p>
+
+<h2 id="vai-ora">Vai all'ora</h2>
+<p><strong>Vai all'ora…</strong> (<kbd>Ctrl</kbd>+<kbd>G</kbd>) chiede un'ora, per esempio <code>14:32</code> o <code>14:32:10</code>, anche con la data davanti (<code>2026-10-22 14:32</code> o <code>22/10/2026 14:32</code>). Un'ora senza data si riferisce alla data della sessione (se il percorso ha una <a href="#data">data</a>) oppure a oggi.</p>
+<p>La vista seleziona la prima riga <em>visibile</em> con orario uguale o successivo e Follow si disattiva. Valgono gli stessi formati di orario della <a href="#ricerca-avanzata">ricerca avanzata</a>; le righe senza orario (per esempio uno stack trace) prendono quello della riga precedente. Se nessuna riga arriva a quell'ora, o se le righe non hanno un orario riconoscibile, compare un messaggio. Se l'ora è prima della prima riga letta e ci sono righe più vecchie nel file, l'app ti suggerisce <a href="#precedenti">▲ Precedenti</a>.</p>
+
+<h2 id="istogramma">Istogramma degli errori</h2>
+<p>Sopra le righe, ogni scheda mostra una striscia di barre: una barra per minuto, alta quanto il numero di voci ERROR (e di righe di avviso personalizzato) in quel minuto, cos&igrave; un picco di errori si vede subito. La striscia copre tutto il log, dal primo minuto con un errore all'ultimo minuto (al massimo gli ultimi 50.000 minuti), e scorre in orizzontale; resta sull'ultimo minuto finch&eacute; non la fai scorrere indietro, e i minuti senza errori sono posti vuoti. Passando sopra una barra si vedono il minuto e il conteggio. Il pulsante <strong>Istogramma</strong> nella barra nasconde o mostra la striscia.</p>
+<p><strong>Cliccando una barra</strong> viene selezionata la prima riga visibile da quel minuto in poi (Follow disattivato), come in <a href="#vai-ora">Vai all'ora</a>. Le righe senza orario prendono il minuto della riga precedente. <em>Pulisci</em> azzera la striscia; si aggiorna anche all'arrivo di nuove righe e dopo aver caricato le <a href="#precedenti">righe precedenti</a>.</p>
 
 <h2 id="ricerca-avanzata">Ricerca avanzata tra le sessioni</h2>
 <p>Il pulsante <strong>Cerca…</strong> o <kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>F</kbd> apre una finestra che cerca nelle righe già lette di <em>tutte</em> le sessioni aperte, anche se la scheda non è visibile e a prescindere dai filtri della singola scheda. La finestra resta aperta mentre usi le schede (anche in Affianca).</p>
@@ -226,10 +256,13 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li><strong>Copia</strong> copia la risposta; <strong>Apri formattato</strong> la apre nel browser con titoli e tabelle; <strong>Esporta…</strong> salva il report in Markdown (<code>.md</code>) o HTML (<code>.html</code>), con data, strumento, schede e prompt in testa.</li>
 </ul>
 
+<p><strong>Spiega questa riga</strong>: clicca con il tasto destro su una riga e scegli <em>Spiega questa riga</em>. Si apre (o viene riusata) la finestra di Analisi IA con solo quella scheda selezionata, il prompt <em>Spiega questa riga</em> e, come input, la riga pi&ugrave; le 20 righe visibili prima e dopo (la riga &egrave; segnata con <code>&gt;&gt;&gt;</code>). Controlla e premi <strong>Avvia</strong>; conferma e impostazioni dello strumento sono quelle gi&agrave; descritte. Su uno spazio vuoto o su un separatore il menu non compare.</p>
+
 <h2 id="precedenti">Righe precedenti</h2>
 <p>All'apertura vengono lette solo le ultime <em>Righe iniziali</em> del file. <strong>▲ Precedenti</strong> carica un altro blocco della stessa dimensione (1000 righe se <em>Righe iniziali</em> è 0) e lo mette sopra le righe già presenti. La lettura delle nuove righe continua e la vista non salta.</p>
 <ul>
-  <li>Il pulsante è disabilitato quando l'inizio del file è già caricato, quando la sessione non è attiva, e dopo una rotazione del file (il nuovo file viene letto già dall'inizio).</li>
+  <li><strong>⏫ Tutto</strong> carica in un colpo solo tutte le righe rimanenti fino all'inizio del file, entro il limite di 100.000 righe del buffer (se il file è più lungo, restano caricate le 100.000 più recenti).</li>
+  <li>I pulsanti sono disabilitati quando l'inizio del file è già caricato, quando la sessione non è attiva, e dopo una rotazione del file (il nuovo file viene letto già dall'inizio).</li>
   <li>Se il blocco supererebbe il limite di 100.000 righe, ne vengono caricate solo quante ci stanno e l'app te lo segnala.</li>
 </ul>
 
@@ -265,6 +298,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Sessione</td><td>Risultato successivo / precedente</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Righe del log</td><td>Copia le righe selezionate</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Sessione</td><td>Salva le righe visibili</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>Sessione</td><td><a href="#vai-ora">Vai all'ora</a></td></tr>
   <tr><td>Tasto centrale del mouse</td><td>Titolo della scheda</td><td>Chiude la scheda</td></tr>
 </table>
 

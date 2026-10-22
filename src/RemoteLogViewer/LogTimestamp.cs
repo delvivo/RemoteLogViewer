@@ -26,4 +26,31 @@ public static partial class LogTimestamp
     }
 
     private static int Num(Match m, string group) => int.Parse(m.Groups[group].Value);
+
+    private static readonly string[] TargetFormats = ["H:mm", "H:mm:ss", "yyyy-MM-dd H:mm", "yyyy-MM-dd H:mm:ss", "dd/MM/yyyy H:mm", "dd/MM/yyyy H:mm:ss"];
+
+    /// "Go to time" input: a time (date = `defaultDate`) or a date and time.
+    public static bool TryParseTarget(string text, DateTime defaultDate, out DateTime value)
+    {
+        if (!DateTime.TryParseExact(text.Trim(), TargetFormats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.NoCurrentDateDefault, out value))
+            return false;
+        if (value.Date == DateTime.MinValue.Date) value = defaultDate.Date + value.TimeOfDay; // time only
+        return true;
+    }
+
+    /// Index of the first line whose timestamp (own, or inherited from the previous timestamped line) is ≥ `target`.
+    /// Lines before the first timestamp are skipped. `BeforeFirst` = found, but `target` is strictly earlier than every timestamp.
+    public static (int Index, GoToStatus Status) FindAtOrAfter(IReadOnlyList<LogLine> lines, DateTime target, DateTime defaultDate)
+    {
+        var any = false;
+        for (var i = 0; i < lines.Count; i++)
+        {
+            if (lines[i].IsMarker || !TryParse(lines[i].Text, defaultDate, out var t)) continue; // inherited: an earlier line already decided
+            if (t >= target) return (i, any || t == target ? GoToStatus.Found : GoToStatus.BeforeFirst);
+            any = true;
+        }
+        return (-1, any ? GoToStatus.NotFound : GoToStatus.NoTimestamps);
+    }
 }
+
+public enum GoToStatus { Found, BeforeFirst, NotFound, NoTimestamps }

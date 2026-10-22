@@ -63,8 +63,11 @@
     <li><a href="#schede">Tabs and Side by side</a></li>
     <li><a href="#workspace">Reopening at startup</a></li>
     <li><a href="#avvisi">Error alerts</a></li>
+    <li><a href="#livelli">Custom levels and alerts</a></li>
     <li><a href="#vista">Session toolbar</a></li>
     <li><a href="#filtri">Filters, context and search</a></li>
+    <li><a href="#vai-ora">Go to time</a></li>
+    <li><a href="#istogramma">Error histogram</a></li>
     <li><a href="#ricerca-avanzata">Advanced search across sessions</a></li>
     <li><a href="#analisi-ia">AI analysis</a></li>
     <li><a href="#precedenti">Older lines</a></li>
@@ -96,6 +99,7 @@ Get-Content -Tail 1000 -Wait "\\server\E$\logs\app.log"</code></pre>
   <tr><td>File</td><td>The path relative to the share (<code>logs\app.log</code>) or the full UNC path, which must be inside the share. It can contain a <a href="#data">variable date</a>.</td></tr>
   <tr><td>Initial lines</td><td>How many lines to read from the end of the file when opening (0 to 100,000). It is also the number of lines loaded each time with <a href="#precedenti">▲ Older</a>.</td></tr>
   <tr><td>Encoding</td><td><em>auto</em> (UTF-8), UTF-16 or Windows-1252. If the file starts with a BOM, the encoding given by the BOM always wins.</td></tr>
+  <tr><td>Levels and alerts</td><td>Optional: regexes to detect levels in non-standard formats and to alert on text of your choice. See <a href="#livelli">Custom levels and alerts</a>.</td></tr>
 </table>
 <p><strong>Test connection</strong> tries to reach the share and the file without saving anything.</p>
 <p>The buttons under the list are: <em>Start</em>, <em>New</em>, <em>Edit</em> (<kbd>F2</kbd>), <em>Duplicate</em>, <em>Delete</em> (<kbd>Del</kbd>) and <em>Collection</em>. To start a session you can also double-click it or press <kbd>Enter</kbd>.</p>
@@ -139,10 +143,14 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>If only the old logs have the date and the current file does not (e.g. today <code>app.log</code>, yesterday <code>app.2026-09-29.log</code>), put the separator inside the format, quoted, and tick <em>Today's file has no date</em>:
     <pre><code>logs\app{date:'.'yyyy-MM-dd}.log</code></pre>
     For today <code>logs\app.log</code> is opened, for other dates the file with the date. At midnight the session stays on <code>app.log</code>: when the server renames it, the app detects it and restarts from the beginning of the new file.</li>
+  <li>If the server compresses rotated logs (e.g. yesterday <code>app.2026-09-29.log.gz</code>), write <code>logs\app{date:'.'yyyy-MM-dd}.log.gz</code> with <em>Today's file has no date</em>: for today <code>app.log</code> is opened (no <code>.gz</code>), for other dates the <a href="#archivi-gz">archive</a>.</li>
+  <li>If the same day has several numbered archives (e.g. today <code>hr-portal.log</code>, yesterday <code>hr-portal.log.2026-10-03.0.gz</code>, <code>….1.gz</code>, …), put <code>{n}</code> in place of the number:
+    <pre><code>logs\hr-portal.log{date:'.'yyyy-MM-dd}.{n}.gz</code></pre>
+    For past dates every part of the day is read, in number order (0, 1, 2, … 10), one after the other; for today, with <em>Today's file has no date</em>, <code>{n}</code> (with the dot before it) and <code>.gz</code> are dropped and <code>hr-portal.log</code> is opened. <code>{n}</code> is only allowed in the name of a <code>.gz</code> file.</li>
 </ul>
 
 <h2 id="file-locali">Local files</h2>
-<p>To read a file on your PC (or on a drive Windows can already reach) without creating a session: <strong>Open file…</strong> or <kbd>Ctrl</kbd>+<kbd>O</kbd> opens the file dialog (several files at once are fine; <em>Log and text</em> and <em>All files</em> filters), or drag one or more files from Explorer onto the window.</p>
+<p>To read a file on your PC (or on a drive Windows can already reach) without creating a session: <strong>Open file…</strong> or <kbd>Ctrl</kbd>+<kbd>O</kbd> opens the file dialog (several files at once are fine; <em>Logs, text and archives</em> and <em>All files</em> filters), or drag one or more files from Explorer onto the window.</p>
 <ul>
   <li>Each file opens in a tab named after the file (the full path is in the tooltip; if two files have the same name the title becomes <code>folder\name</code>). A file that is already open is not duplicated: its tab is selected.</li>
   <li>No credentials, no date and no network connection managed by the app: the file is read with your Windows user's permissions. For shares that need a user and password use a <a href="#sessioni">session</a>.</li>
@@ -151,6 +159,9 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>It is not added to the saved sessions list nor to exports. On close it is remembered and reopened at startup if it still exists (otherwise it is silently skipped).</li>
   <li>Folders and non-file items that are dragged in are ignored; a file that cannot be opened (missing, no permission) gives a message and no tab.</li>
 </ul>
+
+<h3 id="archivi-gz">.gz archives</h3>
+<p>A file ending in <code>.gz</code> (a log rotated and compressed by the server), opened as a local file or from a session, is <strong>read-only</strong>: it is decompressed once, with no tail and no Follow. The status becomes <em>Read-only .gz archive (N lines)</em> and the Start/Stop button is disabled. Only the last 100,000 lines are kept (a <span class="mark">— archive: last … lines of … —</span> line says so). The lines count as history: no error alerts. Filters, search, Go to time, Save and AI analysis work as usual.</p>
 
 <h2 id="schede">Tabs and Side by side</h2>
 <p>Each session you start opens in a tab. The tab title shows a status dot, the session name (plus the date, if the path contains one), the <a href="#avvisi">error badge</a> if any, and the ✕ button. To close a tab you can also middle-click its title.</p>
@@ -173,7 +184,16 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>If the app is not in the foreground, its button in the Windows taskbar flashes until you go back to the app.</li>
   <li>An error followed by its stack trace counts as <strong>one</strong> error.</li>
   <li>Lines read when the session opens and those loaded with ▲ Older do not raise alerts. In Side by side mode no badge appears, because all sessions are already visible.</li>
+  <li>You can get the same alert for lines that are not errors, with the session's <em>Alert</em> regex: see <a href="#livelli">Custom levels and alerts</a>.</li>
 </ul>
+
+<h2 id="livelli">Custom levels and alerts</h2>
+<p>In the session window, the <strong>Levels and alerts</strong> section (collapsed while empty) has five optional fields. They are .NET regular expressions and ignore case.</p>
+<ul>
+  <li><strong>ERROR, WARN, INFO, DEBUG</strong>: for logs that mark the level in a way the app does not recognize, for example <code>[E]</code>, <code>|ERR|</code> or <code>level=50</code>. Example: ERROR <code>\[E\]|\|ERR\|</code>. Each line is checked against these fields in order of severity (ERROR, then WARN, INFO, DEBUG): the first match wins. If none matches, the standard detection applies, so you can fill in only the levels you need. Filters, counters, badges and advanced search use the level found this way.</li>
+  <li><strong>Alert</strong>: new matching lines, of any level, raise the same <a href="#avvisi">alert</a> as errors (tab badge and taskbar flash). Example: <code>OutOfMemory|deadlock|timeout</code>. A line that is an error and also matches the alert counts once.</li>
+</ul>
+<p>An invalid regex prevents saving, and the message names the field. Changes apply the next time the session is opened: tabs already open keep the previous settings. The fields are exported, imported and duplicated with the session. <a href="#file-locali">Local files</a> always use the standard detection.</p>
 
 <h2 id="vista">Session toolbar</h2>
 <table>
@@ -184,7 +204,9 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td>Wrap</td><td>Wraps long lines instead of showing the horizontal scroll bar.</td></tr>
   <tr><td>Clear</td><td>Empties the view and resets the counters. Reading the file continues.</td></tr>
   <tr><td>▲ Older</td><td>Loads the <a href="#precedenti">lines before</a> the ones already read.</td></tr>
+  <tr><td>⏫ All</td><td>Loads <a href="#precedenti">the whole file</a> from the start (max 100,000 lines).</td></tr>
   <tr><td>Save…</td><td><a href="#salva">Saves the visible lines</a> to a file (<kbd>Ctrl</kbd>+<kbd>S</kbd>).</td></tr>
+  <tr><td>Go to time…</td><td>Selects the first visible line from a given time (<kbd>Ctrl</kbd>+<kbd>G</kbd>). See <a href="#vai-ora">Go to time</a>.</td></tr>
   <tr><td>Filter, Regex, Context</td><td>See <a href="#filtri">Filters, context and search</a>.</td></tr>
   <tr><td><span class="err">ERROR n</span> <span class="warn">WARN n</span> INFO n <span class="dbg">DEBUG n</span></td><td>The checkboxes show or hide lines of that level. The number is how many entries of that level are in the buffer: a stack trace counts as 1 and the number does not depend on the filters.</td></tr>
   <tr><td>Search, ▲ ▼</td><td>Highlights the lines containing the text and jumps from one result to the next.</td></tr>
@@ -200,6 +222,14 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <p>In the <strong>Context</strong> box you set how many lines to show before and after each line matching the filter (0 to 50), like <code>grep -C</code>. Context lines appear dimmed. Between groups, if they are not contiguous, a <span class="mark">--</span> separator appears. With Follow on, the lines following a match appear as they arrive. Without a filter, context has no effect.</p>
 <h3>Search</h3>
 <p><kbd>Ctrl</kbd>+<kbd>F</kbd> moves the cursor to the search box. Matching lines are highlighted in yellow; <kbd>F3</kbd> and <kbd>Shift</kbd>+<kbd>F3</kbd> jump to the next or previous result. Unlike the filter, search does not hide any line.</p>
+
+<h2 id="vai-ora">Go to time</h2>
+<p><strong>Go to time…</strong> (<kbd>Ctrl</kbd>+<kbd>G</kbd>) asks for a time, for example <code>14:32</code> or <code>14:32:10</code>, optionally preceded by a date (<code>2026-10-22 14:32</code> or <code>22/10/2026 14:32</code>). A time without a date refers to the session's date (if the path has a <a href="#data">date</a>) or to today.</p>
+<p>The view selects the first <em>visible</em> line at or after that time, and Follow turns off. The time formats are the same as in the <a href="#ricerca-avanzata">advanced search</a>; lines without a time (for example a stack trace) take the one of the previous line. If no line reaches that time, or the lines have no recognizable time, a message appears. If the time is before the first line read and the file has older lines, the app suggests <a href="#precedenti">▲ Older</a>.</p>
+
+<h2 id="istogramma">Error histogram</h2>
+<p>Above the lines, each tab shows a strip of bars: one bar per minute, as tall as the number of ERROR entries (and custom alert lines) in that minute, so a burst of errors is visible at a glance. The strip covers the whole log, from the first minute with an error to the latest minute (at most the last 50,000 minutes), and scrolls horizontally; it stays on the newest minute unless you scroll it back, and minutes with no errors are empty slots. Hover a bar to see the minute and the count. The <strong>Histogram</strong> button in the toolbar hides or shows the strip.</p>
+<p><strong>Click a bar</strong> to select the first visible line at or after that minute (Follow turns off), exactly as <a href="#vai-ora">Go to time</a>. Lines without a time take the previous line's minute. <em>Clear</em> resets the strip; it also updates as new lines arrive and after <a href="#precedenti">older lines</a> are loaded.</p>
 
 <h2 id="ricerca-avanzata">Advanced search across sessions</h2>
 <p>The <strong>Search…</strong> button or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> opens a window that searches the lines already read in <em>all</em> open sessions, even if their tab is not visible and regardless of each tab's own filters. The window stays open while you use the tabs (also in Side by side).</p>
@@ -226,10 +256,13 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li><strong>Copy</strong> copies the answer; <strong>Open formatted</strong> opens it in the browser with headings and tables; <strong>Export…</strong> saves the report as Markdown (<code>.md</code>) or HTML (<code>.html</code>), with date, tool, tabs and prompt at the top.</li>
 </ul>
 
+<p><strong>Explain this line</strong>: right-click a line and choose <em>Explain this line</em>. The AI analysis window opens (or is reused) with only that tab checked, the <em>Explain this line</em> prompt, and, as input, the line and the 20 visible lines before and after it (the line is marked with <code>&gt;&gt;&gt;</code>). Review it and press <strong>Start</strong>; the confirmation and the tool settings are the same as above. Right-clicking empty space or a separator shows no menu.</p>
+
 <h2 id="precedenti">Older lines</h2>
 <p>When opening, only the last <em>Initial lines</em> of the file are read. <strong>▲ Older</strong> loads another block of the same size (1000 lines if <em>Initial lines</em> is 0) and puts it above the lines already present. Reading new lines continues and the view does not jump.</p>
 <ul>
-  <li>The button is disabled when the start of the file is already loaded, when the session is not active, and after a file rotation (the new file is already read from the start).</li>
+  <li><strong>⏫ All</strong> loads in one go every remaining line up to the start of the file, within the 100,000-line buffer limit (if the file is longer, the most recent 100,000 stay loaded).</li>
+  <li>The buttons are disabled when the start of the file is already loaded, when the session is not active, and after a file rotation (the new file is already read from the start).</li>
   <li>If the block would exceed the 100,000-line limit, only as many lines as fit are loaded and the app tells you.</li>
 </ul>
 
@@ -265,6 +298,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Session</td><td>Next / previous result</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Log lines</td><td>Copies the selected lines</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Session</td><td>Saves the visible lines</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>Session</td><td><a href="#vai-ora">Go to time</a></td></tr>
   <tr><td>Middle mouse button</td><td>Tab title</td><td>Closes the tab</td></tr>
 </table>
 
