@@ -2,7 +2,7 @@
 
 All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.4.0] - 2026-10-23
 
 ### Added
 
@@ -73,6 +73,7 @@ All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](htt
 - Shared credentials, with passwords protected by DPAPI.
 - Word wrap toggle, and the application icon.
 
+[1.4.0]: https://github.com/delvivo/RemoteLogViewer/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/delvivo/RemoteLogViewer/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/delvivo/RemoteLogViewer/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/delvivo/RemoteLogViewer/compare/v1.0.0...v1.1.0
