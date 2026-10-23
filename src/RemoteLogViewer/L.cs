@@ -273,6 +273,21 @@ public static class L
         ["Impossibile aprire «{0}»: {1}"] = "Cannot open \"{0}\": {1}",
         ["Nessun file valido"] = "No valid file",
 
+        // ---- merged timeline ----
+        ["Unisci…"] = "Merge…",
+        ["Unisce in ordine cronologico le righe delle sessioni aperte (Ctrl+Maiusc+M)"] = "Merges the lines of the open sessions in chronological order (Ctrl+Shift+M)",
+        ["Unione ({0})"] = "Merged ({0})",
+        ["Unione"] = "Merged",
+        ["Servono almeno due sessioni aperte."] = "At least two open sessions are needed.",
+        ["Esiste già una scheda Unione: chiudila e riaprila per includere le sessioni aperte dopo."] = "A Merged tab already exists: close and reopen it to include sessions opened since.",
+        ["Sessioni:"] = "Sessions:",
+        ["(chiusa)"] = "(closed)",
+        ["sessione chiusa"] = "session closed",
+        ["Mostra o nasconde le righe di questa sessione"] = "Shows or hides the lines of this session",
+        ["Nessun orario riconoscibile: le righe stanno in testa."] = "No recognizable timestamp: its lines are placed first.",
+        ["Vai al tab sorgente"] = "Go to source tab",
+        ["La riga non è più nel buffer della sessione."] = "The line is no longer in the session buffer.",
+
         // ---- AI analysis ----
         ["Analisi IA…"] = "AI analysis…",
         ["Analizza i log con uno strumento IA (Ctrl+Maiusc+I)"] = "Analyze the logs with an AI tool (Ctrl+Shift+I)",

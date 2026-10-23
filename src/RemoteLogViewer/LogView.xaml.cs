@@ -22,6 +22,9 @@ public partial class LogView : UserControl
     public event Action? StatusChanged;
     public event Action<LogView, string[]>? ExplainRequested; // excerpt (target line marked) for the AI window
     public event Action<int>? ErrorsArrived; // new ERROR entries and alert lines (not from the initial read)
+    public event Action<IReadOnlyList<LogLine>>? LinesAppended;  // lines drained from the session in one tick, arrival order (merged view)
+    public event Action<IReadOnlyList<LogLine>>? LinesPrepended; // one block of older lines, file order (merged view)
+    public event Action? Closed;
     public Brush StatusBrush => StatusDot.Fill;
     public int UnreadErrors { get; private set; } // ERROR entries and alert lines arrived while this view was not visible
 
@@ -73,6 +76,7 @@ public partial class LogView : UserControl
         L.Changed -= OnLanguageChanged;
         _timer.Stop();
         Session.Stop();
+        Closed?.Invoke();
     }
 
     /// Copy of the whole buffer for the cross-tab search (UI thread only: `_all` is not thread-safe, LogLine is immutable).
@@ -119,13 +123,16 @@ public partial class LogView : UserControl
             foreach (var l in block) { l.IsMatch = SearchHit(l); Count(l, 1); }
             _all.InsertRange(0, block);
             older = true;
+            LinesPrepended?.Invoke(block);
         }
         var added = new List<LogLine>();
+        var appended = new List<LogLine>();
         var errors = 0;
         while (Session.Pending.TryDequeue(out var l))
         {
             l.IsMatch = SearchHit(l);
             _all.Add(l);
+            appended.Add(l);
             Count(l, 1);
             _hist.Add(l, HistDay);
             if (l is { IsHistory: false } && (l is { Level: LogLevel.Error, IsEntry: true } || l.IsAlert)) errors++; // custom alerts count like errors, once
@@ -142,6 +149,7 @@ public partial class LogView : UserControl
         }
         else if (older) { Rebuild(keepTopLine: true); ResetHistogram(); } // indices shifted: replay the whole buffer
         else foreach (var l in added) _visible.Add(l);
+        if (appended.Count > 0) LinesAppended?.Invoke(appended);
         UpdateCount();
         RefreshStrip();
         if (Follow) ScrollToEnd();

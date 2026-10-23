@@ -69,6 +69,7 @@
     <li><a href="#vai-ora">Go to time</a></li>
     <li><a href="#istogramma">Error histogram</a></li>
     <li><a href="#ricerca-avanzata">Advanced search across sessions</a></li>
+    <li><a href="#unione">Merged timeline</a></li>
     <li><a href="#analisi-ia">AI analysis</a></li>
     <li><a href="#precedenti">Older lines</a></li>
     <li><a href="#salva">Saving and copying</a></li>
@@ -243,6 +244,18 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li><strong>Export…</strong> saves the shown results to a UTF-8 file, one <code># Name (N)</code> block per session.</li>
 </ul>
 
+<h2 id="unione">Merged timeline</h2>
+<p>To follow a request across several services, the <strong>Merge…</strong> button or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> opens a <strong>Merged</strong> tab that interleaves the lines of <em>all</em> the open session tabs in chronological order (Side by side does not do that). At least two sessions are needed.</p>
+<ul>
+  <li>Each row starts with a <strong>session column</strong>, coloured per session; the line keeps its level colour. A line without a timestamp, like a stack trace, stays right after the line it belongs to; equal timestamps are ordered by session, then by arrival. The timestamp is read as in the <a href="#ricerca-avanzata">advanced search</a> (time only: the session's date).</li>
+  <li>The tab starts from the lines already read and then stays live: new lines (and <a href="#precedenti">older lines</a> you load in a session) land at their chronological place. <em>Follow</em>, <em>Wrap</em>, the text/regex filter with context and the level checkboxes work as in a session tab.</li>
+  <li>The <strong>Sessions</strong> row has a checkbox per session: untick one to hide its lines. A session with no recognizable timestamp has its lines placed first (the checkbox tooltip says so).</li>
+  <li>If you close a session tab, its lines stay in the merged tab, marked <em>(closed)</em>, and receive nothing new. <em>Clear</em> in a session does not remove what was already merged.</li>
+  <li><strong>Double-click</strong> a row, or <em>Go to source tab</em> in its context menu, selects the session tab and reveals the line (clearing its filters if they hide it).</li>
+  <li><kbd>Ctrl</kbd>+<kbd>S</kbd> saves the visible rows as <code>[session] line</code>; <kbd>Ctrl</kbd>+<kbd>C</kbd> copies the selected lines. The tab raises no error alerts and is not reopened at startup. At most 200,000 rows are kept (the oldest are dropped).</li>
+  <li>Only one merged tab exists at a time; sessions opened after it are not added: close it and merge again.</li>
+</ul>
+
 <h2 id="analisi-ia">AI analysis</h2>
 <p>The <strong>AI analysis…</strong> button or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd> opens a window that has the logs analyzed by a command-line AI tool already installed on the PC, for example to get an <strong>error report</strong> you can export. The window stays open while you use the tabs.</p>
 <ul>
@@ -294,6 +307,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td><kbd>Del</kbd></td><td>Session list</td><td>Deletes</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Session</td><td>Go to the search box</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd></td><td>Main window</td><td>Opens the <a href="#ricerca-avanzata">advanced search</a> across all sessions</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd></td><td>Main window</td><td><a href="#unione">Merges</a> the open sessions by timestamp</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd></td><td>Main window</td><td>Opens the <a href="#analisi-ia">AI analysis</a> of the logs</td></tr>
   <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Session</td><td>Next / previous result</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Log lines</td><td>Copies the selected lines</td></tr>

@@ -9,10 +9,12 @@
         <CommandBinding Command="{x:Static local:MainWindow.Search}" Executed="Search_Executed" />
         <CommandBinding Command="ApplicationCommands.Open" Executed="Open_Executed" />
         <CommandBinding Command="{x:Static local:MainWindow.Ai}" Executed="Ai_Executed" />
+        <CommandBinding Command="{x:Static local:MainWindow.Merge}" Executed="Merge_Executed" />
     </Window.CommandBindings>
     <Window.InputBindings>
         <KeyBinding Key="F" Modifiers="Control+Shift" Command="{x:Static local:MainWindow.Search}" />
         <KeyBinding Key="I" Modifiers="Control+Shift" Command="{x:Static local:MainWindow.Ai}" />
+        <KeyBinding Key="M" Modifiers="Control+Shift" Command="{x:Static local:MainWindow.Merge}" />
     </Window.InputBindings>
     <Grid>
         <Grid.ColumnDefinitions>
@@ -72,6 +74,7 @@
                 <ToggleButton x:Name="SideBySideButton" Content="{local:T 'Affianca'}" Checked="SideBySide_Click" Unchecked="SideBySide_Click" ToolTip="{local:T 'Mostra tutte le sessioni aperte contemporaneamente'}" />
                 <Separator />
                 <Button Content="{local:T 'Cerca…'}" Command="{x:Static local:MainWindow.Search}" ToolTip="{local:T 'Ricerca avanzata tra tutte le sessioni aperte (Ctrl+Maiusc+F)'}" />
+                <Button Content="{local:T 'Unisci…'}" Command="{x:Static local:MainWindow.Merge}" ToolTip="{local:T 'Unisce in ordine cronologico le righe delle sessioni aperte (Ctrl+Maiusc+M)'}" />
                 <Button Content="{local:T 'Analisi IA…'}" Command="{x:Static local:MainWindow.Ai}" ToolTip="{local:T 'Analizza i log con uno strumento IA (Ctrl+Maiusc+I)'}" />
                 <Separator />
                 <TextBlock Text="{local:T 'Lingua'}" VerticalAlignment="Center" Margin="0,0,4,0" />
@@ -80,7 +83,7 @@
                 <Button Content="{local:T 'Guida'}" Command="ApplicationCommands.Help" ToolTip="{local:T 'Guida utente (F1)'}" />
             </ToolBar>
             <Grid>
-                <TabControl x:Name="Tabs" PreviewMouseMove="Tabs_PreviewMouseMove" PreviewMouseLeftButtonUp="Tabs_PreviewMouseLeftButtonUp" />
+                <TabControl x:Name="Tabs" SelectionChanged="Tabs_SelectionChanged" PreviewMouseMove="Tabs_PreviewMouseMove" PreviewMouseLeftButtonUp="Tabs_PreviewMouseLeftButtonUp" />
                 <UniformGrid x:Name="SideBySideGrid" Visibility="Collapsed" />
                 <TextBlock x:Name="EmptyHint" Text="{local:T 'Doppio click su una sessione salvata per avviarla, oppure crea una Nuova sessione.'}"
                            HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Gray" IsHitTestVisible="False" />

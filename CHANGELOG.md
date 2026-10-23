@@ -2,6 +2,12 @@
 
 All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Merged timeline** (toolbar *Merge…*, `Ctrl+Shift+M`): a *Merged* tab that interleaves the lines of all open sessions in timestamp order, with a coloured session column. Lines without a timestamp stay attached to the previous line of their session; it starts from the lines already read and stays live (late lines and loaded older lines land in their chronological place). Per-session show/hide, level and text/regex filters with context, double-click or *Go to source tab* reveals the line in its tab, `Ctrl+S` saves `[session] line`. Closed sessions keep their rows. The tab raises no alerts and is not restored at startup.
+
 ## [1.3.0] - 2026-10-22
 
 ### Added

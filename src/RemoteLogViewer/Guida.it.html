@@ -69,6 +69,7 @@
     <li><a href="#vai-ora">Vai all'ora</a></li>
     <li><a href="#istogramma">Istogramma degli errori</a></li>
     <li><a href="#ricerca-avanzata">Ricerca avanzata tra le sessioni</a></li>
+    <li><a href="#unione">Unione cronologica</a></li>
     <li><a href="#analisi-ia">Analisi IA</a></li>
     <li><a href="#precedenti">Righe precedenti</a></li>
     <li><a href="#salva">Salvare e copiare</a></li>
@@ -243,6 +244,18 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li><strong>Esporta…</strong> salva i risultati mostrati in un file UTF-8, un blocco <code># Nome (N)</code> per sessione.</li>
 </ul>
 
+<h2 id="unione">Unione cronologica</h2>
+<p>Per seguire una richiesta attraverso più servizi, il pulsante <strong>Unisci…</strong> o <kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>M</kbd> apre una scheda <strong>Unione</strong> che intercala in ordine cronologico le righe di <em>tutte</em> le schede di sessione aperte (Affianca non lo fa). Servono almeno due sessioni.</p>
+<ul>
+  <li>Ogni riga inizia con una <strong>colonna sessione</strong>, colorata per sessione; la riga mantiene il colore del livello. Una riga senza timestamp, come lo stack trace, resta subito dopo la riga a cui appartiene; a parità di timestamp l&rsquo;ordine è per sessione, poi di arrivo. Il timestamp è letto come nella <a href="#ricerca-avanzata">ricerca avanzata</a> (solo ora: la data della sessione).</li>
+  <li>La scheda parte dalle righe già lette e poi resta in diretta: le righe nuove (e le <a href="#precedenti">righe precedenti</a> che carichi in una sessione) finiscono al loro posto cronologico. <em>Follow</em>, <em>A capo</em>, il filtro testo/regex con contesto e le caselle dei livelli funzionano come in una scheda di sessione.</li>
+  <li>La riga <strong>Sessioni</strong> ha una casella per sessione: deseleziona per nascondere le sue righe. Una sessione senza timestamp riconoscibile ha le righe in testa (lo dice il tooltip della casella).</li>
+  <li>Se chiudi la scheda di una sessione, le sue righe restano nell&rsquo;Unione, marcate <em>(chiusa)</em>, e non ne arrivano di nuove. <em>Pulisci</em> in una sessione non toglie ciò che era già unito.</li>
+  <li><strong>Doppio click</strong> su una riga, o <em>Vai al tab sorgente</em> nel menu contestuale, seleziona la scheda della sessione e porta la riga in vista (azzerando i suoi filtri se la nascondono).</li>
+  <li><kbd>Ctrl</kbd>+<kbd>S</kbd> salva le righe visibili come <code>[sessione] riga</code>; <kbd>Ctrl</kbd>+<kbd>C</kbd> copia le righe selezionate. La scheda non genera avvisi di errore e non viene riaperta all&rsquo;avvio. Si tengono al massimo 200.000 righe (le più vecchie vengono scartate).</li>
+  <li>Esiste una sola scheda Unione alla volta; le sessioni aperte dopo non vengono aggiunte: chiudila e unisci di nuovo.</li>
+</ul>
+
 <h2 id="analisi-ia">Analisi IA</h2>
 <p>Il pulsante <strong>Analisi IA…</strong> o <kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>I</kbd> apre una finestra che fa analizzare i log a uno strumento IA a riga di comando già installato sul PC, per esempio per ottenere un <strong>report degli errori</strong> da esportare. La finestra resta aperta mentre usi le schede.</p>
 <ul>
@@ -294,6 +307,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td><kbd>Canc</kbd></td><td>Elenco sessioni</td><td>Elimina</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Sessione</td><td>Vai alla casella di ricerca</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>F</kbd></td><td>Finestra principale</td><td>Apre la <a href="#ricerca-avanzata">ricerca avanzata</a> tra tutte le sessioni</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>M</kbd></td><td>Finestra principale</td><td><a href="#unione">Unisce</a> per timestamp le sessioni aperte</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>I</kbd></td><td>Finestra principale</td><td>Apre l'<a href="#analisi-ia">analisi IA</a> dei log</td></tr>
   <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Sessione</td><td>Risultato successivo / precedente</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Righe del log</td><td>Copia le righe selezionate</td></tr>
