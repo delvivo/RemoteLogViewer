@@ -15,7 +15,7 @@ public enum RevealResult { NotFound, Shown, ShownFiltersCleared }
 
 public partial class LogView : UserControl
 {
-    public static readonly RoutedCommand FindNext = new(), FindPrev = new(), FocusSearch = new(), GoToTime = new();
+    public static readonly RoutedCommand FindNext = new(), FindPrev = new(), FocusSearch = new(), GoToTime = new(), ToggleBookmark = new();
     private const int MaxLines = 100_000, TrimBlock = 10_000;
 
     public ActiveSession Session { get; }
@@ -49,6 +49,7 @@ public partial class LogView : UserControl
         CommandBindings.Add(new CommandBinding(FindNext, (_, _) => Find(1)));
         CommandBindings.Add(new CommandBinding(FindPrev, (_, _) => Find(-1)));
         CommandBindings.Add(new CommandBinding(FocusSearch, (_, _) => { SearchBox.Focus(); SearchBox.SelectAll(); }));
+        CommandBindings.Add(new CommandBinding(ToggleBookmark, (_, _) => Bookmark(Lines.SelectedItem as LogLine)));
         CommandBindings.Add(new CommandBinding(GoToTime, (_, _) => AskTime(), (_, e) => e.CanExecute = _visible.Count > 0));
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Save, (_, _) => SaveVisible(), (_, e) => e.CanExecute = _visible.Count > 0));
         IsVisibleChanged += (_, e) =>
@@ -193,6 +194,15 @@ public partial class LogView : UserControl
         if (_menuLine is not { IsMarker: false }) e.Handled = true; // no line (or a separator): no menu
     }
 
+    private void Bookmark(LogLine? line)
+    {
+        if (line == null || line.IsMarker) return;
+        line.IsBookmarked = !line.IsBookmarked;
+        UpdateCount();
+    }
+
+    private void Bookmark_Click(object sender, RoutedEventArgs e) => Bookmark(_menuLine);
+
     private void Explain_Click(object sender, RoutedEventArgs e)
     {
         var index = _menuLine == null ? -1 : _visible.IndexOf(_menuLine);
@@ -233,6 +243,8 @@ public partial class LogView : UserControl
         InfoCheck.Content = $"INFO {_counts[(int)LogLevel.Info]}";
         DebugCheck.Content = $"DEBUG {_counts[(int)LogLevel.Debug]}";
         var matches = _search.Length == 0 ? "" : L.F(" · {0} trovate", _all.Count(l => l.IsMatch));
+        var marks = _all.Count(l => l.IsBookmarked);
+        if (marks > 0) matches += L.F(" · {0} segnalibri", marks);
         CountLabel.Text = _visible.Count == _all.Count ? L.F("{0} righe{1}", _all.Count, matches) : L.F("{0}/{1} righe{2}", _visible.Count, _all.Count, matches);
     }
 
@@ -386,7 +398,8 @@ public partial class LogView : UserControl
 
     private void Find(int dir)
     {
-        if (_search.Length == 0 || _visible.Count == 0) return;
+        if (_visible.Count == 0) return;
+        if (_search.Length == 0) { GoToBookmark(dir); return; } // empty search box: F3 walks the bookmarks
         var n = _visible.Count;
         var start = Lines.SelectedIndex >= 0 ? Lines.SelectedIndex : (dir > 0 ? -1 : n);
         for (var k = 1; k <= n; k++)
@@ -398,6 +411,15 @@ public partial class LogView : UserControl
             Lines.ScrollIntoView(_visible[i]);
             return;
         }
+    }
+
+    private void GoToBookmark(int dir)
+    {
+        var i = Bookmarks.Next(_visible, Lines.SelectedIndex, dir);
+        if (i < 0) { Info(L.T("Nessun segnalibro.")); return; }
+        FollowButton.IsChecked = false;
+        Lines.SelectedIndex = i;
+        Lines.ScrollIntoView(_visible[i]);
     }
 
     private void Copy_Executed(object sender, ExecutedRoutedEventArgs e)

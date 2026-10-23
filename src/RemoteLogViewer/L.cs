@@ -346,6 +346,10 @@ public static class L
         ["Istogramma"] = "Histogram",
         ["Mostra o nasconde l'istogramma degli errori per minuto"] = "Show or hide the errors-per-minute histogram",
         ["Spiega questa riga"] = "Explain this line",
+        ["Segnalibro (F2)"] = "Bookmark (F2)",
+        ["Nessun segnalibro."] = "No bookmarks.",
+        [" · {0} segnalibri"] = " · {0} bookmarks",
+        ["Ctrl+F, F3 / Maiusc+F3 (senza testo: tra i segnalibri)"] = "Ctrl+F, F3 / Shift+F3 (empty: between bookmarks)",
         ["Spiega la riga del log che inizia con \">>> \" usando le righe attorno come contesto: cosa significa, la causa più probabile e cosa controllare per primo. Sii conciso. Rispondi in italiano."]
             = "Explain the log line that starts with \">>> \", using the surrounding lines as context: what it means, the most likely cause and what to check first. Be concise. Answer in English.",
         // go to time

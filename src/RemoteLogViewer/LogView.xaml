@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:RemoteLogViewer">
     <UserControl.InputBindings>
+        <KeyBinding Key="F2" Command="{x:Static local:LogView.ToggleBookmark}" />
         <KeyBinding Key="F3" Command="{x:Static local:LogView.FindNext}" />
         <KeyBinding Key="F3" Modifiers="Shift" Command="{x:Static local:LogView.FindPrev}" />
         <KeyBinding Key="F" Modifiers="Control" Command="{x:Static local:LogView.FocusSearch}" />
@@ -34,7 +35,7 @@
             <CheckBox x:Name="InfoCheck" Content="INFO" Tag="Info" IsChecked="True" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="{local:T 'Mostra righe INFO'}" />
             <CheckBox x:Name="DebugCheck" Content="DEBUG" Tag="Debug" IsChecked="True" Foreground="Gray" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="{local:T 'Mostra righe DEBUG/TRACE'}" />
             <TextBlock Text="{local:T 'Cerca:'}" VerticalAlignment="Center" Margin="6,0,4,0" />
-            <TextBox x:Name="SearchBox" Width="160" Margin="2" VerticalContentAlignment="Center" TextChanged="Search_Changed" ToolTip="Ctrl+F, F3 / Shift+F3" />
+            <TextBox x:Name="SearchBox" Width="160" Margin="2" VerticalContentAlignment="Center" TextChanged="Search_Changed" ToolTip="{local:T 'Ctrl+F, F3 / Maiusc+F3 (senza testo: tra i segnalibri)'}" />
             <Button Content="▲" Width="24" Margin="2" Command="{x:Static local:LogView.FindPrev}" ToolTip="{local:T 'Precedente (Shift+F3)'}" />
             <Button Content="▼" Width="24" Margin="2" Command="{x:Static local:LogView.FindNext}" ToolTip="{local:T 'Successiva (F3)'}" />
             <TextBlock x:Name="CountLabel" VerticalAlignment="Center" Margin="8,0" Foreground="Gray" />
@@ -58,6 +59,7 @@
             </ListBox.Style>
             <ListBox.ContextMenu>
                 <ContextMenu>
+                    <MenuItem Header="{local:T 'Segnalibro (F2)'}" AutomationProperties.Name="{local:T 'Segnalibro (F2)'}" Click="Bookmark_Click" />
                     <MenuItem Header="{local:T 'Spiega questa riga'}" AutomationProperties.Name="{local:T 'Spiega questa riga'}" Click="Explain_Click" />
                 </ContextMenu>
             </ListBox.ContextMenu>
@@ -84,6 +86,9 @@
                             <Setter Property="Foreground" Value="SteelBlue" />
                             <Setter Property="FontStyle" Value="Italic" />
                         </DataTrigger>
+                        <DataTrigger Binding="{Binding IsBookmarked}" Value="True">
+                            <Setter Property="Background" Value="#BBDEFB" />
+                        </DataTrigger>
                         <DataTrigger Binding="{Binding IsMatch}" Value="True">
                             <Setter Property="Background" Value="#FFF59D" />
                         </DataTrigger>
@@ -92,6 +97,18 @@
             </ListBox.ItemContainerStyle>
             <ListBox.ItemTemplate>
                 <DataTemplate>
+                    <DockPanel>
+                    <TextBlock DockPanel.Dock="Left" Text="●" Foreground="SteelBlue" Margin="0,0,4,0" Visibility="Collapsed">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsBookmarked}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                     <TextBlock Text="{Binding Text}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
@@ -103,6 +120,7 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
+                    </DockPanel>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>

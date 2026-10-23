@@ -66,6 +66,7 @@
     <li><a href="#livelli">Custom levels and alerts</a></li>
     <li><a href="#vista">Session toolbar</a></li>
     <li><a href="#filtri">Filters, context and search</a></li>
+    <li><a href="#segnalibri">Bookmarks</a></li>
     <li><a href="#vai-ora">Go to time</a></li>
     <li><a href="#istogramma">Error histogram</a></li>
     <li><a href="#ricerca-avanzata">Advanced search across sessions</a></li>
@@ -225,6 +226,10 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <h3>Search</h3>
 <p><kbd>Ctrl</kbd>+<kbd>F</kbd> moves the cursor to the search box. Matching lines are highlighted in yellow; <kbd>F3</kbd> and <kbd>Shift</kbd>+<kbd>F3</kbd> jump to the next or previous result. Unlike the filter, search does not hide any line.</p>
 
+<h2 id="segnalibri">Bookmarks</h2>
+<p>Select a line and press <kbd>F2</kbd> (or right-click → <em>Bookmark</em>) to mark it: a <strong>●</strong> and a light blue background appear. Press <kbd>F2</kbd> again to remove it. When the search box is <strong>empty</strong>, <kbd>F3</kbd> and <kbd>Shift</kbd>+<kbd>F3</kbd> jump to the next or previous bookmark (wrapping around); when the box contains text, they keep jumping to the next or previous search result. Only bookmarks on visible lines are visited (filters hide them but do not remove them). The number of bookmarks is shown next to the line count.</p>
+<p>A bookmark belongs to its line: it stays when you change filters or load older lines, and disappears with the line when it leaves the buffer or with <em>Clear</em>. Bookmarks are not saved and do not exist in the Merged view.</p>
+
 <h2 id="vai-ora">Go to time</h2>
 <p><strong>Go to time…</strong> (<kbd>Ctrl</kbd>+<kbd>G</kbd>) asks for a time, for example <code>14:32</code> or <code>14:32:10</code>, optionally preceded by a date (<code>2026-10-22 14:32</code> or <code>22/10/2026 14:32</code>). A time without a date refers to the session's date (if the path has a <a href="#data">date</a>) or to today.</p>
 <p>The view selects the first <em>visible</em> line at or after that time, and Follow turns off. The time formats are the same as in the <a href="#ricerca-avanzata">advanced search</a>; lines without a time (for example a stack trace) take the one of the previous line. If no line reaches that time, or the lines have no recognizable time, a message appears. If the time is before the first line read and the file has older lines, the app suggests <a href="#precedenti">▲ Older</a>.</p>
@@ -310,7 +315,8 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd></td><td>Main window</td><td>Opens the <a href="#ricerca-avanzata">advanced search</a> across all sessions</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd></td><td>Main window</td><td><a href="#unione">Merges</a> the open sessions by timestamp</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd></td><td>Main window</td><td>Opens the <a href="#analisi-ia">AI analysis</a> of the logs</td></tr>
-  <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Session</td><td>Next / previous result</td></tr>
+  <tr><td><kbd>F2</kbd></td><td>Log lines</td><td><a href="#segnalibri">Bookmark</a> the selected line (set / clear)</td></tr>
+  <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Session</td><td>Next / previous result; with an empty search box, next / previous <a href="#segnalibri">bookmark</a></td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Log lines</td><td>Copies the selected lines</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Session</td><td>Saves the visible lines</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>Session</td><td><a href="#vai-ora">Go to time</a></td></tr>

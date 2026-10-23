@@ -29,6 +29,13 @@ public class LogLine(string text, LogLevel level, bool isMarker = false, bool is
         set { if (_isContext != value) { _isContext = value; PropertyChanged?.Invoke(this, new(nameof(IsContext))); } }
     }
 
+    private bool _isBookmarked;
+    public bool IsBookmarked // user bookmark (F2); lives on the object, so it survives Rebuild and trim
+    {
+        get => _isBookmarked;
+        set { if (_isBookmarked != value) { _isBookmarked = value; PropertyChanged?.Invoke(this, new(nameof(IsBookmarked))); } }
+    }
+
     public event PropertyChangedEventHandler? PropertyChanged;
     public override string ToString() => Text;
 }
