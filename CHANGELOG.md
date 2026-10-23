@@ -6,7 +6,8 @@ All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](htt
 
 ### Added
 
-- **Merged timeline** (toolbar *Merge…*, `Ctrl+Shift+M`): a *Merged* tab that interleaves the lines of all open sessions in timestamp order, with a coloured session column. Lines without a timestamp stay attached to the previous line of their session; it starts from the lines already read and stays live (late lines and loaded older lines land in their chronological place). Per-session show/hide, level and text/regex filters with context, double-click or *Go to source tab* reveals the line in its tab, `Ctrl+S` saves `[session] line`. Closed sessions keep their rows. The tab raises no alerts and is not restored at startup.
+- **Merged timeline** (toolbar *Merge…*, `Ctrl+Shift+M`): a *Merged* tab that interleaves the lines of all open sessions in timestamp order, with a coloured session column. Lines without a timestamp stay attached to the previous line of their session; it starts from the lines already read and stays live (late lines and loaded older lines land in their chronological place). Per-session show/hide, level and text/regex filters with context, double-click or *Go to source tab* reveals the line in its tab, `Ctrl+S` saves `[session] line`. Closed sessions keep their rows. The tab raises no alerts and is not restored at startup. With more than two sessions open, a window lets you choose which ones to merge.
+- **Rename tab**: double-click a tab title or right-click → *Rename tab…* to give an open tab (session or Merged) a name of your own. It is not saved, keeps the date suffix, and is used in Side by side, search, AI analysis and the Merged session column; typing the original name restores it.
 
 ## [1.3.0] - 2026-10-22
 

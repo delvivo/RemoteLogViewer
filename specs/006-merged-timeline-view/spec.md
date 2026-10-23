@@ -82,7 +82,7 @@ The user can narrow the merged view with the same tools as a normal tab: level f
 ### Functional Requirements
 
 - **FR-001**: Users MUST be able to open a merged view from the main window (toolbar command and keyboard shortcut) that combines the lines of chosen open sessions. It opens as a tab in the main window, closable, reorderable and usable in side-by-side mode like any other tab.
-- **FR-002**: Users MUST be able to choose which open sessions are included, with all open sessions included by default, by showing or hiding each session inside the merged view (sessions opened after the merged view was created are not added; reopening it includes them).
+- **FR-002**: Users MUST be able to choose which open sessions are included, with all open sessions included by default, first in a window opened by the merge command when more than two session tabs are open (all ticked, at least two; with exactly two there is nothing to choose), then by showing or hiding each session inside the merged view (sessions opened after the merged view was created, or left out, are not added; reopening it includes them).
 - **FR-003**: The merged view MUST list lines in ascending order of their timestamp across all included sessions.
 - **FR-004**: A line without its own timestamp MUST take the timestamp of the previous line of the same session, so it stays attached to it.
 - **FR-005**: Ties MUST be resolved deterministically, preserving each session's own line order.
@@ -93,6 +93,7 @@ The user can narrow the merged view with the same tools as a normal tab: level f
 - **FR-010**: Users MUST be able to jump from a merged row to the same line in its source tab.
 - **FR-011**: Users MUST be able to save the visible rows of the merged view to a text file, including the session name on each row.
 - **FR-012**: The merged view MUST NOT alter source sessions, their buffers or their saved configuration, and MUST NOT trigger alerts/badges of its own.
+- **FR-014**: Users MUST be able to rename any open tab (session or merged) by double-clicking its title or from its context menu. The name applies to that open tab only (not stored, saved sessions unchanged, date suffix kept), shows everywhere the tab is named (title, side-by-side, search, AI analysis, merged session column), and typing the original name restores it.
 - **FR-013**: All new user-visible text MUST be available in Italian and English, and the user guides, README and changelog MUST describe the feature.
 
 ### Key Entities

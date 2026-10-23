@@ -168,6 +168,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <p>Each session you start opens in a tab. The tab title shows a status dot, the session name (plus the date, if the path contains one), the <a href="#avvisi">error badge</a> if any, and the ✕ button. To close a tab you can also middle-click its title.</p>
 <ul>
   <li>To reorder tabs, drag a title onto another tab.</li>
+  <li>To <strong>rename</strong> a tab, double-click its title or right-click it and choose <em>Rename tab…</em>. The name is only for that open tab (the saved session is unchanged and the date stays appended): it shows in the title, in Side by side, in the search and AI windows and in the Merged session column. Type the original name to restore it; the Merged tab can be renamed too (the default is <em>Merged (n)</em>). Names are not saved: at the next start the tabs get their usual names.</li>
   <li><strong>Side by side</strong> (top bar) shows all open sessions together, in a grid, in the same order as the tabs.</li>
 </ul>
 
@@ -245,7 +246,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 </ul>
 
 <h2 id="unione">Merged timeline</h2>
-<p>To follow a request across several services, the <strong>Merge…</strong> button or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> opens a <strong>Merged</strong> tab that interleaves the lines of <em>all</em> the open session tabs in chronological order (Side by side does not do that). At least two sessions are needed.</p>
+<p>To follow a request across several services, the <strong>Merge…</strong> button or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> opens a <strong>Merged</strong> tab that interleaves the lines of <em>all</em> the open session tabs in chronological order (Side by side does not do that). With more than two sessions open, a window asks <strong>which sessions to merge</strong> (all ticked, at least two); with exactly two they are merged straight away.</p>
 <ul>
   <li>Each row starts with a <strong>session column</strong>, coloured per session; the line keeps its level colour. A line without a timestamp, like a stack trace, stays right after the line it belongs to; equal timestamps are ordered by session, then by arrival. The timestamp is read as in the <a href="#ricerca-avanzata">advanced search</a> (time only: the session's date).</li>
   <li>The tab starts from the lines already read and then stays live: new lines (and <a href="#precedenti">older lines</a> you load in a session) land at their chronological place. <em>Follow</em>, <em>Wrap</em>, the text/regex filter with context and the level checkboxes work as in a session tab.</li>
@@ -253,7 +254,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>If you close a session tab, its lines stay in the merged tab, marked <em>(closed)</em>, and receive nothing new. <em>Clear</em> in a session does not remove what was already merged.</li>
   <li><strong>Double-click</strong> a row, or <em>Go to source tab</em> in its context menu, selects the session tab and reveals the line (clearing its filters if they hide it).</li>
   <li><kbd>Ctrl</kbd>+<kbd>S</kbd> saves the visible rows as <code>[session] line</code>; <kbd>Ctrl</kbd>+<kbd>C</kbd> copies the selected lines. The tab raises no error alerts and is not reopened at startup. At most 200,000 rows are kept (the oldest are dropped).</li>
-  <li>Only one merged tab exists at a time; sessions opened after it are not added: close it and merge again.</li>
+  <li>Only one merged tab exists at a time; sessions opened after it, or left out in the window, are not added: close it and merge again.</li>
 </ul>
 
 <h2 id="analisi-ia">AI analysis</h2>

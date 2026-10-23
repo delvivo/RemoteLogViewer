@@ -168,6 +168,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <p>Ogni sessione avviata si apre in una scheda. Il titolo della scheda mostra un pallino di stato, il nome della sessione (più la data, se il percorso ne contiene una), l'eventuale <a href="#avvisi">badge degli errori</a> e il pulsante ✕. Per chiudere una scheda puoi anche fare click con il tasto centrale sul titolo.</p>
 <ul>
   <li>Per riordinare le schede, trascina il titolo su un'altra scheda.</li>
+  <li>Per <strong>rinominare</strong> una scheda, fai doppio click sul titolo o click destro e <em>Rinomina scheda…</em>. Il nome vale solo per quella scheda aperta (la sessione salvata non cambia e la data resta in coda): compare nel titolo, in Affianca, nelle finestre di ricerca e analisi IA e nella colonna sessione dell&rsquo;Unione. Digita il nome originale per ripristinarlo; si può rinominare anche la scheda Unione (di default <em>Unione (n)</em>). I nomi non vengono salvati: al prossimo avvio le schede riprendono il nome abituale.</li>
   <li><strong>Affianca</strong> (barra in alto) mostra tutte le sessioni aperte insieme, in una griglia, nello stesso ordine delle schede.</li>
 </ul>
 
@@ -245,7 +246,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 </ul>
 
 <h2 id="unione">Unione cronologica</h2>
-<p>Per seguire una richiesta attraverso più servizi, il pulsante <strong>Unisci…</strong> o <kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>M</kbd> apre una scheda <strong>Unione</strong> che intercala in ordine cronologico le righe di <em>tutte</em> le schede di sessione aperte (Affianca non lo fa). Servono almeno due sessioni.</p>
+<p>Per seguire una richiesta attraverso più servizi, il pulsante <strong>Unisci…</strong> o <kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>M</kbd> apre una scheda <strong>Unione</strong> che intercala in ordine cronologico le righe di <em>tutte</em> le schede di sessione aperte (Affianca non lo fa). Con più di due sessioni aperte una finestra chiede <strong>quali sessioni unire</strong> (tutte spuntate, almeno due); con esattamente due vengono unite subito.</p>
 <ul>
   <li>Ogni riga inizia con una <strong>colonna sessione</strong>, colorata per sessione; la riga mantiene il colore del livello. Una riga senza timestamp, come lo stack trace, resta subito dopo la riga a cui appartiene; a parità di timestamp l&rsquo;ordine è per sessione, poi di arrivo. Il timestamp è letto come nella <a href="#ricerca-avanzata">ricerca avanzata</a> (solo ora: la data della sessione).</li>
   <li>La scheda parte dalle righe già lette e poi resta in diretta: le righe nuove (e le <a href="#precedenti">righe precedenti</a> che carichi in una sessione) finiscono al loro posto cronologico. <em>Follow</em>, <em>A capo</em>, il filtro testo/regex con contesto e le caselle dei livelli funzionano come in una scheda di sessione.</li>
@@ -253,7 +254,7 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>Se chiudi la scheda di una sessione, le sue righe restano nell&rsquo;Unione, marcate <em>(chiusa)</em>, e non ne arrivano di nuove. <em>Pulisci</em> in una sessione non toglie ciò che era già unito.</li>
   <li><strong>Doppio click</strong> su una riga, o <em>Vai al tab sorgente</em> nel menu contestuale, seleziona la scheda della sessione e porta la riga in vista (azzerando i suoi filtri se la nascondono).</li>
   <li><kbd>Ctrl</kbd>+<kbd>S</kbd> salva le righe visibili come <code>[sessione] riga</code>; <kbd>Ctrl</kbd>+<kbd>C</kbd> copia le righe selezionate. La scheda non genera avvisi di errore e non viene riaperta all&rsquo;avvio. Si tengono al massimo 200.000 righe (le più vecchie vengono scartate).</li>
-  <li>Esiste una sola scheda Unione alla volta; le sessioni aperte dopo non vengono aggiunte: chiudila e unisci di nuovo.</li>
+  <li>Esiste una sola scheda Unione alla volta; le sessioni aperte dopo, o escluse nella finestra, non vengono aggiunte: chiudila e unisci di nuovo.</li>
 </ul>
 
 <h2 id="analisi-ia">Analisi IA</h2>

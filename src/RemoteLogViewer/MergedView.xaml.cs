@@ -56,7 +56,8 @@ public partial class MergedView : UserControl
     private LogLine? _menuLine;
 
     public event Action<LogView, LogLine>? RevealRequested; // source tab + the original line
-    public string Title => L.F("Unione ({0})", _merge.Sessions.Count);
+    public string? CustomTitle { get; set; } // tab name chosen by the user; null = "Unione (n)"
+    public string Title => CustomTitle ?? L.F("Unione ({0})", _merge.Sessions.Count);
 
     public MergedView(IReadOnlyList<LogView> sources)
     {
@@ -85,10 +86,18 @@ public partial class MergedView : UserControl
         Action<IReadOnlyList<LogLine>> appended = lines => OnLines(s, lines, prepend: false);
         Action<IReadOnlyList<LogLine>> prepended = lines => OnLines(s, lines, prepend: true);
         Action closed = () => OnSourceClosed(s);
+        Action status = () => // tab renamed (or a "today" session rolled over): keep the session column in sync
+        {
+            if (s.Name == view.Session.DisplayName) return;
+            s.Name = view.Session.DisplayName;
+            UpdateBox(s);
+            Lines.Items.Refresh();
+        };
         view.LinesAppended += appended;
         view.LinesPrepended += prepended;
         view.Closed += closed;
-        _unsubscribe.Add(() => { view.LinesAppended -= appended; view.LinesPrepended -= prepended; view.Closed -= closed; });
+        view.StatusChanged += status;
+        _unsubscribe.Add(() => { view.LinesAppended -= appended; view.LinesPrepended -= prepended; view.Closed -= closed; view.StatusChanged -= status; });
     }
 
     public void Close()

@@ -59,6 +59,11 @@ None (existing project, no new dependency).
 - [ ] T019 Run `dotnet build` (kill a running `RemoteLogViewer.exe` first) and `dotnet test` (ActiveSession SMB tests run outside the sandbox or skip), then walk through `quickstart.md` manually; remove any test residue from `%APPDATA%\RemoteLogViewer\sessions.json`
   - Done: build + 245 tests green, automated smoke (two local files → merged order). Still to do by hand: the quickstart UI walk-through (tab, colours, drag, Affianca, language switch).
 
+## Phase 7: Follow-up (post-review)
+
+- [X] T020 `src/RemoteLogViewer/MergeDialog.xaml(.cs)` + `MainWindow.Merge_Executed`: with > 2 session tabs a dialog lists them (all ticked, OK needs ≥ 2) and only the chosen ones are merged; with exactly 2 no dialog
+- [X] T021 Rename tabs: `ActiveSession.Alias/Label`, `LogView.Rename`, `MergedView.CustomTitle`, `MainWindow.WireTabRename/RenameTab` (header double-click + context menu), `MergedView` follows source renames; tests in `tests/RemoteLogViewer.Tests/ActiveSessionAliasTests.cs`; strings in `L.cs`, guides, READMEs, CHANGELOG, CLAUDE.md
+
 ## Dependencies & execution order
 
 - Phase 2 first: T001 and T002 (T001 can be written first, TDD); T003 is independent of them ([P]-able, but touches `LogView.xaml.cs` only).

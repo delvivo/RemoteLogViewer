@@ -79,6 +79,13 @@ public partial class LogView : UserControl
         Closed?.Invoke();
     }
 
+    /// Renames this open tab (null = back to the session's name); raises `StatusChanged` so titles refresh.
+    public void Rename(string? alias)
+    {
+        Session.Alias = alias;
+        UpdateStatus();
+    }
+
     /// Copy of the whole buffer for the cross-tab search (UI thread only: `_all` is not thread-safe, LogLine is immutable).
     public LogLine[] Snapshot() => _all.ToArray();
 

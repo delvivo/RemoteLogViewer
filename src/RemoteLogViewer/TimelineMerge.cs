@@ -4,7 +4,7 @@ namespace RemoteLogViewer;
 public class MergedSession(int index, string name, DateTime defaultDate, object? source)
 {
     public int Index { get; } = index;
-    public string Name { get; } = name;
+    public string Name { get; set; } = name; // follows the source tab when it is renamed
     public DateTime DefaultDate { get; } = defaultDate;
     public object? Source { get; set; } = source;
     public bool Closed { get; set; }

@@ -434,6 +434,7 @@ public partial class MainWindow : Window
         tab.MouseUp += (_, e) => { if (e.ChangedButton == MouseButton.Middle) CloseTab(tab); };
 
         WireTabDrag(tab);
+        WireTabRename(tab);
 
         Tabs.Items.Add(tab);
         Tabs.SelectedItem = tab;
@@ -465,6 +466,38 @@ public partial class MainWindow : Window
             Relayout();
             e.Handled = true;
         };
+    }
+
+    // Rename an open tab: double-click on its title or the context menu. Not stored: a reopened tab gets its session's name again.
+    private void WireTabRename(TabItem tab)
+    {
+        var item = new MenuItem();
+        item.SetBinding(HeaderedItemsControl.HeaderProperty, L.Bind("Rinomina scheda…"));
+        item.Click += (_, _) => RenameTab(tab);
+        tab.ContextMenu = new ContextMenu { Items = { item } };
+        tab.MouseDoubleClick += (_, e) =>
+        {
+            // Same rule as the drag: only the header (visual child) counts, not the content routed through the logical tree.
+            if (e.ChangedButton != MouseButton.Left || e.OriginalSource is not Visual v || !tab.IsAncestorOf(v) || Ancestor<Button>(v) != null) return;
+            e.Handled = true;
+            RenameTab(tab);
+        };
+    }
+
+    private void RenameTab(TabItem tab)
+    {
+        // Typing the original name back (or the default title for the merged tab) restores it.
+        var current = tab.Tag switch { LogView lv => lv.Session.Label, MergedView mv => mv.Title, _ => "" };
+        var text = TextDialog.Ask(this, L.T("Rinomina scheda"), L.T("_Nome:"), current);
+        if (text == null || text == current) return;
+        if (tab.Tag is LogView view) view.Rename(text == view.Session.Config.Name ? null : text); // StatusChanged refreshes the title
+        else if (tab.Tag is MergedView merged)
+        {
+            merged.CustomTitle = text;
+            _mergedTitle();
+            System.Windows.Automation.AutomationProperties.SetName(tab, merged.Title);
+            Relayout(); // side-by-side cell titles
+        }
     }
 
     // On the TabControl, not the TabItem: a fast drag leaves the small header before the first move event.
@@ -621,6 +654,11 @@ public partial class MainWindow : Window
             MessageBox.Show(this, L.T("Servono almeno due sessioni aperte."), "Remote Log Viewer", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
+        if (sources.Count > 2) // with two there is nothing to choose
+        {
+            if (MergeDialog.Pick(this, sources) is not { } chosen) return;
+            sources = chosen;
+        }
         var view = new MergedView(sources);
         view.RevealRequested += (v, line) =>
         {
@@ -639,6 +677,7 @@ public partial class MainWindow : Window
         close.Click += (_, _) => CloseTab(tab);
         tab.MouseUp += (_, ev) => { if (ev.ChangedButton == MouseButton.Middle) CloseTab(tab); };
         WireTabDrag(tab);
+        WireTabRename(tab);
         _merged = view;
         Tabs.Items.Add(tab);
         Tabs.SelectedItem = tab;
