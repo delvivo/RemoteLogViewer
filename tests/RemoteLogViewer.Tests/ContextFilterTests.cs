@@ -91,4 +91,15 @@ public class ContextFilterTests
         }
         Assert.Equal(["riga 1", "riga 2", "riga 3"], shown.Select(l => l.Text));
     }
+
+    [Fact]
+    public void Bookmark_flag_survives_a_rebuild_by_object_identity()
+    {
+        var all = Buffer(10);
+        all[3].IsBookmarked = true;
+        Run(all, 0, Is(99)); // hides everything
+        var shown = Run(all, 0, null);
+        Assert.Same(all[3], shown[3]);
+        Assert.Equal([3], shown.Select((l, i) => (l, i)).Where(x => x.l.IsBookmarked).Select(x => x.i));
+    }
 }

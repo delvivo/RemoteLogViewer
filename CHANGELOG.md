@@ -2,6 +2,15 @@
 
 All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.4.0] - 2026-10-23
+
+### Added
+
+- **Line bookmarks**: `F2` sets or clears a bookmark on the selected line (● marker and light blue background, also in the line context menu); with an empty search box `F3` / `Shift+F3` jump to the next / previous visible bookmark, wrapping around (with search text they keep jumping between matches). The flag lives on the line, so bookmarks survive filters, loading older lines and rebuilds, and go away with the line on trim or *Clear*. The count appears next to the line count. Not saved, not in the Merged view.
+- **Merged timeline** (toolbar *Merge…*, `Ctrl+Shift+M`): a *Merged* tab that interleaves the lines of all open sessions in timestamp order, with a coloured session column. Lines without a timestamp stay attached to the previous line of their session; it starts from the lines already read and stays live (late lines and loaded older lines land in their chronological place). Per-session show/hide, level and text/regex filters with context, double-click or *Go to source tab* reveals the line in its tab, `Ctrl+S` saves `[session] line`. Closed sessions keep their rows. The tab raises no alerts and is not restored at startup. With more than two sessions open, a window lets you choose which ones to merge.
+- **Rename tab**: double-click a tab title or right-click → *Rename tab…* to give an open tab (session or Merged) a name of your own. It is not saved, keeps the date suffix, and is used in Side by side, search, AI analysis and the Merged session column; typing the original name restores it.
+- **Close all tabs**: right-click a tab → *Close all tabs*.
+
 ## [1.3.0] - 2026-10-22
 
 ### Added
@@ -64,7 +73,8 @@ All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](htt
 - Shared credentials, with passwords protected by DPAPI.
 - Word wrap toggle, and the application icon.
 
-[1.3.0]: https://github.com/delvivo/RemoteLogViewer/compare/v1.3.0...v1.2.0
+[1.4.0]: https://github.com/delvivo/RemoteLogViewer/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/delvivo/RemoteLogViewer/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/delvivo/RemoteLogViewer/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/delvivo/RemoteLogViewer/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/delvivo/RemoteLogViewer/releases/tag/v1.0.0

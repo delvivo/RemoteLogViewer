@@ -16,7 +16,9 @@ public class ActiveSession(SessionConfig config, DateTime? date = null, Func<Dat
     public SessionConfig Config { get; } = config;
     public DateTime? Date { get; private set; } = date?.Date;
     public bool FollowToday { get; } = date != null && date.Value.Date == (today ?? (() => DateTime.Today))().Date;
-    public string DisplayName => Date is { } d ? $"{Config.Name} · {d:yyyy-MM-dd}" : Config.Name;
+    public string? Alias { get; set; } // tab name chosen by the user for this open tab (not stored); null = the session's name
+    public string Label => Alias ?? Config.Name;
+    public string DisplayName => Date is { } d ? $"{Label} · {d:yyyy-MM-dd}" : Label;
     public string Path => Date is { } d ? Config.ResolvePath(d, _today()) : Config.FullPath;
     public ConcurrentQueue<LogLine> Pending { get; } = new();
     public ConcurrentQueue<List<LogLine>> Older { get; } = new(); // blocks of earlier lines, to put at the top

@@ -66,9 +66,11 @@
     <li><a href="#livelli">Custom levels and alerts</a></li>
     <li><a href="#vista">Session toolbar</a></li>
     <li><a href="#filtri">Filters, context and search</a></li>
+    <li><a href="#segnalibri">Bookmarks</a></li>
     <li><a href="#vai-ora">Go to time</a></li>
     <li><a href="#istogramma">Error histogram</a></li>
     <li><a href="#ricerca-avanzata">Advanced search across sessions</a></li>
+    <li><a href="#unione">Merged timeline</a></li>
     <li><a href="#analisi-ia">AI analysis</a></li>
     <li><a href="#precedenti">Older lines</a></li>
     <li><a href="#salva">Saving and copying</a></li>
@@ -167,6 +169,8 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <p>Each session you start opens in a tab. The tab title shows a status dot, the session name (plus the date, if the path contains one), the <a href="#avvisi">error badge</a> if any, and the ✕ button. To close a tab you can also middle-click its title.</p>
 <ul>
   <li>To reorder tabs, drag a title onto another tab.</li>
+  <li>To <strong>rename</strong> a tab, double-click its title or right-click it and choose <em>Rename tab…</em>. The name is only for that open tab (the saved session is unchanged and the date stays appended): it shows in the title, in Side by side, in the search and AI windows and in the Merged session column. Type the original name to restore it; the Merged tab can be renamed too (the default is <em>Merged (n)</em>). Names are not saved: at the next start the tabs get their usual names.</li>
+  <li>To close every tab at once, right-click any tab and choose <em>Close all tabs</em>.</li>
   <li><strong>Side by side</strong> (top bar) shows all open sessions together, in a grid, in the same order as the tabs.</li>
 </ul>
 
@@ -223,6 +227,10 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <h3>Search</h3>
 <p><kbd>Ctrl</kbd>+<kbd>F</kbd> moves the cursor to the search box. Matching lines are highlighted in yellow; <kbd>F3</kbd> and <kbd>Shift</kbd>+<kbd>F3</kbd> jump to the next or previous result. Unlike the filter, search does not hide any line.</p>
 
+<h2 id="segnalibri">Bookmarks</h2>
+<p>Select a line and press <kbd>F2</kbd> (or right-click → <em>Bookmark</em>) to mark it: a <strong>●</strong> and a light blue background appear. Press <kbd>F2</kbd> again to remove it. When the search box is <strong>empty</strong>, <kbd>F3</kbd> and <kbd>Shift</kbd>+<kbd>F3</kbd> jump to the next or previous bookmark (wrapping around); when the box contains text, they keep jumping to the next or previous search result. Only bookmarks on visible lines are visited (filters hide them but do not remove them). The number of bookmarks is shown next to the line count.</p>
+<p>A bookmark belongs to its line: it stays when you change filters or load older lines, and disappears with the line when it leaves the buffer or with <em>Clear</em>. Bookmarks are not saved and do not exist in the Merged view.</p>
+
 <h2 id="vai-ora">Go to time</h2>
 <p><strong>Go to time…</strong> (<kbd>Ctrl</kbd>+<kbd>G</kbd>) asks for a time, for example <code>14:32</code> or <code>14:32:10</code>, optionally preceded by a date (<code>2026-10-22 14:32</code> or <code>22/10/2026 14:32</code>). A time without a date refers to the session's date (if the path has a <a href="#data">date</a>) or to today.</p>
 <p>The view selects the first <em>visible</em> line at or after that time, and Follow turns off. The time formats are the same as in the <a href="#ricerca-avanzata">advanced search</a>; lines without a time (for example a stack trace) take the one of the previous line. If no line reaches that time, or the lines have no recognizable time, a message appears. If the time is before the first line read and the file has older lines, the app suggests <a href="#precedenti">▲ Older</a>.</p>
@@ -241,6 +249,18 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>Results are grouped by tab (<code>Name · N</code>), one row per match, highlighted. There are at most 10,000: beyond that the search stops and tells you. They are a snapshot: press <strong>Search</strong> again to refresh, <strong>Cancel</strong> stops a long search.</li>
   <li><strong>Double-click</strong> (or <kbd>Enter</kbd>) on a result selects the tab and scrolls the line into view. If the tab's filters hide it, they are cleared and the <em>Filters cleared</em> notice appears; if the line is no longer in the buffer, you are told.</li>
   <li><strong>Export…</strong> saves the shown results to a UTF-8 file, one <code># Name (N)</code> block per session.</li>
+</ul>
+
+<h2 id="unione">Merged timeline</h2>
+<p>To follow a request across several services, the <strong>Merge…</strong> button or <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> opens a <strong>Merged</strong> tab that interleaves the lines of <em>all</em> the open session tabs in chronological order (Side by side does not do that). With more than two sessions open, a window asks <strong>which sessions to merge</strong> (all ticked, at least two); with exactly two they are merged straight away.</p>
+<ul>
+  <li>Each row starts with a <strong>session column</strong>, coloured per session; the line keeps its level colour. A line without a timestamp, like a stack trace, stays right after the line it belongs to; equal timestamps are ordered by session, then by arrival. The timestamp is read as in the <a href="#ricerca-avanzata">advanced search</a> (time only: the session's date).</li>
+  <li>The tab starts from the lines already read and then stays live: new lines (and <a href="#precedenti">older lines</a> you load in a session) land at their chronological place. <em>Follow</em>, <em>Wrap</em>, the text/regex filter with context and the level checkboxes work as in a session tab.</li>
+  <li>The <strong>Sessions</strong> row has a checkbox per session: untick one to hide its lines. A session with no recognizable timestamp has its lines placed first (the checkbox tooltip says so).</li>
+  <li>If you close a session tab, its lines stay in the merged tab, marked <em>(closed)</em>, and receive nothing new. <em>Clear</em> in a session does not remove what was already merged.</li>
+  <li><strong>Double-click</strong> a row, or <em>Go to source tab</em> in its context menu, selects the session tab and reveals the line (clearing its filters if they hide it).</li>
+  <li><kbd>Ctrl</kbd>+<kbd>S</kbd> saves the visible rows as <code>[session] line</code>; <kbd>Ctrl</kbd>+<kbd>C</kbd> copies the selected lines. The tab raises no error alerts and is not reopened at startup. At most 200,000 rows are kept (the oldest are dropped).</li>
+  <li>Only one merged tab exists at a time; sessions opened after it, or left out in the window, are not added: close it and merge again.</li>
 </ul>
 
 <h2 id="analisi-ia">AI analysis</h2>
@@ -294,8 +314,10 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td><kbd>Del</kbd></td><td>Session list</td><td>Deletes</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Session</td><td>Go to the search box</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd></td><td>Main window</td><td>Opens the <a href="#ricerca-avanzata">advanced search</a> across all sessions</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd></td><td>Main window</td><td><a href="#unione">Merges</a> the open sessions by timestamp</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd></td><td>Main window</td><td>Opens the <a href="#analisi-ia">AI analysis</a> of the logs</td></tr>
-  <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Session</td><td>Next / previous result</td></tr>
+  <tr><td><kbd>F2</kbd></td><td>Log lines</td><td><a href="#segnalibri">Bookmark</a> the selected line (set / clear)</td></tr>
+  <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Session</td><td>Next / previous result; with an empty search box, next / previous <a href="#segnalibri">bookmark</a></td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Log lines</td><td>Copies the selected lines</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Session</td><td>Saves the visible lines</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>Session</td><td><a href="#vai-ora">Go to time</a></td></tr>

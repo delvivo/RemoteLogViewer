@@ -433,7 +433,17 @@ public partial class MainWindow : Window
         close.Click += (_, _) => CloseTab(tab);
         tab.MouseUp += (_, e) => { if (e.ChangedButton == MouseButton.Middle) CloseTab(tab); };
 
-        // Reorder by dragging the header onto another tab. The LogView stays in Tag, so the session is untouched.
+        WireTabDrag(tab);
+        WireTabRename(tab);
+
+        Tabs.Items.Add(tab);
+        Tabs.SelectedItem = tab;
+        Relayout();
+    }
+
+    // Reorder by dragging the header onto another tab. The view stays in Tag, so the session is untouched.
+    private void WireTabDrag(TabItem tab)
+    {
         tab.PreviewMouseLeftButtonDown += (_, e) =>
         {
             // The content (LogView) also routes here through the logical tree: only the header (visual child) starts a drag,
@@ -456,10 +466,41 @@ public partial class MainWindow : Window
             Relayout();
             e.Handled = true;
         };
+    }
 
-        Tabs.Items.Add(tab);
-        Tabs.SelectedItem = tab;
-        Relayout();
+    // Rename an open tab: double-click on its title or the context menu. Not stored: a reopened tab gets its session's name again.
+    private void WireTabRename(TabItem tab)
+    {
+        var item = new MenuItem();
+        item.SetBinding(HeaderedItemsControl.HeaderProperty, L.Bind("Rinomina scheda…"));
+        item.Click += (_, _) => RenameTab(tab);
+        var closeAll = new MenuItem();
+        closeAll.SetBinding(HeaderedItemsControl.HeaderProperty, L.Bind("Chiudi tutte le schede"));
+        closeAll.Click += (_, _) => { foreach (var t in Tabs.Items.Cast<TabItem>().ToList()) CloseTab(t); };
+        tab.ContextMenu = new ContextMenu { Items = { item, closeAll } };
+        tab.MouseDoubleClick += (_, e) =>
+        {
+            // Same rule as the drag: only the header (visual child) counts, not the content routed through the logical tree.
+            if (e.ChangedButton != MouseButton.Left || e.OriginalSource is not Visual v || !tab.IsAncestorOf(v) || Ancestor<Button>(v) != null) return;
+            e.Handled = true;
+            RenameTab(tab);
+        };
+    }
+
+    private void RenameTab(TabItem tab)
+    {
+        // Typing the original name back (or the default title for the merged tab) restores it.
+        var current = tab.Tag switch { LogView lv => lv.Session.Label, MergedView mv => mv.Title, _ => "" };
+        var text = TextDialog.Ask(this, L.T("Rinomina scheda"), L.T("_Nome:"), current);
+        if (text == null || text == current) return;
+        if (tab.Tag is LogView view) view.Rename(text == view.Session.Config.Name ? null : text); // StatusChanged refreshes the title
+        else if (tab.Tag is MergedView merged)
+        {
+            merged.CustomTitle = text;
+            _mergedTitle();
+            System.Windows.Automation.AutomationProperties.SetName(tab, merged.Title);
+            Relayout(); // side-by-side cell titles
+        }
     }
 
     // On the TabControl, not the TabItem: a fast drag leaves the small header before the first move event.
@@ -474,7 +515,8 @@ public partial class MainWindow : Window
 
     private void CloseTab(TabItem tab)
     {
-        ((LogView)tab.Tag).Close();
+        if (tab.Tag is LogView lv) lv.Close();
+        else if (tab.Tag is MergedView mv) { mv.Close(); L.Changed -= _mergedTitle; _merged = null; }
         Tabs.Items.Remove(tab);
         Relayout();
     }
@@ -505,7 +547,7 @@ public partial class MainWindow : Window
         {
             var full = System.IO.Path.GetFullPath(file);
             var existing = Tabs.Items.Cast<TabItem>().FirstOrDefault(t =>
-                ((LogView)t.Tag).Session.Config is { IsLocal: true } c && string.Equals(c.FilePath, full, StringComparison.OrdinalIgnoreCase));
+                (t.Tag as LogView)?.Session.Config is { IsLocal: true } c && string.Equals(c.FilePath, full, StringComparison.OrdinalIgnoreCase));
             if (existing != null) { Tabs.SelectedItem = existing; continue; }
             try { using var _ = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -537,7 +579,7 @@ public partial class MainWindow : Window
     private SessionConfig LocalConfig(string path)
     {
         var config = SessionConfig.Local(path);
-        var taken = Tabs.Items.Cast<TabItem>().Any(t => ((LogView)t.Tag).Session.Config is { IsLocal: true } c && c.Name == config.Name);
+        var taken = Tabs.Items.Cast<TabItem>().Any(t => (t.Tag as LogView)?.Session.Config is { IsLocal: true } c && c.Name == config.Name);
         if (taken && System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(config.FilePath)) is { Length: > 0 } dir)
             config.Name = System.IO.Path.Combine(dir, config.Name);
         return config;
@@ -554,7 +596,7 @@ public partial class MainWindow : Window
             _search.Activate();
             return;
         }
-        _search = new SearchWindow(() => Tabs.Items.Cast<TabItem>().Select(t => (LogView)t.Tag).ToList(), RevealLine) { Owner = this };
+        _search = new SearchWindow(() => Tabs.Items.Cast<TabItem>().Select(t => t.Tag).OfType<LogView>().ToList(), RevealLine) { Owner = this };
         _search.Closed += (_, _) => _search = null;
         _search.Show();
     }
@@ -572,7 +614,7 @@ public partial class MainWindow : Window
             _ai.Activate();
             return _ai;
         }
-        _ai = new AiWindow(() => Tabs.Items.Cast<TabItem>().Select(t => (LogView)t.Tag).ToList(), (Tabs.SelectedItem as TabItem)?.Tag as LogView) { Owner = this };
+        _ai = new AiWindow(() => Tabs.Items.Cast<TabItem>().Select(t => t.Tag).OfType<LogView>().ToList(), (Tabs.SelectedItem as TabItem)?.Tag as LogView) { Owner = this };
         _ai.Closed += (_, _) => _ai = null;
         _ai.Show();
         return _ai;
@@ -589,6 +631,62 @@ public partial class MainWindow : Window
         return result;
     }
 
+    public static readonly RoutedCommand Merge = new();
+    private MergedView? _merged;
+    private Action _mergedTitle = () => { };
+    private int _lastSessionIndex; // session tab selected last: what the workspace stores while the merged tab is selected
+
+    private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (e.OriginalSource != Tabs) return; // also bubbles up from the lists inside the views
+        var views = Tabs.Items.Cast<TabItem>().Select(t => t.Tag).OfType<LogView>().ToList();
+        if (Tabs.SelectedItem is TabItem { Tag: LogView v } && views.IndexOf(v) is var i and >= 0) _lastSessionIndex = i;
+    }
+
+    private void Merge_Executed(object sender, ExecutedRoutedEventArgs e)
+    {
+        if (_merged != null)
+        {
+            Tabs.SelectedItem = Tabs.Items.Cast<TabItem>().First(t => t.Tag == _merged);
+            MessageBox.Show(this, L.T("Esiste già una scheda Unione: chiudila e riaprila per includere le sessioni aperte dopo."), "Remote Log Viewer", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        var sources = Tabs.Items.Cast<TabItem>().Select(t => t.Tag).OfType<LogView>().ToList();
+        if (sources.Count < 2)
+        {
+            MessageBox.Show(this, L.T("Servono almeno due sessioni aperte."), "Remote Log Viewer", MessageBoxButton.OK, MessageBoxImage.Information);
+            return;
+        }
+        if (sources.Count > 2) // with two there is nothing to choose
+        {
+            if (MergeDialog.Pick(this, sources) is not { } chosen) return;
+            sources = chosen;
+        }
+        var view = new MergedView(sources);
+        view.RevealRequested += (v, line) =>
+        {
+            if (RevealLine(v, line) == RevealResult.NotFound)
+                MessageBox.Show(this, L.T("La riga non è più nel buffer della sessione."), "Remote Log Viewer", MessageBoxButton.OK, MessageBoxImage.Information);
+        };
+        var title = new TextBlock { Text = view.Title };
+        _mergedTitle = () => title.Text = view.Title;
+        L.Changed += _mergedTitle;
+        var close = new Button { Content = "✕", Padding = new Thickness(3, 0, 3, 0), Margin = new Thickness(6, 0, 0, 0), BorderThickness = new Thickness(0), Background = Brushes.Transparent };
+        var header = new StackPanel { Orientation = Orientation.Horizontal };
+        header.Children.Add(title);
+        header.Children.Add(close);
+        var tab = new TabItem { Header = header, Tag = view, AllowDrop = true };
+        System.Windows.Automation.AutomationProperties.SetName(tab, view.Title);
+        close.Click += (_, _) => CloseTab(tab);
+        tab.MouseUp += (_, ev) => { if (ev.ChangedButton == MouseButton.Middle) CloseTab(tab); };
+        WireTabDrag(tab);
+        WireTabRename(tab);
+        _merged = view;
+        Tabs.Items.Add(tab);
+        Tabs.SelectedItem = tab;
+        Relayout();
+    }
+
     private void Credentials_Click(object sender, RoutedEventArgs e) => new CredentialsWindow(_tree, Save) { Owner = this }.ShowDialog();
 
     private void SideBySide_Click(object sender, RoutedEventArgs e) => Relayout();
@@ -599,7 +697,7 @@ public partial class MainWindow : Window
         var tabs = Tabs.Items.Cast<TabItem>().ToList();
         foreach (var t in tabs)
         {
-            var v = (LogView)t.Tag;
+            var v = (UserControl)t.Tag;
             if (v.Parent is TabItem ti) ti.Content = null;
             else if (v.Parent is Panel p) p.Children.Remove(v);
         }
@@ -608,9 +706,9 @@ public partial class MainWindow : Window
         var side = SideBySideButton.IsChecked == true;
         foreach (var t in tabs)
         {
-            var v = (LogView)t.Tag;
+            var v = (UserControl)t.Tag;
             if (!side) { t.Content = v; continue; }
-            var title = new TextBlock { Text = v.Session.DisplayName, FontWeight = FontWeights.SemiBold, Margin = new Thickness(4, 2, 4, 2) };
+            var title = new TextBlock { Text = v is LogView lv ? lv.Session.DisplayName : ((MergedView)v).Title, FontWeight = FontWeights.SemiBold, Margin = new Thickness(4, 2, 4, 2) };
             DockPanel.SetDock(title, Dock.Top);
             var cell = new DockPanel();
             cell.Children.Add(title);
@@ -645,17 +743,19 @@ public partial class MainWindow : Window
 
     private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
-        var views = Tabs.Items.Cast<TabItem>().Select(t => (LogView)t.Tag).ToList();
+        var views = Tabs.Items.Cast<TabItem>().Select(t => t.Tag).OfType<LogView>().ToList(); // the merged tab is not restored
+        var selected = Tabs.SelectedItem is TabItem { Tag: LogView sel } ? views.IndexOf(sel) : _lastSessionIndex;
         _tree.Workspace = new Workspace
         {
             Tabs = views.Select(v => v.Session.Config.IsLocal
                 ? new OpenTab { LocalPath = v.Session.Config.FilePath }
                 : new OpenTab { SessionId = v.Session.Config.Id, Date = v.Session.Date, FollowToday = v.Session.FollowToday }).ToList(),
-            Selected = Tabs.SelectedIndex,
+            Selected = selected,
             SideBySide = SideBySideButton.IsChecked == true,
         };
         try { Save(); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { } // closing must never fail
+        _merged?.Close(); // first: no per-source "closed" updates while the views shut down
         foreach (var v in views) v.Close();
     }
 

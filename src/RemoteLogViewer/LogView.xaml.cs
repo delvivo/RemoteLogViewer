@@ -15,13 +15,16 @@ public enum RevealResult { NotFound, Shown, ShownFiltersCleared }
 
 public partial class LogView : UserControl
 {
-    public static readonly RoutedCommand FindNext = new(), FindPrev = new(), FocusSearch = new(), GoToTime = new();
+    public static readonly RoutedCommand FindNext = new(), FindPrev = new(), FocusSearch = new(), GoToTime = new(), ToggleBookmark = new();
     private const int MaxLines = 100_000, TrimBlock = 10_000;
 
     public ActiveSession Session { get; }
     public event Action? StatusChanged;
     public event Action<LogView, string[]>? ExplainRequested; // excerpt (target line marked) for the AI window
     public event Action<int>? ErrorsArrived; // new ERROR entries and alert lines (not from the initial read)
+    public event Action<IReadOnlyList<LogLine>>? LinesAppended;  // lines drained from the session in one tick, arrival order (merged view)
+    public event Action<IReadOnlyList<LogLine>>? LinesPrepended; // one block of older lines, file order (merged view)
+    public event Action? Closed;
     public Brush StatusBrush => StatusDot.Fill;
     public int UnreadErrors { get; private set; } // ERROR entries and alert lines arrived while this view was not visible
 
@@ -46,6 +49,7 @@ public partial class LogView : UserControl
         CommandBindings.Add(new CommandBinding(FindNext, (_, _) => Find(1)));
         CommandBindings.Add(new CommandBinding(FindPrev, (_, _) => Find(-1)));
         CommandBindings.Add(new CommandBinding(FocusSearch, (_, _) => { SearchBox.Focus(); SearchBox.SelectAll(); }));
+        CommandBindings.Add(new CommandBinding(ToggleBookmark, (_, _) => Bookmark(Lines.SelectedItem as LogLine)));
         CommandBindings.Add(new CommandBinding(GoToTime, (_, _) => AskTime(), (_, e) => e.CanExecute = _visible.Count > 0));
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Save, (_, _) => SaveVisible(), (_, e) => e.CanExecute = _visible.Count > 0));
         IsVisibleChanged += (_, e) =>
@@ -73,6 +77,14 @@ public partial class LogView : UserControl
         L.Changed -= OnLanguageChanged;
         _timer.Stop();
         Session.Stop();
+        Closed?.Invoke();
+    }
+
+    /// Renames this open tab (null = back to the session's name); raises `StatusChanged` so titles refresh.
+    public void Rename(string? alias)
+    {
+        Session.Alias = alias;
+        UpdateStatus();
     }
 
     /// Copy of the whole buffer for the cross-tab search (UI thread only: `_all` is not thread-safe, LogLine is immutable).
@@ -119,13 +131,16 @@ public partial class LogView : UserControl
             foreach (var l in block) { l.IsMatch = SearchHit(l); Count(l, 1); }
             _all.InsertRange(0, block);
             older = true;
+            LinesPrepended?.Invoke(block);
         }
         var added = new List<LogLine>();
+        var appended = new List<LogLine>();
         var errors = 0;
         while (Session.Pending.TryDequeue(out var l))
         {
             l.IsMatch = SearchHit(l);
             _all.Add(l);
+            appended.Add(l);
             Count(l, 1);
             _hist.Add(l, HistDay);
             if (l is { IsHistory: false } && (l is { Level: LogLevel.Error, IsEntry: true } || l.IsAlert)) errors++; // custom alerts count like errors, once
@@ -142,6 +157,7 @@ public partial class LogView : UserControl
         }
         else if (older) { Rebuild(keepTopLine: true); ResetHistogram(); } // indices shifted: replay the whole buffer
         else foreach (var l in added) _visible.Add(l);
+        if (appended.Count > 0) LinesAppended?.Invoke(appended);
         UpdateCount();
         RefreshStrip();
         if (Follow) ScrollToEnd();
@@ -177,6 +193,15 @@ public partial class LogView : UserControl
         _menuLine = (d as ListBoxItem)?.DataContext as LogLine;
         if (_menuLine is not { IsMarker: false }) e.Handled = true; // no line (or a separator): no menu
     }
+
+    private void Bookmark(LogLine? line)
+    {
+        if (line == null || line.IsMarker) return;
+        line.IsBookmarked = !line.IsBookmarked;
+        UpdateCount();
+    }
+
+    private void Bookmark_Click(object sender, RoutedEventArgs e) => Bookmark(_menuLine);
 
     private void Explain_Click(object sender, RoutedEventArgs e)
     {
@@ -218,6 +243,8 @@ public partial class LogView : UserControl
         InfoCheck.Content = $"INFO {_counts[(int)LogLevel.Info]}";
         DebugCheck.Content = $"DEBUG {_counts[(int)LogLevel.Debug]}";
         var matches = _search.Length == 0 ? "" : L.F(" · {0} trovate", _all.Count(l => l.IsMatch));
+        var marks = _all.Count(l => l.IsBookmarked);
+        if (marks > 0) matches += L.F(" · {0} segnalibri", marks);
         CountLabel.Text = _visible.Count == _all.Count ? L.F("{0} righe{1}", _all.Count, matches) : L.F("{0}/{1} righe{2}", _visible.Count, _all.Count, matches);
     }
 
@@ -371,7 +398,8 @@ public partial class LogView : UserControl
 
     private void Find(int dir)
     {
-        if (_search.Length == 0 || _visible.Count == 0) return;
+        if (_visible.Count == 0) return;
+        if (_search.Length == 0) { GoToBookmark(dir); return; } // empty search box: F3 walks the bookmarks
         var n = _visible.Count;
         var start = Lines.SelectedIndex >= 0 ? Lines.SelectedIndex : (dir > 0 ? -1 : n);
         for (var k = 1; k <= n; k++)
@@ -383,6 +411,15 @@ public partial class LogView : UserControl
             Lines.ScrollIntoView(_visible[i]);
             return;
         }
+    }
+
+    private void GoToBookmark(int dir)
+    {
+        var i = Bookmarks.Next(_visible, Lines.SelectedIndex, dir);
+        if (i < 0) { Info(L.T("Nessun segnalibro.")); return; }
+        FollowButton.IsChecked = false;
+        Lines.SelectedIndex = i;
+        Lines.ScrollIntoView(_visible[i]);
     }
 
     private void Copy_Executed(object sender, ExecutedRoutedEventArgs e)

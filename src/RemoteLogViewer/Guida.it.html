@@ -66,9 +66,11 @@
     <li><a href="#livelli">Livelli e avvisi personalizzati</a></li>
     <li><a href="#vista">Barra della sessione</a></li>
     <li><a href="#filtri">Filtri, contesto e ricerca</a></li>
+    <li><a href="#segnalibri">Segnalibri</a></li>
     <li><a href="#vai-ora">Vai all'ora</a></li>
     <li><a href="#istogramma">Istogramma degli errori</a></li>
     <li><a href="#ricerca-avanzata">Ricerca avanzata tra le sessioni</a></li>
+    <li><a href="#unione">Unione cronologica</a></li>
     <li><a href="#analisi-ia">Analisi IA</a></li>
     <li><a href="#precedenti">Righe precedenti</a></li>
     <li><a href="#salva">Salvare e copiare</a></li>
@@ -167,6 +169,8 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <p>Ogni sessione avviata si apre in una scheda. Il titolo della scheda mostra un pallino di stato, il nome della sessione (più la data, se il percorso ne contiene una), l'eventuale <a href="#avvisi">badge degli errori</a> e il pulsante ✕. Per chiudere una scheda puoi anche fare click con il tasto centrale sul titolo.</p>
 <ul>
   <li>Per riordinare le schede, trascina il titolo su un'altra scheda.</li>
+  <li>Per <strong>rinominare</strong> una scheda, fai doppio click sul titolo o click destro e <em>Rinomina scheda…</em>. Il nome vale solo per quella scheda aperta (la sessione salvata non cambia e la data resta in coda): compare nel titolo, in Affianca, nelle finestre di ricerca e analisi IA e nella colonna sessione dell&rsquo;Unione. Digita il nome originale per ripristinarlo; si può rinominare anche la scheda Unione (di default <em>Unione (n)</em>). I nomi non vengono salvati: al prossimo avvio le schede riprendono il nome abituale.</li>
+  <li>Per chiudere tutte le schede in una volta, click destro su una scheda e <em>Chiudi tutte le schede</em>.</li>
   <li><strong>Affianca</strong> (barra in alto) mostra tutte le sessioni aperte insieme, in una griglia, nello stesso ordine delle schede.</li>
 </ul>
 
@@ -223,6 +227,10 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
 <h3>Ricerca</h3>
 <p><kbd>Ctrl</kbd>+<kbd>F</kbd> porta il cursore nella casella di ricerca. Le righe trovate vengono evidenziate in giallo; con <kbd>F3</kbd> e <kbd>Shift</kbd>+<kbd>F3</kbd> passi al risultato successivo o precedente. A differenza del filtro, la ricerca non nasconde nessuna riga.</p>
 
+<h2 id="segnalibri">Segnalibri</h2>
+<p>Seleziona una riga e premi <kbd>F2</kbd> (o clic destro → <em>Segnalibro</em>) per segnarla: compare un <strong>●</strong> e uno sfondo azzurro. Premendo di nuovo <kbd>F2</kbd> il segnalibro viene tolto. Con la casella di ricerca <strong>vuota</strong>, <kbd>F3</kbd> e <kbd>Shift</kbd>+<kbd>F3</kbd> passano al segnalibro successivo o precedente (ricominciando dall'altro capo); se nella casella c'è del testo, restano i comandi del risultato di ricerca successivo/precedente. Vengono visitati solo i segnalibri delle righe visibili (i filtri li nascondono, ma non li tolgono). Il numero di segnalibri compare accanto al conteggio delle righe.</p>
+<p>Il segnalibro appartiene alla riga: resta se cambi filtri o carichi righe precedenti, e sparisce con la riga quando esce dal buffer o con <em>Pulisci</em>. I segnalibri non vengono salvati e non esistono nella vista Unione.</p>
+
 <h2 id="vai-ora">Vai all'ora</h2>
 <p><strong>Vai all'ora…</strong> (<kbd>Ctrl</kbd>+<kbd>G</kbd>) chiede un'ora, per esempio <code>14:32</code> o <code>14:32:10</code>, anche con la data davanti (<code>2026-10-22 14:32</code> o <code>22/10/2026 14:32</code>). Un'ora senza data si riferisce alla data della sessione (se il percorso ha una <a href="#data">data</a>) oppure a oggi.</p>
 <p>La vista seleziona la prima riga <em>visibile</em> con orario uguale o successivo e Follow si disattiva. Valgono gli stessi formati di orario della <a href="#ricerca-avanzata">ricerca avanzata</a>; le righe senza orario (per esempio uno stack trace) prendono quello della riga precedente. Se nessuna riga arriva a quell'ora, o se le righe non hanno un orario riconoscibile, compare un messaggio. Se l'ora è prima della prima riga letta e ci sono righe più vecchie nel file, l'app ti suggerisce <a href="#precedenti">▲ Precedenti</a>.</p>
@@ -241,6 +249,18 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <li>I risultati sono raggruppati per scheda (<code>Nome · N</code>), una riga per ogni corrispondenza, evidenziata. Sono al massimo 10.000: oltre, la ricerca si ferma e te lo segnala. Sono un&rsquo;istantanea: premi di nuovo <strong>Cerca</strong> per aggiornarli, <strong>Annulla</strong> ferma una ricerca lunga.</li>
   <li><strong>Doppio click</strong> (o <kbd>Invio</kbd>) su un risultato seleziona la scheda e porta la riga in vista. Se i filtri della scheda la nascondono vengono azzerati e compare l&rsquo;avviso <em>Filtri rimossi</em>; se la riga non è più nel buffer, viene detto.</li>
   <li><strong>Esporta…</strong> salva i risultati mostrati in un file UTF-8, un blocco <code># Nome (N)</code> per sessione.</li>
+</ul>
+
+<h2 id="unione">Unione cronologica</h2>
+<p>Per seguire una richiesta attraverso più servizi, il pulsante <strong>Unisci…</strong> o <kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>M</kbd> apre una scheda <strong>Unione</strong> che intercala in ordine cronologico le righe di <em>tutte</em> le schede di sessione aperte (Affianca non lo fa). Con più di due sessioni aperte una finestra chiede <strong>quali sessioni unire</strong> (tutte spuntate, almeno due); con esattamente due vengono unite subito.</p>
+<ul>
+  <li>Ogni riga inizia con una <strong>colonna sessione</strong>, colorata per sessione; la riga mantiene il colore del livello. Una riga senza timestamp, come lo stack trace, resta subito dopo la riga a cui appartiene; a parità di timestamp l&rsquo;ordine è per sessione, poi di arrivo. Il timestamp è letto come nella <a href="#ricerca-avanzata">ricerca avanzata</a> (solo ora: la data della sessione).</li>
+  <li>La scheda parte dalle righe già lette e poi resta in diretta: le righe nuove (e le <a href="#precedenti">righe precedenti</a> che carichi in una sessione) finiscono al loro posto cronologico. <em>Follow</em>, <em>A capo</em>, il filtro testo/regex con contesto e le caselle dei livelli funzionano come in una scheda di sessione.</li>
+  <li>La riga <strong>Sessioni</strong> ha una casella per sessione: deseleziona per nascondere le sue righe. Una sessione senza timestamp riconoscibile ha le righe in testa (lo dice il tooltip della casella).</li>
+  <li>Se chiudi la scheda di una sessione, le sue righe restano nell&rsquo;Unione, marcate <em>(chiusa)</em>, e non ne arrivano di nuove. <em>Pulisci</em> in una sessione non toglie ciò che era già unito.</li>
+  <li><strong>Doppio click</strong> su una riga, o <em>Vai al tab sorgente</em> nel menu contestuale, seleziona la scheda della sessione e porta la riga in vista (azzerando i suoi filtri se la nascondono).</li>
+  <li><kbd>Ctrl</kbd>+<kbd>S</kbd> salva le righe visibili come <code>[sessione] riga</code>; <kbd>Ctrl</kbd>+<kbd>C</kbd> copia le righe selezionate. La scheda non genera avvisi di errore e non viene riaperta all&rsquo;avvio. Si tengono al massimo 200.000 righe (le più vecchie vengono scartate).</li>
+  <li>Esiste una sola scheda Unione alla volta; le sessioni aperte dopo, o escluse nella finestra, non vengono aggiunte: chiudila e unisci di nuovo.</li>
 </ul>
 
 <h2 id="analisi-ia">Analisi IA</h2>
@@ -294,8 +314,10 @@ logs\app_{date:yyyy-MM-dd}.log</code></pre>
   <tr><td><kbd>Canc</kbd></td><td>Elenco sessioni</td><td>Elimina</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>F</kbd></td><td>Sessione</td><td>Vai alla casella di ricerca</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>F</kbd></td><td>Finestra principale</td><td>Apre la <a href="#ricerca-avanzata">ricerca avanzata</a> tra tutte le sessioni</td></tr>
+  <tr><td><kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>M</kbd></td><td>Finestra principale</td><td><a href="#unione">Unisce</a> per timestamp le sessioni aperte</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>Maiusc</kbd>+<kbd>I</kbd></td><td>Finestra principale</td><td>Apre l'<a href="#analisi-ia">analisi IA</a> dei log</td></tr>
-  <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Sessione</td><td>Risultato successivo / precedente</td></tr>
+  <tr><td><kbd>F2</kbd></td><td>Righe del log</td><td><a href="#segnalibri">Segnalibro</a> sulla riga selezionata (mette / toglie)</td></tr>
+  <tr><td><kbd>F3</kbd> / <kbd>Shift</kbd>+<kbd>F3</kbd></td><td>Sessione</td><td>Risultato successivo / precedente; con la ricerca vuota, <a href="#segnalibri">segnalibro</a> successivo / precedente</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>C</kbd></td><td>Righe del log</td><td>Copia le righe selezionate</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>S</kbd></td><td>Sessione</td><td>Salva le righe visibili</td></tr>
   <tr><td><kbd>Ctrl</kbd>+<kbd>G</kbd></td><td>Sessione</td><td><a href="#vai-ora">Vai all'ora</a></td></tr>

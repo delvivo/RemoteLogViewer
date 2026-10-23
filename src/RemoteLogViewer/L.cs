@@ -273,6 +273,28 @@ public static class L
         ["Impossibile aprire «{0}»: {1}"] = "Cannot open \"{0}\": {1}",
         ["Nessun file valido"] = "No valid file",
 
+        // ---- merged timeline ----
+        ["Unisci…"] = "Merge…",
+        ["Unisce in ordine cronologico le righe delle sessioni aperte (Ctrl+Maiusc+M)"] = "Merges the lines of the open sessions in chronological order (Ctrl+Shift+M)",
+        ["Unione ({0})"] = "Merged ({0})",
+        ["Unione"] = "Merged",
+        ["Servono almeno due sessioni aperte."] = "At least two open sessions are needed.",
+        ["Esiste già una scheda Unione: chiudila e riaprila per includere le sessioni aperte dopo."] = "A Merged tab already exists: close and reopen it to include sessions opened since.",
+        ["Sessioni:"] = "Sessions:",
+        ["(chiusa)"] = "(closed)",
+        ["sessione chiusa"] = "session closed",
+        ["Mostra o nasconde le righe di questa sessione"] = "Shows or hides the lines of this session",
+        ["Nessun orario riconoscibile: le righe stanno in testa."] = "No recognizable timestamp: its lines are placed first.",
+        ["Vai al tab sorgente"] = "Go to source tab",
+        ["Unisci sessioni"] = "Merge sessions",
+        ["Sessioni da unire in ordine cronologico:"] = "Sessions to merge in chronological order:",
+        ["Spunta almeno due sessioni."] = "Tick at least two sessions.",
+        ["Rinomina scheda…"] = "Rename tab…",
+        ["Chiudi tutte le schede"] = "Close all tabs",
+        ["Rinomina scheda"] = "Rename tab",
+        ["_Nome:"] = "_Name:",
+        ["La riga non è più nel buffer della sessione."] = "The line is no longer in the session buffer.",
+
         // ---- AI analysis ----
         ["Analisi IA…"] = "AI analysis…",
         ["Analizza i log con uno strumento IA (Ctrl+Maiusc+I)"] = "Analyze the logs with an AI tool (Ctrl+Shift+I)",
@@ -325,6 +347,10 @@ public static class L
         ["Istogramma"] = "Histogram",
         ["Mostra o nasconde l'istogramma degli errori per minuto"] = "Show or hide the errors-per-minute histogram",
         ["Spiega questa riga"] = "Explain this line",
+        ["Segnalibro (F2)"] = "Bookmark (F2)",
+        ["Nessun segnalibro."] = "No bookmarks.",
+        [" · {0} segnalibri"] = " · {0} bookmarks",
+        ["Ctrl+F, F3 / Maiusc+F3 (senza testo: tra i segnalibri)"] = "Ctrl+F, F3 / Shift+F3 (empty: between bookmarks)",
         ["Spiega la riga del log che inizia con \">>> \" usando le righe attorno come contesto: cosa significa, la causa più probabile e cosa controllare per primo. Sii conciso. Rispondi in italiano."]
             = "Explain the log line that starts with \">>> \", using the surrounding lines as context: what it means, the most likely cause and what to check first. Be concise. Answer in English.",
         // go to time
