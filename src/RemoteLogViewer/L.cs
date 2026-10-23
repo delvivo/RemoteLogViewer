@@ -290,6 +290,7 @@ public static class L
         ["Sessioni da unire in ordine cronologico:"] = "Sessions to merge in chronological order:",
         ["Spunta almeno due sessioni."] = "Tick at least two sessions.",
         ["Rinomina scheda…"] = "Rename tab…",
+        ["Chiudi tutte le schede"] = "Close all tabs",
         ["Rinomina scheda"] = "Rename tab",
         ["_Nome:"] = "_Name:",
         ["La riga non è più nel buffer della sessione."] = "The line is no longer in the session buffer.",

@@ -474,7 +474,10 @@ public partial class MainWindow : Window
         var item = new MenuItem();
         item.SetBinding(HeaderedItemsControl.HeaderProperty, L.Bind("Rinomina scheda…"));
         item.Click += (_, _) => RenameTab(tab);
-        tab.ContextMenu = new ContextMenu { Items = { item } };
+        var closeAll = new MenuItem();
+        closeAll.SetBinding(HeaderedItemsControl.HeaderProperty, L.Bind("Chiudi tutte le schede"));
+        closeAll.Click += (_, _) => { foreach (var t in Tabs.Items.Cast<TabItem>().ToList()) CloseTab(t); };
+        tab.ContextMenu = new ContextMenu { Items = { item, closeAll } };
         tab.MouseDoubleClick += (_, e) =>
         {
             // Same rule as the drag: only the header (visual child) counts, not the content routed through the logical tree.
