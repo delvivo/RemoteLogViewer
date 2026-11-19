@@ -497,7 +497,7 @@ public partial class MainWindow : Window
         else if (tab.Tag is MergedView merged)
         {
             merged.CustomTitle = text;
-            _mergedTitle();
+            _mergedTitles[merged]();
             System.Windows.Automation.AutomationProperties.SetName(tab, merged.Title);
             Relayout(); // side-by-side cell titles
         }
@@ -516,7 +516,7 @@ public partial class MainWindow : Window
     private void CloseTab(TabItem tab)
     {
         if (tab.Tag is LogView lv) lv.Close();
-        else if (tab.Tag is MergedView mv) { mv.Close(); L.Changed -= _mergedTitle; _merged = null; }
+        else if (tab.Tag is MergedView mv) { mv.Close(); L.Changed -= _mergedTitles[mv]; _mergedTitles.Remove(mv); }
         Tabs.Items.Remove(tab);
         Relayout();
     }
@@ -632,8 +632,7 @@ public partial class MainWindow : Window
     }
 
     public static readonly RoutedCommand Merge = new();
-    private MergedView? _merged;
-    private Action _mergedTitle = () => { };
+    private readonly Dictionary<MergedView, Action> _mergedTitles = []; // open merged tabs → their title refresh (L.Changed)
     private int _lastSessionIndex; // session tab selected last: what the workspace stores while the merged tab is selected
 
     private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -645,12 +644,6 @@ public partial class MainWindow : Window
 
     private void Merge_Executed(object sender, ExecutedRoutedEventArgs e)
     {
-        if (_merged != null)
-        {
-            Tabs.SelectedItem = Tabs.Items.Cast<TabItem>().First(t => t.Tag == _merged);
-            MessageBox.Show(this, L.T("Esiste già una scheda Unione: chiudila e riaprila per includere le sessioni aperte dopo."), "Remote Log Viewer", MessageBoxButton.OK, MessageBoxImage.Information);
-            return;
-        }
         var sources = Tabs.Items.Cast<TabItem>().Select(t => t.Tag).OfType<LogView>().ToList();
         if (sources.Count < 2)
         {
@@ -669,8 +662,9 @@ public partial class MainWindow : Window
                 MessageBox.Show(this, L.T("La riga non è più nel buffer della sessione."), "Remote Log Viewer", MessageBoxButton.OK, MessageBoxImage.Information);
         };
         var title = new TextBlock { Text = view.Title };
-        _mergedTitle = () => title.Text = view.Title;
-        L.Changed += _mergedTitle;
+        Action refresh = () => title.Text = view.Title;
+        _mergedTitles[view] = refresh;
+        L.Changed += refresh;
         var close = new Button { Content = "✕", Padding = new Thickness(3, 0, 3, 0), Margin = new Thickness(6, 0, 0, 0), BorderThickness = new Thickness(0), Background = Brushes.Transparent };
         var header = new StackPanel { Orientation = Orientation.Horizontal };
         header.Children.Add(title);
@@ -681,7 +675,6 @@ public partial class MainWindow : Window
         tab.MouseUp += (_, ev) => { if (ev.ChangedButton == MouseButton.Middle) CloseTab(tab); };
         WireTabDrag(tab);
         WireTabRename(tab);
-        _merged = view;
         Tabs.Items.Add(tab);
         Tabs.SelectedItem = tab;
         Relayout();
@@ -755,7 +748,7 @@ public partial class MainWindow : Window
         };
         try { Save(); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { } // closing must never fail
-        _merged?.Close(); // first: no per-source "closed" updates while the views shut down
+        foreach (var m in _mergedTitles.Keys) m.Close(); // first: no per-source "closed" updates while the views shut down
         foreach (var v in views) v.Close();
     }
 

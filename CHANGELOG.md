@@ -2,6 +2,16 @@
 
 All notable changes to Remote Log Viewer. Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- **Search box in the Merged tab**: same as in session tabs (highlight, match count, `Ctrl+F`, `F3` / `Shift+F3`), next to the filter. No bookmarks.
+
+### Changed
+
+- **Several Merged tabs**: *Merge…* always opens a new Merged tab (e.g. one per group of sessions) instead of selecting the existing one.
+
 ## [1.4.0] - 2026-10-23
 
 ### Added

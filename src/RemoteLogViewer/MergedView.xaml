@@ -2,6 +2,11 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:RemoteLogViewer">
+    <UserControl.InputBindings>
+        <KeyBinding Key="F3" Command="{x:Static local:LogView.FindNext}" />
+        <KeyBinding Key="F3" Modifiers="Shift" Command="{x:Static local:LogView.FindPrev}" />
+        <KeyBinding Key="F" Modifiers="Control" Command="{x:Static local:LogView.FocusSearch}" />
+    </UserControl.InputBindings>
     <DockPanel>
         <WrapPanel DockPanel.Dock="Top" Margin="2">
             <ToggleButton x:Name="FollowButton" Content="Follow" IsChecked="True" Width="60" Margin="2" Checked="Follow_Click" ToolTip="{local:T 'Scorrimento automatico'}" />
@@ -16,6 +21,10 @@
             <CheckBox x:Name="WarnCheck" Content="WARN" Tag="Warn" IsChecked="True" Foreground="#E07B00" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="{local:T 'Mostra righe WARN'}" />
             <CheckBox x:Name="InfoCheck" Content="INFO" Tag="Info" IsChecked="True" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="{local:T 'Mostra righe INFO'}" />
             <CheckBox x:Name="DebugCheck" Content="DEBUG" Tag="Debug" IsChecked="True" Foreground="Gray" VerticalAlignment="Center" Margin="4,0" Checked="Level_Changed" Unchecked="Level_Changed" ToolTip="{local:T 'Mostra righe DEBUG/TRACE'}" />
+            <TextBlock Text="{local:T 'Cerca:'}" VerticalAlignment="Center" Margin="6,0,4,0" />
+            <TextBox x:Name="SearchBox" Width="160" Margin="2" VerticalContentAlignment="Center" TextChanged="Search_Changed" ToolTip="{local:T 'Ctrl+F, F3 / Maiusc+F3'}" />
+            <Button Content="▲" Width="24" Margin="2" Command="{x:Static local:LogView.FindPrev}" ToolTip="{local:T 'Precedente (Shift+F3)'}" />
+            <Button Content="▼" Width="24" Margin="2" Command="{x:Static local:LogView.FindNext}" ToolTip="{local:T 'Successiva (F3)'}" />
             <TextBlock x:Name="CountLabel" VerticalAlignment="Center" Margin="8,0" Foreground="Gray" />
         </WrapPanel>
         <WrapPanel x:Name="SessionPanel" DockPanel.Dock="Top" Margin="2,0,2,2">
@@ -62,6 +71,9 @@
                         <DataTrigger Binding="{Binding IsMarker}" Value="True">
                             <Setter Property="Foreground" Value="SteelBlue" />
                             <Setter Property="FontStyle" Value="Italic" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding IsMatch}" Value="True">
+                            <Setter Property="Background" Value="#FFF59D" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
