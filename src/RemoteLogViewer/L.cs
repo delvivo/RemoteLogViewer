@@ -279,7 +279,6 @@ public static class L
         ["Unione ({0})"] = "Merged ({0})",
         ["Unione"] = "Merged",
         ["Servono almeno due sessioni aperte."] = "At least two open sessions are needed.",
-        ["Esiste già una scheda Unione: chiudila e riaprila per includere le sessioni aperte dopo."] = "A Merged tab already exists: close and reopen it to include sessions opened since.",
         ["Sessioni:"] = "Sessions:",
         ["(chiusa)"] = "(closed)",
         ["sessione chiusa"] = "session closed",
@@ -351,6 +350,7 @@ public static class L
         ["Nessun segnalibro."] = "No bookmarks.",
         [" · {0} segnalibri"] = " · {0} bookmarks",
         ["Ctrl+F, F3 / Maiusc+F3 (senza testo: tra i segnalibri)"] = "Ctrl+F, F3 / Shift+F3 (empty: between bookmarks)",
+        ["Ctrl+F, F3 / Maiusc+F3"] = "Ctrl+F, F3 / Shift+F3",
         ["Spiega la riga del log che inizia con \">>> \" usando le righe attorno come contesto: cosa significa, la causa più probabile e cosa controllare per primo. Sii conciso. Rispondi in italiano."]
             = "Explain the log line that starts with \">>> \", using the surrounding lines as context: what it means, the most likely cause and what to check first. Be concise. Answer in English.",
         // go to time

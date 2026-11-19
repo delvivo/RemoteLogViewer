@@ -54,6 +54,7 @@ public partial class MergedView : UserControl
     private Func<string, bool>? _filter;
     private ScrollViewer? _scroll;
     private LogLine? _menuLine;
+    private string _search = "";
 
     public event Action<LogView, LogLine>? RevealRequested; // source tab + the original line
     public string? CustomTitle { get; set; } // tab name chosen by the user; null = "Unione (n)"
@@ -64,6 +65,9 @@ public partial class MergedView : UserControl
         InitializeComponent();
         Lines.ItemsSource = _visible;
         CommandBindings.Add(new CommandBinding(ApplicationCommands.Save, (_, _) => SaveVisible(), (_, e) => e.CanExecute = _visible.Count > 0));
+        CommandBindings.Add(new CommandBinding(LogView.FindNext, (_, _) => Find(1)));
+        CommandBindings.Add(new CommandBinding(LogView.FindPrev, (_, _) => Find(-1)));
+        CommandBindings.Add(new CommandBinding(LogView.FocusSearch, (_, _) => { SearchBox.Focus(); SearchBox.SelectAll(); }));
         foreach (var view in sources) AddSource(view);
         Rebuild();
         L.Changed += OnLanguageChanged;
@@ -136,7 +140,10 @@ public partial class MergedView : UserControl
         {
             // Everything went to the end: feed only the new rows (same cheap path as LogView.Drain).
             for (var i = _merge.Rows.Count - lines.Count; i < _merge.Rows.Count; i++)
+            {
+                _merge.Rows[i].IsMatch = SearchHit(_merge.Rows[i]);
                 foreach (var l in _ctx.Add(_merge.Rows, i)) _visible.Add(l);
+            }
             UpdateCount();
             if (Follow) ScrollToEnd();
         }
@@ -182,7 +189,11 @@ public partial class MergedView : UserControl
         var top = keepTopLine && _scroll != null && (int)_scroll.VerticalOffset < _visible.Count ? _visible[(int)_scroll.VerticalOffset] : null;
         _ctx = new ContextFilter(_filter == null ? 0 : ContextLines, LineOk, _filter);
         var visible = new List<LogLine>();
-        for (var i = 0; i < _merge.Rows.Count; i++) visible.AddRange(_ctx.Add(_merge.Rows, i));
+        for (var i = 0; i < _merge.Rows.Count; i++)
+        {
+            _merge.Rows[i].IsMatch = SearchHit(_merge.Rows[i]); // rows created by a mid-list merge are fresh copies
+            visible.AddRange(_ctx.Add(_merge.Rows, i));
+        }
         _visible = new ObservableCollection<LogLine>(visible);
         Lines.ItemsSource = _visible;
         UpdateCount();
@@ -204,7 +215,8 @@ public partial class MergedView : UserControl
         InfoCheck.Content = $"INFO {_counts[(int)LogLevel.Info]}";
         DebugCheck.Content = $"DEBUG {_counts[(int)LogLevel.Debug]}";
         var total = _merge.Rows.Count;
-        CountLabel.Text = _visible.Count == total ? L.F("{0} righe{1}", total, "") : L.F("{0}/{1} righe{2}", _visible.Count, total, "");
+        var matches = _search.Length == 0 ? "" : L.F(" · {0} trovate", _merge.Rows.Count(l => l.IsMatch));
+        CountLabel.Text = _visible.Count == total ? L.F("{0} righe{1}", total, matches) : L.F("{0}/{1} righe{2}", _visible.Count, total, matches);
     }
 
     private void Follow_Click(object sender, RoutedEventArgs e)
@@ -248,6 +260,33 @@ public partial class MergedView : UserControl
         var level = Enum.Parse<LogLevel>((string)cb.Tag);
         if (cb.IsChecked == true) _hiddenLevels.Remove(level); else _hiddenLevels.Add(level);
         if (IsLoaded) Rebuild(); // Checked fires during InitializeComponent
+    }
+
+    // ---- search (highlight + F3 / Shift+F3, same as LogView without bookmarks) ----
+
+    private bool SearchHit(LogLine l) => _search.Length > 0 && l.Text.Contains(_search, StringComparison.OrdinalIgnoreCase);
+
+    private void Search_Changed(object sender, TextChangedEventArgs e)
+    {
+        _search = SearchBox.Text;
+        foreach (var l in _merge.Rows) l.IsMatch = SearchHit(l);
+        UpdateCount();
+    }
+
+    private void Find(int dir)
+    {
+        if (_visible.Count == 0 || _search.Length == 0) return;
+        var n = _visible.Count;
+        var start = Lines.SelectedIndex >= 0 ? Lines.SelectedIndex : (dir > 0 ? -1 : n);
+        for (var k = 1; k <= n; k++)
+        {
+            var i = ((start + dir * k) % n + n) % n;
+            if (!_visible[i].IsMatch) continue;
+            FollowButton.IsChecked = false;
+            Lines.SelectedIndex = i;
+            Lines.ScrollIntoView(_visible[i]);
+            return;
+        }
     }
 
     // ---- go to the source tab ----
